@@ -1,0 +1,56 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id                    String   @id @default(uuid())
+  title                 String
+  price                 String
+  link                  String
+  source                String   // Store name (e.g., "Etsy", "Wayfair", "OuterKnown")
+  description           String   @db.Text
+  features              String   @db.Text
+  whyBuy                String   @db.Text
+  amazonReviewSummary   String?  @db.Text
+  instagramReviewSummary String? @db.Text
+  fbMarketplaceSummary  String?  @db.Text
+  prosAndCons           Json?    // Stored as JSON with pros and cons arrays
+  lastUpdated           DateTime @default(now())
+  
+  // Embedding vectors
+  productEmbedding      Float[]  // Product description embedding
+  personaEmbeddings     PersonaEmbedding[]
+  
+  // Categories and tags
+  category              String?
+  subCategory           String?
+  tags                  String[] // Array of tags for additional filtering
+  
+  // Product attributes
+  attributes            Json?    // Flexible attributes as JSON
+  
+  @@index([category, subCategory])
+}
+
+model PersonaEmbedding {
+  id          String   @id @default(uuid())
+  personaName String   // Name of the persona (e.g., "Tech-savvy professional", "Artist")
+  description String   @db.Text // Description of the persona
+  embedding   Float[]  // Embedding vector for this persona
+  relevanceScore Float  // How relevant this product is for this persona (0-1)
+  
+  // Relation to product
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId   String
+  
+  @@index([personaName])
+  @@index([productId])
+} 

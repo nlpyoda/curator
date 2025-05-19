@@ -1,24 +1,42 @@
 {
   "name": "curatorapp52",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "node_modules/expo/AppEntry.js",
+  "homepage": "https://adiakhouri.github.io/curator",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "build:web": "expo export:web",
+    "predeploy": "npm run build:web",
+    "deploy": "gh-pages -d web-build"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@expo/webpack-config": "^19.0.1",
+    "@prisma/client": "^6.4.1",
+    "dotenv": "^16.4.7",
     "expo": "~52.0.37",
-    "expo-status-bar": "~2.0.1",
-    "react": "18.3.1",
-    "react-native": "0.76.7",
     "expo-router": "~4.0.17",
+    "expo-status-bar": "~2.0.1",
+    "faiss-node": "^0.5.1",
+    "openai": "^4.86.2",
+    "playwright": "^1.51.0",
+    "react": "18.3.1",
+    "react-dom": "^18.3.1",
+    "react-native": "0.76.7",
+    "react-native-gesture-handler": "~2.20.2",
+    "react-native-linear-gradient": "^2.8.3",
     "react-native-reanimated": "~3.16.1",
-    "react-native-gesture-handler": "~2.20.2"
+    "react-native-web": "^0.19.13"
   },
   "devDependencies": {
-    "@babel/core": "^7.20.0"
+    "@babel/core": "^7.20.0",
+    "@babel/plugin-transform-export-namespace-from": "^7.25.9",
+    "gh-pages": "^6.3.0",
+    "metro-react-native-babel-transformer": "^0.77.0",
+    "prisma": "^5.11.0"
   },
   "private": true
 }
