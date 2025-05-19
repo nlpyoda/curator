@@ -1,0 +1,9 @@
+{
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "lang": "en",
+  "name": "CuratorApp52",
+  "short_name": "CuratorApp52",
+  "start_url": "/?utm_source=web_app_manifest",
+  "orientation": "portrait"
+}
