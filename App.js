@@ -1,10 +1,19 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, TextInput, FlatList, SafeAreaView, ActivityIndicator, TouchableOpacity, Animated, Dimensions, Platform, Easing, Modal, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, TextInput, FlatList, SafeAreaView, ActivityIndicator, TouchableOpacity, Animated as RNAnimated, Dimensions, Platform, Easing, Modal, ScrollView } from 'react-native';
 import { useState, useEffect, useRef } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AIProductService } from './app/services/AIProductService';
 import PlaywrightService from './app/services/PlaywrightService';
 import GradientBackground from './app/components/GradientBackground';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withSpring, 
+  withTiming,
+  interpolate,
+  Extrapolate
+} from 'react-native-reanimated';
+import ProductCard from './app/components/ProductCard';
 
 const { width } = Dimensions.get('window');
 const cardWidth = width * 0.92;
@@ -30,21 +39,21 @@ const StarRating = ({ rating }) => {
 
 // Animated Background Element (ethereal floating elements)
 const EtherealBackground = ({ children }) => {
-  const anim1 = useRef(new Animated.Value(0)).current;
-  const anim2 = useRef(new Animated.Value(0)).current;
-  const anim3 = useRef(new Animated.Value(0)).current;
+  const anim1 = useRef(new RNAnimated.Value(0)).current;
+  const anim2 = useRef(new RNAnimated.Value(0)).current;
+  const anim3 = useRef(new RNAnimated.Value(0)).current;
   
   useEffect(() => {
     const createAnimation = (animatedValue) => {
-      return Animated.loop(
-        Animated.sequence([
-          Animated.timing(animatedValue, {
+      return RNAnimated.loop(
+        RNAnimated.sequence([
+          RNAnimated.timing(animatedValue, {
             toValue: 1,
             duration: Math.random() * 10000 + 15000,
             useNativeDriver: true,
             easing: Easing.inOut(Easing.ease),
           }),
-          Animated.timing(animatedValue, {
+          RNAnimated.timing(animatedValue, {
             toValue: 0,
             duration: Math.random() * 10000 + 15000,
             useNativeDriver: true,
@@ -155,265 +164,33 @@ const EtherealBackground = ({ children }) => {
   );
 };
 
-// Animated Product Card - Update to include reviews
-const ProductCard = ({ product, index, scrollY, onPress }) => {
-  const [isFlipped, setIsFlipped] = useState(false);
-  const [showStory, setShowStory] = useState(false);
-  const flipAnim = useRef(new Animated.Value(0)).current;
-  const storyAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-
-  // Calculate card position for parallax effect
-  const inputRange = [-1, 0, 100 * index, 100 * (index + 2)];
-  const scale = scrollY.interpolate({
-    inputRange,
-    outputRange: [1, 1, 1, 0.8],
-  });
-
-  const opacity = scrollY.interpolate({
-    inputRange,
-    outputRange: [1, 1, 1, 0.5],
-  });
-
-  const translateY = scrollY.interpolate({
-    inputRange,
-    outputRange: [0, 0, 0, 50],
-  });
-
-  // Get theme color based on product category
-  const getThemeColor = () => {
-    const category = product.title.toLowerCase();
-    if (category.includes('laptop') || category.includes('macbook')) return '#007AFF';
-    if (category.includes('headphone')) return '#FF2D55';
-    if (category.includes('camera')) return '#5856D6';
-    return '#34C759';
-  };
-
-  const themeColor = getThemeColor();
-
-  // Flip animation
-  const flipCard = () => {
-    Animated.spring(flipAnim, {
-      toValue: isFlipped ? 0 : 1,
-      friction: 8,
-      tension: 10,
-      useNativeDriver: true,
-    }).start();
-    setIsFlipped(!isFlipped);
-  };
-
-  // Story animation
-  const toggleStory = () => {
-    Animated.spring(storyAnim, {
-      toValue: showStory ? 0 : 1,
-      friction: 8,
-      tension: 10,
-      useNativeDriver: true,
-    }).start();
-    setShowStory(!showStory);
-  };
-
-  // Hover animation
-  const handleHover = (isHovered) => {
-    Animated.spring(scaleAnim, {
-      toValue: isHovered ? 1.05 : 1,
-      friction: 8,
-      tension: 10,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const frontAnimatedStyle = {
-    transform: [
-      { scale: scaleAnim },
-      {
-        rotateY: flipAnim.interpolate({
-          inputRange: [0, 1],
-          outputRange: ['0deg', '180deg'],
-        }),
-      },
-    ],
-  };
-
-  const backAnimatedStyle = {
-    transform: [
-      { scale: scaleAnim },
-      {
-        rotateY: flipAnim.interpolate({
-          inputRange: [0, 1],
-          outputRange: ['180deg', '360deg'],
-        }),
-      },
-    ],
-  };
-
-  const storyAnimatedStyle = {
-    transform: [
-      {
-        translateY: storyAnim.interpolate({
-          inputRange: [0, 1],
-          outputRange: [100, 0],
-        }),
-      },
-    ],
-    opacity: storyAnim,
-  };
-
-  return (
-    <Animated.View
-      style={[
-        styles.productCardContainer,
-        {
-          transform: [{ scale }, { translateY }],
-          opacity,
-        },
-      ]}
-    >
-      <TouchableOpacity
-        activeOpacity={0.9}
-        onPress={flipCard}
-        onLongPress={() => onPress(product)}
-        onPressIn={() => handleHover(true)}
-        onPressOut={() => handleHover(false)}
-      >
-        <Animated.View style={[styles.productCard, frontAnimatedStyle]}>
-          <GradientBackground
-            colors={[themeColor, `${themeColor}80`]}
-            style={styles.cardGradient}
-          >
-            <View style={styles.productHeader}>
-              <Text style={styles.productTitle}>{product.title}</Text>
-              <View style={styles.storeTag}>
-                <Text style={styles.storeText}>{product.source}</Text>
-              </View>
-            </View>
-            
-            <View style={styles.priceContainer}>
-              <Text style={styles.price}>{product.price}</Text>
-              <View style={styles.trendingBadge}>
-                <Text style={styles.trendingText}>🔥 Trending</Text>
-              </View>
-            </View>
-
-            <Text style={styles.description} numberOfLines={2}>
-              {product.description}
-            </Text>
-
-            <View style={styles.matchContainer}>
-              <Text style={styles.matchText}>
-                Match Score: {product.similarityScore}%
-              </Text>
-              <View style={styles.starContainer}>
-                <StarRating rating={product.averageRating} />
-              </View>
-            </View>
-
-            <TouchableOpacity
-              style={styles.storyButton}
-              onPress={toggleStory}
-            >
-              <Text style={styles.storyButtonText}>View Story</Text>
-            </TouchableOpacity>
-          </GradientBackground>
-        </Animated.View>
-
-        <Animated.View style={[styles.productCard, styles.cardBack, backAnimatedStyle]}>
-          <GradientBackground
-            colors={[`${themeColor}80`, themeColor]}
-            style={styles.cardGradient}
-          >
-            <View style={styles.backContent}>
-              <Text style={styles.whyBuyTitle}>Why Consider This?</Text>
-              <Text style={styles.whyBuyText}>{product.whyBuy}</Text>
-              
-              <View style={styles.prosConsContainer}>
-                <View style={styles.prosContainer}>
-                  <Text style={styles.prosTitle}>Pros</Text>
-                  {product.prosAndCons.pros.map((pro, index) => (
-                    <Text key={index} style={styles.prosText}>✓ {pro}</Text>
-                  ))}
-                </View>
-                <View style={styles.consContainer}>
-                  <Text style={styles.consTitle}>Cons</Text>
-                  {product.prosAndCons.cons.map((con, index) => (
-                    <Text key={index} style={styles.consText}>× {con}</Text>
-                  ))}
-                </View>
-              </View>
-            </View>
-          </GradientBackground>
-        </Animated.View>
-
-        <Animated.View style={[styles.storyContainer, storyAnimatedStyle]}>
-          <GradientBackground
-            colors={[themeColor, `${themeColor}80`]}
-            style={styles.storyGradient}
-          >
-            <ScrollView style={styles.storyScroll}>
-              <View style={styles.storyContent}>
-                <Text style={styles.storyTitle}>Product Story</Text>
-                <View style={styles.reviewSection}>
-                  <Text style={styles.reviewTitle}>Customer Reviews</Text>
-                  {Object.entries(product.reviews).map(([platform, review], index) => (
-                    <View key={index} style={styles.reviewItem}>
-                      <Text style={styles.platformText}>{platform}</Text>
-                      <Text style={styles.reviewText}>{review}</Text>
-                    </View>
-                  ))}
-                </View>
-                <View style={styles.socialProof}>
-                  <Text style={styles.socialTitle}>Social Proof</Text>
-                  <View style={styles.socialStats}>
-                    <View style={styles.statItem}>
-                      <Text style={styles.statNumber}>98%</Text>
-                      <Text style={styles.statLabel}>Satisfaction</Text>
-                    </View>
-                    <View style={styles.statItem}>
-                      <Text style={styles.statNumber}>10k+</Text>
-                      <Text style={styles.statLabel}>Reviews</Text>
-                    </View>
-                    <View style={styles.statItem}>
-                      <Text style={styles.statNumber}>4.8</Text>
-                      <Text style={styles.statLabel}>Rating</Text>
-                    </View>
-                  </View>
-                </View>
-              </View>
-            </ScrollView>
-          </GradientBackground>
-        </Animated.View>
-      </TouchableOpacity>
-    </Animated.View>
-  );
-};
-
 // Product Detail Panel - Update to include reviews
 const ProductDetail = ({ item, visible, onClose, onPurchase }) => {
-  const slideAnim = useRef(new Animated.Value(visible ? 0 : 300)).current;
-  const opacityAnim = useRef(new Animated.Value(visible ? 1 : 0)).current;
+  const slideAnim = useRef(new RNAnimated.Value(visible ? 0 : 300)).current;
+  const opacityAnim = useRef(new RNAnimated.Value(visible ? 1 : 0)).current;
   
   useEffect(() => {
     if (visible) {
-      Animated.parallel([
-        Animated.timing(slideAnim, {
+      RNAnimated.parallel([
+        RNAnimated.timing(slideAnim, {
           toValue: 0,
           duration: 300,
           useNativeDriver: true,
         }),
-        Animated.timing(opacityAnim, {
+        RNAnimated.timing(opacityAnim, {
           toValue: 1,
           duration: 250,
           useNativeDriver: true,
         })
       ]).start();
     } else {
-      Animated.parallel([
-        Animated.timing(slideAnim, {
+      RNAnimated.parallel([
+        RNAnimated.timing(slideAnim, {
           toValue: 300,
           duration: 300,
           useNativeDriver: true,
         }),
-        Animated.timing(opacityAnim, {
+        RNAnimated.timing(opacityAnim, {
           toValue: 0,
           duration: 250,
           useNativeDriver: true,
@@ -620,10 +397,10 @@ export default function App() {
   const [detailVisible, setDetailVisible] = useState(false);
   const [purchaseState, setPurchaseState] = useState(null);
   const [isPurchasing, setIsPurchasing] = useState(false);
-  const scrollY = useRef(new Animated.Value(0)).current;
+  const scrollY = useRef(new RNAnimated.Value(0)).current;
   
   // Animated values for UI transitions
-  const headerHeight = useRef(new Animated.Value(120)).current;
+  const headerHeight = useRef(new RNAnimated.Value(120)).current;
   
   useEffect(() => {
     const initializeService = async () => {
@@ -658,7 +435,7 @@ export default function App() {
     setIsLoading(true);
     setErrorMessage(null);
     // Collapse header on search
-    Animated.timing(headerHeight, {
+    RNAnimated.timing(headerHeight, {
       toValue: 80,
       duration: 300,
       useNativeDriver: false,
@@ -807,7 +584,7 @@ export default function App() {
         )}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContainer}
-        onScroll={Animated.event(
+        onScroll={RNAnimated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
           { useNativeDriver: true }
         )}
@@ -1106,7 +883,8 @@ const styles = StyleSheet.create({
     elevation: 2,
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.03)',
-    backgroundColor: 'transparent', // Transparent to show both card sides
+    backgroundColor: 'transparent',
+    backfaceVisibility: 'hidden',
   },
   cardSide: {
     position: 'absolute',
@@ -1120,8 +898,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.95)', // Made slightly transparent
   },
   cardBack: {
-    backgroundColor: 'rgba(255,255,255,0.97)', // Made slightly transparent
-    transform: [{ rotateY: '180deg' }],
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255,255,255,0.97)',
+    backfaceVisibility: 'hidden',
   },
   storeTag: {
     position: 'absolute',
@@ -1237,9 +1020,10 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   whyBuyText: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 20,
     color: '#444444',
+    marginBottom: 16,
   },
   backProsConsContainer: {
     flexDirection: 'row',
@@ -1392,15 +1176,19 @@ const styles = StyleSheet.create({
   },
   prosConsContainer: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 16,
   },
   prosConsColumn: {
     flex: 1,
   },
   prosContainer: {
-    marginRight: 12,
+    flex: 1,
+    marginRight: 8,
   },
   consContainer: {
-    marginLeft: 12,
+    flex: 1,
+    marginLeft: 8,
   },
   proItem: {
     marginBottom: 8,
@@ -1578,20 +1366,19 @@ const styles = StyleSheet.create({
     color: '#444444',
   },
   platformText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#222222',
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666666',
+    marginBottom: 4,
   },
   reviewsContainer: {
     marginTop: 5,
   },
   reviewItem: {
-    marginBottom: 12,
-    backgroundColor: 'rgba(0,0,0,0.02)',
+    marginBottom: 16,
     padding: 12,
+    backgroundColor: 'rgba(0,0,0,0.03)',
     borderRadius: 8,
-    borderLeftWidth: 3,
-    borderLeftColor: '#2C6BED',
   },
   reviewPlatform: {
     fontSize: 13,
@@ -1727,10 +1514,12 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
+    backfaceVisibility: 'hidden',
   },
   cardGradient: {
     flex: 1,
     padding: 16,
+    borderRadius: 12,
   },
   priceContainer: {
     flexDirection: 'row',
@@ -1767,8 +1556,8 @@ const styles = StyleSheet.create({
   },
   whyBuyTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontWeight: '700',
+    color: '#222222',
     marginBottom: 8,
   },
   storyContainer: {
@@ -1777,11 +1566,13 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.98)',
+    borderRadius: 12,
     overflow: 'hidden',
   },
   storyGradient: {
     flex: 1,
+    padding: 16,
   },
   storyScroll: {
     flex: 1,
@@ -1791,27 +1582,27 @@ const styles = StyleSheet.create({
   },
   storyTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontWeight: '700',
+    color: '#222222',
     marginBottom: 16,
   },
   reviewSection: {
-    marginBottom: 16,
+    marginBottom: 24,
   },
   reviewTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 8,
+    fontWeight: '600',
+    color: '#444444',
+    marginBottom: 12,
   },
   socialProof: {
     marginTop: 16,
   },
   socialTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 8,
+    fontWeight: '600',
+    color: '#444444',
+    marginBottom: 12,
   },
   socialStats: {
     flexDirection: 'row',
@@ -1821,13 +1612,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statNumber: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#222222',
   },
   statLabel: {
     fontSize: 12,
-    color: '#fff',
-    marginTop: 4,
+    color: '#666666',
+    marginTop: 2,
   },
 });
