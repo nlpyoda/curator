@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Animated } from 'react-native';
 
 // Mock data for testing
 const mockProducts = [
@@ -10,7 +10,14 @@ const mockProducts = [
     rating: 4.8,
     description: 'Latest MacBook Pro with M3 Pro chip, 16GB RAM, and 512GB SSD.',
     link: 'https://www.apple.com/macbook-pro',
-    tags: ['pro', 'premium', 'power-user', 'creative']
+    tags: ['pro', 'premium', 'power-user', 'creative'],
+    whyBuy: 'Industry-leading performance for demanding creative tasks with the M3 Pro chip.',
+    insights: [
+      { label: 'Performance', value: 98, color: '#FF5757' },
+      { label: 'Battery Life', value: 92, color: '#32D74B' },
+      { label: 'Portability', value: 75, color: '#4E7CFF' },
+      { label: 'Value', value: 70, color: '#BF5AF2' }
+    ]
   },
   {
     id: '2',
@@ -19,7 +26,14 @@ const mockProducts = [
     rating: 4.7,
     description: 'Ultra-thin and lightweight MacBook Air with M2 chip.',
     link: 'https://www.apple.com/macbook-air',
-    tags: ['lightweight', 'portable', 'student', 'casual']
+    tags: ['lightweight', 'portable', 'student', 'casual'],
+    whyBuy: 'Perfect balance of performance and portability for everyday tasks and light creative work.',
+    insights: [
+      { label: 'Performance', value: 82, color: '#FF5757' },
+      { label: 'Battery Life', value: 95, color: '#32D74B' },
+      { label: 'Portability', value: 96, color: '#4E7CFF' },
+      { label: 'Value', value: 85, color: '#BF5AF2' }
+    ]
   },
   {
     id: '3',
@@ -28,7 +42,14 @@ const mockProducts = [
     rating: 4.9,
     description: 'Powerful yet portable MacBook Pro with M3 chip.',
     link: 'https://www.apple.com/macbook-pro',
-    tags: ['pro', 'premium', 'power-user', 'balanced']
+    tags: ['pro', 'premium', 'power-user', 'balanced'],
+    whyBuy: 'Ideal for professionals who need performance without sacrificing portability.',
+    insights: [
+      { label: 'Performance', value: 95, color: '#FF5757' },
+      { label: 'Battery Life', value: 90, color: '#32D74B' },
+      { label: 'Portability', value: 85, color: '#4E7CFF' },
+      { label: 'Value', value: 78, color: '#BF5AF2' }
+    ]
   },
   {
     id: '4',
@@ -37,7 +58,14 @@ const mockProducts = [
     rating: 4.6,
     description: 'Affordable MacBook Air with the efficient M1 chip.',
     link: 'https://www.apple.com/macbook-air',
-    tags: ['budget', 'student', 'casual', 'entry-level']
+    tags: ['budget', 'student', 'casual', 'entry-level'],
+    whyBuy: 'Best value MacBook with exceptional battery life and solid performance for students.',
+    insights: [
+      { label: 'Performance', value: 75, color: '#FF5757' },
+      { label: 'Battery Life', value: 96, color: '#32D74B' },
+      { label: 'Portability', value: 93, color: '#4E7CFF' },
+      { label: 'Value', value: 95, color: '#BF5AF2' }
+    ]
   }
 ];
 
@@ -47,25 +75,28 @@ const personas = [
     id: 'creative',
     name: 'Creative Pro',
     emoji: '🎨',
-    description: 'High-end performance for creative workflows',
+    description: 'For designers, video editors & creators',
     tagWeights: { premium: 2, pro: 2, creative: 3, power: 1.5 },
-    color: '#FF5757'
+    color: '#FF5757',
+    insights: ['Performance', 'Display Quality']
   },
   {
     id: 'student',
     name: 'Student',
     emoji: '🎓',
-    description: 'Affordable options for studying',
+    description: 'Budget-friendly options + portability',
     tagWeights: { student: 2, budget: 1.5, portable: 1.5, entry: 1.2 },
-    color: '#4E7CFF'
+    color: '#4E7CFF',
+    insights: ['Battery Life', 'Value']
   },
   {
     id: 'business',
     name: 'Business Pro',
     emoji: '💼',
-    description: 'Reliable performance for business tasks',
+    description: 'Reliable performance, balance oriented',
     tagWeights: { premium: 1.5, balanced: 1.8, pro: 1.3 },
-    color: '#32D74B'
+    color: '#32D74B',
+    insights: ['Reliability', 'Performance']
   },
   {
     id: 'traveler',
@@ -73,45 +104,112 @@ const personas = [
     emoji: '✈️',
     description: 'Ultra-portable for on-the-go productivity',
     tagWeights: { portable: 2, lightweight: 2, balanced: 1.5 },
-    color: '#BF5AF2'
+    color: '#BF5AF2',
+    insights: ['Portability', 'Battery Life']
   }
 ];
 
-// Simple product card component
+// InsightBar component for visualizing product metrics
+const InsightBar = ({ label, value, color }) => {
+  return (
+    <View style={styles.insightContainer}>
+      <Text style={styles.insightLabel}>{label}</Text>
+      <View style={styles.insightBarBackground}>
+        <View 
+          style={[
+            styles.insightBarFill, 
+            { width: `${value}%`, backgroundColor: color }
+          ]} 
+        />
+      </View>
+      <Text style={styles.insightValue}>{value}</Text>
+    </View>
+  );
+};
+
+// Flippable product card component with front/back views
 const ProductCard = ({ product, onPress }) => {
-  const { title, price, rating, description } = product;
+  const [isFlipped, setIsFlipped] = useState(false);
+  const { title, price, rating, description, whyBuy, insights } = product;
+  
+  const handleFlip = () => {
+    setIsFlipped(!isFlipped);
+  };
   
   return (
     <TouchableOpacity
       style={styles.productCard}
-      onPress={() => onPress(product)}
-      activeOpacity={0.7}
+      onPress={handleFlip}
+      activeOpacity={0.9}
     >
-      <View style={styles.cardContent}>
-        <View style={styles.cardHeader}>
-          <Text style={styles.productTitle} numberOfLines={2}>
-            {title}
+      {!isFlipped ? (
+        // Front of card
+        <View style={styles.cardContent}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.productTitle} numberOfLines={2}>
+              {title}
+            </Text>
+            <View style={styles.ratingContainer}>
+              <Text style={styles.rating}>★ {rating}</Text>
+            </View>
+          </View>
+
+          <Text style={styles.price}>${price.toLocaleString()}</Text>
+          
+          <Text style={styles.description} numberOfLines={3}>
+            {description}
           </Text>
-          <View style={styles.ratingContainer}>
-            <Text style={styles.rating}>★ {rating}</Text>
+          
+          <Text style={styles.whyBuyLabel}>Why Buy</Text>
+          <Text style={styles.whyBuyText} numberOfLines={2}>
+            {whyBuy}
+          </Text>
+
+          <View style={styles.cardFooter}>
+            <TouchableOpacity
+              style={styles.viewButton}
+              onPress={handleFlip}
+            >
+              <Text style={styles.viewButtonText}>View Details</Text>
+            </TouchableOpacity>
           </View>
         </View>
-
-        <Text style={styles.price}>${price.toLocaleString()}</Text>
-        
-        <Text style={styles.description} numberOfLines={3}>
-          {description}
-        </Text>
-
-        <View style={styles.cardFooter}>
+      ) : (
+        // Back of card (details view)
+        <View style={styles.cardContentBack}>
           <TouchableOpacity
-            style={styles.viewButton}
-            onPress={() => onPress(product)}
+            style={styles.closeButton}
+            onPress={handleFlip}
           >
-            <Text style={styles.viewButtonText}>View Details</Text>
+            <Text style={styles.closeButtonText}>×</Text>
+          </TouchableOpacity>
+          
+          <Text style={styles.detailsTitle}>{title}</Text>
+          
+          <Text style={styles.detailsSubtitle}>Insight Analysis</Text>
+          
+          <View style={styles.insightsContainer}>
+            {insights.map((insight, index) => (
+              <InsightBar 
+                key={index}
+                label={insight.label} 
+                value={insight.value} 
+                color={insight.color}
+              />
+            ))}
+          </View>
+          
+          <Text style={styles.detailsSubtitle}>Final Verdict</Text>
+          <Text style={styles.verdictText}>{whyBuy}</Text>
+          
+          <TouchableOpacity
+            style={styles.buyButton}
+            onPress={() => window.open(product.link, '_blank')}
+          >
+            <Text style={styles.buyButtonText}>Buy Now</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      )}
     </TouchableOpacity>
   );
 };
@@ -120,7 +218,10 @@ const ProductCard = ({ product, onPress }) => {
 const PersonaSelector = ({ personas, selectedPersona, onSelectPersona }) => {
   return (
     <View style={styles.personaContainer}>
-      <Text style={styles.personaTitle}>Choose Your Vibe</Text>
+      <View style={styles.personaTitleContainer}>
+        <Text style={styles.personaTitle}>Personalize Your Results</Text>
+        <Text style={styles.personaSubtitle}>Select your vibe to get curated product recommendations</Text>
+      </View>
       <ScrollView 
         horizontal 
         showsHorizontalScrollIndicator={false}
@@ -133,8 +234,8 @@ const PersonaSelector = ({ personas, selectedPersona, onSelectPersona }) => {
               styles.personaCard,
               selectedPersona?.id === persona.id && { 
                 borderColor: persona.color,
-                borderWidth: 2,
-                backgroundColor: `${persona.color}22`,
+                borderWidth: 3,
+                backgroundColor: `${persona.color}15`,
               }
             ]}
             onPress={() => onSelectPersona(persona)}
@@ -143,6 +244,28 @@ const PersonaSelector = ({ personas, selectedPersona, onSelectPersona }) => {
             <Text style={styles.personaEmoji}>{persona.emoji}</Text>
             <Text style={styles.personaName}>{persona.name}</Text>
             <Text style={styles.personaDescription}>{persona.description}</Text>
+            
+            {selectedPersona?.id === persona.id && (
+              <View style={styles.personaActiveIndicator}>
+                <Text style={styles.personaActiveText}>Active</Text>
+              </View>
+            )}
+            
+            <View style={[styles.personaFocus, { borderColor: persona.color }]}>
+              <Text style={styles.personaFocusText}>Prioritizes</Text>
+              <View style={styles.personaTagsContainer}>
+                {persona.insights.map((insight, idx) => (
+                  <View 
+                    key={idx} 
+                    style={[styles.personaTag, { backgroundColor: `${persona.color}30` }]}
+                  >
+                    <Text style={[styles.personaTagText, { color: persona.color }]}>
+                      {insight}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -156,6 +279,7 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [selectedPersona, setSelectedPersona] = useState(null);
+  const [scrollY] = useState(new Animated.Value(0));
 
   // Calculate product relevance score based on selected persona
   const getRelevanceScore = (product, persona) => {
@@ -172,6 +296,13 @@ export default function App() {
     
     return score;
   };
+
+  // Search immediately when persona changes
+  useEffect(() => {
+    if (selectedPersona) {
+      handleSearch();
+    }
+  }, [selectedPersona]);
 
   const handleSearch = async () => {
     if (!searchQuery.trim() && !selectedPersona) {
@@ -218,13 +349,30 @@ export default function App() {
     }
   };
 
-  const handleProductSelect = (product) => {
-    window.open(product.link, '_blank');
-  };
+  // Header opacity animation based on scroll
+  const headerOpacity = scrollY.interpolate({
+    inputRange: [0, 80],
+    outputRange: [1, 0.98],
+    extrapolate: 'clamp',
+  });
+  
+  const headerTranslate = scrollY.interpolate({
+    inputRange: [0, 80],
+    outputRange: [0, -10],
+    extrapolate: 'clamp',
+  });
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <Animated.View 
+        style={[
+          styles.header, 
+          {
+            opacity: headerOpacity,
+            transform: [{ translateY: headerTranslate }]
+          }
+        ]}
+      >
         <View style={styles.headerContent}>
           <Text style={styles.appTitle}>CuratorApp</Text>
           <Text style={styles.appSubtitle}>AI-Powered Shopping</Text>
@@ -258,20 +406,27 @@ export default function App() {
             setSelectedPersona(selectedPersona?.id === persona.id ? null : persona);
           }}
         />
-      </View>
+      </Animated.View>
 
-      <ScrollView style={styles.content}>
+      <Animated.ScrollView 
+        style={styles.content}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: false }
+        )}
+        scrollEventThrottle={16}
+      >
         {selectedPersona && !isLoading && products.length > 0 && (
-          <View style={[styles.personaTag, { backgroundColor: selectedPersona.color }]}>
-            <Text style={styles.personaTagText}>
-              {selectedPersona.emoji} Showing results for {selectedPersona.name}
+          <View style={[styles.personaResultTag, { backgroundColor: selectedPersona.color }]}>
+            <Text style={styles.personaResultTagText}>
+              {selectedPersona.emoji} Recommendations tailored for {selectedPersona.name}
             </Text>
           </View>
         )}
       
         {isLoading ? (
           <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>Searching...</Text>
+            <Text style={styles.loadingText}>Finding the perfect products...</Text>
           </View>
         ) : errorMessage ? (
           <View style={styles.errorContainer}>
@@ -283,7 +438,6 @@ export default function App() {
               <ProductCard
                 key={product.id}
                 product={product}
-                onPress={handleProductSelect}
               />
             ))}
           </View>
@@ -299,7 +453,7 @@ export default function App() {
             </Text>
           </View>
         )}
-      </ScrollView>
+      </Animated.ScrollView>
     </View>
   );
 }
@@ -307,7 +461,7 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f8f9fa',
   },
   header: {
     backgroundColor: '#fff',
@@ -315,6 +469,11 @@ const styles = StyleSheet.create({
     paddingTop: 40,
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    zIndex: 10,
   },
   headerContent: {
     marginBottom: 20,
@@ -323,6 +482,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     color: '#333',
+    letterSpacing: -0.5,
   },
   appSubtitle: {
     fontSize: 16,
@@ -338,19 +498,21 @@ const styles = StyleSheet.create({
   },
   searchBar: {
     flex: 1,
-    height: 44,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 8,
+    height: 50,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 12,
     paddingHorizontal: 16,
     fontSize: 16,
     color: '#333',
+    borderWidth: 1,
+    borderColor: '#eaeaea',
   },
   searchButton: {
     marginLeft: 10,
     backgroundColor: '#007AFF',
     paddingHorizontal: 20,
-    height: 44,
-    borderRadius: 8,
+    height: 50,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -363,12 +525,21 @@ const styles = StyleSheet.create({
   // Persona selector styles
   personaContainer: {
     marginTop: 10,
+    marginBottom: 10,
+  },
+  personaTitleContainer: {
+    marginBottom: 15,
   },
   personaTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 10,
+    letterSpacing: -0.3,
+  },
+  personaSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 2,
   },
   personaScroll: {
     paddingBottom: 10,
@@ -377,39 +548,83 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     paddingVertical: 15,
     paddingHorizontal: 20,
-    borderRadius: 12,
-    marginRight: 12,
-    minWidth: 140,
+    borderRadius: 16,
+    marginRight: 15,
+    width: 200,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    borderWidth: 1,
+    borderColor: '#eaeaea',
   },
   personaEmoji: {
-    fontSize: 24,
-    marginBottom: 8,
+    fontSize: 30,
+    marginBottom: 10,
   },
   personaName: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 4,
+    letterSpacing: -0.3,
   },
   personaDescription: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#666',
+    marginBottom: 12,
+    lineHeight: 18,
+  },
+  personaActiveIndicator: {
+    position: 'absolute',
+    top: 15,
+    right: 15,
+    backgroundColor: '#4CAF50',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+  },
+  personaActiveText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  personaFocus: {
+    marginTop: 8,
+    borderTopWidth: 1,
+    paddingTop: 10,
+  },
+  personaFocusText: {
+    fontSize: 12,
+    color: '#999',
+    marginBottom: 6,
+  },
+  personaTagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
   },
   personaTag: {
-    alignSelf: 'flex-start',
-    borderRadius: 20,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    marginBottom: 15,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    marginRight: 5,
+    marginBottom: 5,
   },
   personaTagText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  personaResultTag: {
+    alignSelf: 'flex-start',
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    marginBottom: 20,
+  },
+  personaResultTagText: {
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 14,
@@ -417,13 +632,13 @@ const styles = StyleSheet.create({
   
   content: {
     flex: 1,
-    padding: 16,
+    padding: 20,
   },
   productList: {
-    gap: 16,
+    gap: 20,
   },
   loadingContainer: {
-    padding: 20,
+    padding: 40,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -434,8 +649,10 @@ const styles = StyleSheet.create({
   errorContainer: {
     padding: 20,
     backgroundColor: '#fff',
-    borderRadius: 8,
+    borderRadius: 12,
     marginTop: 20,
+    borderWidth: 1,
+    borderColor: '#ffcccc',
   },
   errorText: {
     color: '#FF3B30',
@@ -443,59 +660,69 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   emptyContainer: {
-    padding: 20,
+    padding: 40,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 40,
+    marginTop: 20,
   },
   emptyPrimary: {
     fontSize: 18,
     fontWeight: '600',
     color: '#333',
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   emptySecondary: {
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
+    lineHeight: 22,
   },
   
   // Product card styles
   productCard: {
     backgroundColor: '#fff',
-    borderRadius: 12,
-    marginBottom: 16,
+    borderRadius: 16,
+    marginBottom: 20,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 3,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
     elevation: 3,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#eaeaea',
+    minHeight: 300,
   },
   cardContent: {
-    padding: 16,
+    padding: 20,
+  },
+  cardContentBack: {
+    padding: 20,
+    minHeight: 300,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   productTitle: {
     flex: 1,
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
     color: '#333',
-    marginRight: 8,
+    marginRight: 10,
+    letterSpacing: -0.3,
+    lineHeight: 26,
   },
   ratingContainer: {
     backgroundColor: '#f0f0f0',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: 12,
   },
   rating: {
@@ -504,16 +731,30 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   price: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#007AFF',
-    marginBottom: 8,
+    marginBottom: 12,
+    letterSpacing: -0.5,
   },
   description: {
+    fontSize: 15,
+    color: '#666',
+    lineHeight: 22,
+    marginBottom: 16,
+  },
+  whyBuyLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 4,
+  },
+  whyBuyText: {
     fontSize: 14,
     color: '#666',
     lineHeight: 20,
     marginBottom: 16,
+    fontStyle: 'italic',
   },
   cardFooter: {
     flexDirection: 'row',
@@ -522,12 +763,96 @@ const styles = StyleSheet.create({
   viewButton: {
     backgroundColor: '#007AFF',
     paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
+    paddingVertical: 12,
+    borderRadius: 12,
   },
   viewButtonText: {
     color: '#fff',
     fontSize: 14,
+    fontWeight: '600',
+  },
+  
+  // Card back styles
+  closeButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  closeButtonText: {
+    fontSize: 20,
+    color: '#666',
+    fontWeight: 'bold',
+  },
+  detailsTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 20,
+    marginTop: 5,
+    letterSpacing: -0.3,
+  },
+  detailsSubtitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 10,
+    marginTop: 5,
+  },
+  insightsContainer: {
+    marginBottom: 20,
+  },
+  insightContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  insightLabel: {
+    width: 100,
+    fontSize: 13,
+    color: '#666',
+  },
+  insightBarBackground: {
+    flex: 1,
+    height: 6,
+    backgroundColor: '#eaeaea',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  insightBarFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  insightValue: {
+    width: 30,
+    textAlign: 'right',
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#666',
+    marginLeft: 8,
+  },
+  verdictText: {
+    fontSize: 14,
+    color: '#666',
+    lineHeight: 20,
+    marginBottom: 20,
+  },
+  buyButton: {
+    backgroundColor: '#32D74B',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  buyButtonText: {
+    color: '#fff',
+    fontSize: 15,
     fontWeight: '600',
   },
 }); 
