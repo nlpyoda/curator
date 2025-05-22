@@ -1,6 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Animated } from 'react-native';
 
+// For trendy, minimalist color palette
+const COLORS = {
+  primary: '#0F0F0F',       // Near black
+  secondary: '#007AFF',     // Bright blue
+  accent1: '#FF375F',       // Hot pink
+  accent2: '#53D769',       // Mint green
+  accent3: '#AF52DE',       // Purple
+  accent4: '#FF9500',       // Orange
+  light: '#FFFFFF',         // White
+  lightGray: '#F5F5F7',     // Ultra light gray
+  midGray: '#86868B',       // Mid gray
+  darkGray: '#1D1D1F',      // Dark gray
+  glassBg: 'rgba(255,255,255,0.85)' // Glass effect background
+};
+
 // Mock data for testing
 const mockProducts = [
   {
@@ -411,7 +426,7 @@ const InsightBar = ({ label, value, color }) => {
 };
 
 // Flippable product card component with front/back views
-const ProductCard = ({ product, onPress }) => {
+const ProductCard = ({ product, onPress, isTrending = false }) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const { title, price, rating, description, whyBuy, insights } = product;
   
@@ -421,32 +436,61 @@ const ProductCard = ({ product, onPress }) => {
   
   return (
     <TouchableOpacity
-      style={styles.productCard}
+      style={[
+        styles.productCard,
+        isTrending ? styles.trendingProductCard : null
+      ]}
       onPress={handleFlip}
       activeOpacity={0.9}
     >
       {!isFlipped ? (
-        // Front of card
+        // Front of card - more minimal, social-focused
         <View style={styles.cardContent}>
           <View style={styles.cardHeader}>
-            <Text style={styles.productTitle} numberOfLines={2}>
-              {title}
-            </Text>
-            <View style={styles.ratingContainer}>
-              <Text style={styles.rating}>★ {rating}</Text>
+            <View style={styles.cardHeaderTextContainer}>
+              <Text style={styles.productTitle} numberOfLines={2}>
+                {title}
+              </Text>
+              <View style={styles.priceRatingContainer}>
+                <Text style={styles.price}>${price.toLocaleString()}</Text>
+                <View style={styles.ratingContainer}>
+                  <Text style={styles.rating}>★ {rating}</Text>
+                </View>
+              </View>
             </View>
           </View>
-
-          <Text style={styles.price}>${price.toLocaleString()}</Text>
+          
+          <View style={styles.cardDivider} />
           
           <Text style={styles.description} numberOfLines={3}>
             {description}
           </Text>
           
-          <Text style={styles.whyBuyLabel}>Why Buy</Text>
-          <Text style={styles.whyBuyText} numberOfLines={2}>
-            {whyBuy}
-          </Text>
+          <View style={styles.socialProofSection}>
+            <View style={styles.whyBuyContainer}>
+              <Text style={styles.whyBuyLabel}>Why People Love It</Text>
+              <Text style={styles.whyBuyText} numberOfLines={2}>
+                {whyBuy}
+              </Text>
+            </View>
+            
+            <View style={styles.insightPreview}>
+              {insights.slice(0, 2).map((insight, index) => (
+                <View key={index} style={styles.insightPreviewItem}>
+                  <View 
+                    style={[
+                      styles.insightDot, 
+                      { backgroundColor: insight.color }
+                    ]} 
+                  />
+                  <Text style={styles.insightPreviewText}>
+                    {insight.label}: {insight.value}
+                  </Text>
+                </View>
+              ))}
+              <Text style={styles.insightPreviewMore}>+ more</Text>
+            </View>
+          </View>
 
           <View style={styles.cardFooter}>
             <TouchableOpacity
@@ -458,7 +502,7 @@ const ProductCard = ({ product, onPress }) => {
           </View>
         </View>
       ) : (
-        // Back of card (details view)
+        // Back of card - more detailed view
         <View style={styles.cardContentBack}>
           <TouchableOpacity
             style={styles.closeButton}
@@ -469,21 +513,28 @@ const ProductCard = ({ product, onPress }) => {
           
           <Text style={styles.detailsTitle}>{title}</Text>
           
-          <Text style={styles.detailsSubtitle}>Insight Analysis</Text>
-          
-          <View style={styles.insightsContainer}>
+          <View style={styles.insightCardsContainer}>
             {insights.map((insight, index) => (
-              <InsightBar 
-                key={index}
-                label={insight.label} 
-                value={insight.value} 
-                color={insight.color}
-              />
+              <View key={index} style={[styles.insightCard, { borderColor: insight.color }]}>
+                <Text style={[styles.insightCardValue, { color: insight.color }]}>{insight.value}</Text>
+                <Text style={styles.insightCardLabel}>{insight.label}</Text>
+              </View>
             ))}
           </View>
           
-          <Text style={styles.detailsSubtitle}>Final Verdict</Text>
-          <Text style={styles.verdictText}>{whyBuy}</Text>
+          <View style={styles.verdictSection}>
+            <Text style={styles.detailsSubtitle}>Expert Take</Text>
+            <Text style={styles.verdictText}>{whyBuy}</Text>
+          </View>
+          
+          <View style={styles.socialActions}>
+            <TouchableOpacity style={styles.socialActionButton}>
+              <Text style={styles.socialActionText}>♥ Save</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.socialActionButton}>
+              <Text style={styles.socialActionText}>↗ Share</Text>
+            </TouchableOpacity>
+          </View>
           
           <TouchableOpacity
             style={styles.buyButton}
@@ -513,99 +564,104 @@ const SelectionPanel = ({
     <Animated.View 
       style={[
         styles.selectionPanel,
-        { height: isOpen ? 'auto' : 0, opacity: isOpen ? 1 : 0 }
+        { 
+          height: isOpen ? '100%' : 0, 
+          opacity: isOpen ? 1 : 0,
+          transform: [{ 
+            translateY: isOpen ? 0 : 20 
+          }]
+        }
       ]}
     >
-      <View style={styles.panelHeader}>
-        <Text style={styles.panelTitle}>Personalize Your Experience</Text>
-        <TouchableOpacity style={styles.closePanel} onPress={onClose}>
-          <Text style={styles.closePanelText}>×</Text>
-        </TouchableOpacity>
-      </View>
-      
-      <View style={styles.panelSections}>
-        {/* Personas Section */}
-        <View style={styles.panelSection}>
-          <Text style={styles.sectionTitle}>Who are you?</Text>
-          <Text style={styles.sectionSubtitle}>Select your shopping persona</Text>
-          
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.itemsScroll}
-          >
-            {personas.map(persona => (
-              <TouchableOpacity
-                key={persona.id}
-                style={[
-                  styles.personaItem,
-                  selectedPersona?.id === persona.id && { 
-                    borderColor: persona.color,
-                    borderWidth: 3,
-                    backgroundColor: `${persona.color}15`,
-                  }
-                ]}
-                onPress={() => onSelectPersona(persona)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.itemEmoji}>{persona.emoji}</Text>
-                <Text style={styles.itemName}>{persona.name}</Text>
-                
-                {selectedPersona?.id === persona.id && (
-                  <View style={[styles.selectedBadge, { backgroundColor: persona.color }]}>
-                    <Text style={styles.selectedBadgeText}>Selected</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+      <View style={styles.panelBackdrop} />
+      <View style={styles.panelContent}>
+        <View style={styles.panelHandle} />
+        
+        <View style={styles.panelHeader}>
+          <Text style={styles.panelTitle}>Your Vibe</Text>
+          <TouchableOpacity style={styles.closePanel} onPress={onClose}>
+            <Text style={styles.closePanelText}>×</Text>
+          </TouchableOpacity>
         </View>
         
-        {/* Life Moments Section */}
-        <View style={styles.panelSection}>
-          <Text style={styles.sectionTitle}>What's your moment?</Text>
-          <Text style={styles.sectionSubtitle}>Shopping for a specific life event</Text>
-          
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.itemsScroll}
-          >
-            {lifeMoments.map(moment => (
-              <TouchableOpacity
-                key={moment.id}
-                style={[
-                  styles.momentItem,
-                  selectedMoment?.id === moment.id && { 
-                    borderColor: moment.color,
-                    borderWidth: 3,
-                    backgroundColor: `${moment.color}15`,
-                  }
-                ]}
-                onPress={() => onSelectMoment(moment)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.itemEmoji}>{moment.emoji}</Text>
-                <Text style={styles.itemName}>{moment.name}</Text>
-                
-                {selectedMoment?.id === moment.id && (
-                  <View style={[styles.selectedBadge, { backgroundColor: moment.color }]}>
-                    <Text style={styles.selectedBadgeText}>Selected</Text>
+        <View style={styles.panelSections}>
+          {/* Personas Section */}
+          <View style={styles.panelSection}>
+            <Text style={styles.sectionTitle}>Who are you?</Text>
+            
+            <View style={styles.personaGrid}>
+              {personas.map(persona => (
+                <TouchableOpacity
+                  key={persona.id}
+                  style={[
+                    styles.personaItem,
+                    selectedPersona?.id === persona.id && { 
+                      borderColor: persona.color,
+                      borderWidth: 2,
+                      backgroundColor: `${persona.color}15`,
+                    }
+                  ]}
+                  onPress={() => onSelectPersona(persona)}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.emojiCircle, {backgroundColor: `${persona.color}20`}]}>
+                    <Text style={styles.itemEmoji}>{persona.emoji}</Text>
                   </View>
-                )}
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+                  <Text style={styles.itemName}>{persona.name}</Text>
+                  
+                  {selectedPersona?.id === persona.id && (
+                    <View style={[styles.selectedBadge, { backgroundColor: persona.color }]}>
+                      <Text style={styles.selectedBadgeText}>✓</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+          
+          {/* Life Moments Section */}
+          <View style={styles.panelSection}>
+            <Text style={styles.sectionTitle}>Life moment?</Text>
+            
+            <View style={styles.momentGrid}>
+              {lifeMoments.map(moment => (
+                <TouchableOpacity
+                  key={moment.id}
+                  style={[
+                    styles.momentItem,
+                    selectedMoment?.id === moment.id && { 
+                      borderColor: moment.color,
+                      borderWidth: 2,
+                      backgroundColor: `${moment.color}15`,
+                    }
+                  ]}
+                  onPress={() => onSelectMoment(moment)}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.emojiCircle, {backgroundColor: `${moment.color}20`}]}>
+                    <Text style={styles.itemEmoji}>{moment.emoji}</Text>
+                  </View>
+                  <Text style={styles.itemName}>{moment.name}</Text>
+                  
+                  {selectedMoment?.id === moment.id && (
+                    <View style={[styles.selectedBadge, { backgroundColor: moment.color }]}>
+                      <Text style={styles.selectedBadgeText}>✓</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
         </View>
-      </View>
-      
-      <View style={styles.panelFooter}>
-        <TouchableOpacity 
-          style={styles.applyButton}
-          onPress={onClose}
-        >
-          <Text style={styles.applyButtonText}>Apply & See Results</Text>
-        </TouchableOpacity>
+        
+        <View style={styles.panelFooter}>
+          <TouchableOpacity 
+            style={styles.applyButton}
+            onPress={onClose}
+          >
+            <Text style={styles.applyButtonText}>Find My Perfect Products</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </Animated.View>
   );
@@ -621,13 +677,13 @@ const TrendingSection = ({ lifeMoment, onProductSelect }) => {
     <View style={styles.trendingSection}>
       <View style={styles.trendingHeader}>
         <View style={[styles.trendingBadge, { backgroundColor: lifeMoment.color }]}>
-          <Text style={styles.trendingBadgeText}>Trending</Text>
+          <Text style={styles.trendingBadgeText}>#trending</Text>
         </View>
-        <Text style={styles.trendingTitle}>Popular for {lifeMoment.name}s</Text>
+        <Text style={styles.trendingTitle}>For {lifeMoment.name}s</Text>
       </View>
       
       <Text style={styles.trendingSubtitle}>
-        Here's what's trending for your life moment
+        What others in your situation are buying right now
       </Text>
       
       <ScrollView 
@@ -643,21 +699,39 @@ const TrendingSection = ({ lifeMoment, onProductSelect }) => {
             activeOpacity={0.8}
           >
             <View style={styles.trendingCardContent}>
+              <View style={styles.trendingImagePlaceholder}>
+                <Text style={styles.trendingEmoji}>
+                  {product.category === 'baby' ? '👶' : 
+                   product.category === 'electronics' ? '📱' :
+                   product.category === 'audio' ? '🎧' :
+                   product.category === 'furniture' ? '🪑' :
+                   product.category === 'travel' ? '✈️' : '🛍️'}
+                </Text>
+              </View>
+              
               <Text style={styles.trendingProductTitle} numberOfLines={2}>
                 {product.title}
               </Text>
               
-              <Text style={styles.trendingPrice}>
-                ${product.price.toLocaleString()}
-              </Text>
-              
-              <View style={styles.trendingRating}>
+              <View style={styles.trendingPriceRow}>
+                <Text style={styles.trendingPrice}>
+                  ${product.price.toLocaleString()}
+                </Text>
                 <Text style={styles.trendingRatingText}>★ {product.rating}</Text>
               </View>
               
-              <View style={styles.trendingFooter}>
-                <Text style={styles.viewTrendingText}>View Details →</Text>
+              <View style={styles.trendingSocialProof}>
+                <View style={styles.trendingAvatarGroup}>
+                  <View style={[styles.trendingAvatar, {backgroundColor: COLORS.accent1}]} />
+                  <View style={[styles.trendingAvatar, {backgroundColor: COLORS.accent2, marginLeft: -8}]} />
+                  <View style={[styles.trendingAvatar, {backgroundColor: COLORS.accent3, marginLeft: -8}]} />
+                </View>
+                <Text style={styles.trendingSocialText}>+149 bought recently</Text>
               </View>
+              
+              <TouchableOpacity style={styles.trendingViewButton}>
+                <Text style={styles.trendingViewButtonText}>View</Text>
+              </TouchableOpacity>
             </View>
           </TouchableOpacity>
         ))}
@@ -808,20 +882,20 @@ export default function App() {
         ]}
       >
         <View style={styles.headerContent}>
-          <Text style={styles.appTitle}>CuratorApp</Text>
-          <Text style={styles.appSubtitle}>AI-Powered Shopping</Text>
+          <Text style={styles.appTitle}>curator</Text>
+          <Text style={styles.appSubtitle}>AI-driven product discovery</Text>
         </View>
         
         <View style={styles.searchContainer}>
           <View style={styles.searchInputWrapper}>
             <TextInput
               style={styles.searchBar}
-              placeholder="Search products..."
+              placeholder="What are you looking for?"
               value={searchQuery}
               onChangeText={setSearchQuery}
               onSubmitEditing={handleSearch}
               returnKeyType="search"
-              placeholderTextColor="#8C8C8C"
+              placeholderTextColor={COLORS.midGray}
             />
             <TouchableOpacity 
               style={styles.searchButton} 
@@ -838,7 +912,7 @@ export default function App() {
             onPress={() => setIsPanelOpen(true)}
           >
             <Text style={styles.selectionButtonText}>
-              Personalize Results
+              Personalize
             </Text>
             {(selectedPersona || selectedMoment) && (
               <View style={styles.selectionCountBadge}>
@@ -854,7 +928,7 @@ export default function App() {
               style={styles.clearButton}
               onPress={handleClearSelections}
             >
-              <Text style={styles.clearButtonText}>Clear All</Text>
+              <Text style={styles.clearButtonText}>Clear</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -865,11 +939,9 @@ export default function App() {
           selectedPersona={selectedPersona}
           selectedMoment={selectedMoment}
           onSelectPersona={(persona) => {
-            // Toggle selection if clicking the same persona
             setSelectedPersona(selectedPersona?.id === persona.id ? null : persona);
           }}
           onSelectMoment={(moment) => {
-            // Toggle selection if clicking the same moment
             setSelectedMoment(selectedMoment?.id === moment.id ? null : moment);
           }}
           onClose={() => setIsPanelOpen(false)}
@@ -885,6 +957,13 @@ export default function App() {
         )}
         scrollEventThrottle={16}
       >
+        {/* Social proof header for viral appeal */}
+        <View style={styles.socialProofHeader}>
+          <Text style={styles.socialProofText}>
+            Join 10,000+ others finding their perfect products
+          </Text>
+        </View>
+        
         {/* Life moment trending products section */}
         {selectedMoment && !isLoading && (
           <TrendingSection 
@@ -893,14 +972,13 @@ export default function App() {
           />
         )}
 
-        {/* Active filters display */}
-        {(selectedPersona || selectedMoment) && !isLoading && products.length > 0 && (
+        {/* Active filters display with modern design */}
+        {(selectedPersona || selectedMoment) && !isLoading && (
           <View style={styles.activeFiltersContainer}>
             {selectedPersona && (
               <View style={[styles.filterTag, { backgroundColor: selectedPersona.color }]}>
-                <Text style={styles.filterTagText}>
-                  {selectedPersona.emoji} {selectedPersona.name}
-                </Text>
+                <Text style={styles.filterTagEmoji}>{selectedPersona.emoji}</Text>
+                <Text style={styles.filterTagText}>{selectedPersona.name}</Text>
                 <TouchableOpacity 
                   style={styles.removeFilterButton}
                   onPress={() => setSelectedPersona(null)}
@@ -912,9 +990,8 @@ export default function App() {
             
             {selectedMoment && (
               <View style={[styles.filterTag, { backgroundColor: selectedMoment.color }]}>
-                <Text style={styles.filterTagText}>
-                  {selectedMoment.emoji} {selectedMoment.name}
-                </Text>
+                <Text style={styles.filterTagEmoji}>{selectedMoment.emoji}</Text>
+                <Text style={styles.filterTagText}>{selectedMoment.name}</Text>
                 <TouchableOpacity 
                   style={styles.removeFilterButton}
                   onPress={() => setSelectedMoment(null)}
@@ -928,7 +1005,7 @@ export default function App() {
       
         {isLoading ? (
           <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>Finding the perfect products...</Text>
+            <Text style={styles.loadingText}>Finding your perfect match...</Text>
           </View>
         ) : errorMessage ? (
           <View style={styles.errorContainer}>
@@ -947,12 +1024,12 @@ export default function App() {
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyPrimary}>
               {searchQuery.trim() || selectedPersona || selectedMoment ? 
-                'No matching products found' : 'Ready for product discovery'}
+                'No matching products found' : 'Ready to discover'}
             </Text>
             <Text style={styles.emptySecondary}>
               {searchQuery.trim() || selectedPersona || selectedMoment
                 ? 'Try broadening your search or changing your persona/life moment' 
-                : 'Enter a search term or select a persona/life moment for personalized recommendations'}
+                : 'Select a persona or life moment to see tailored recommendations'}
             </Text>
           </View>
         )}
@@ -964,15 +1041,15 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: COLORS.lightGray,
   },
   header: {
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.light,
     padding: 20,
     paddingTop: 40,
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
-    shadowColor: '#000',
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 5,
@@ -984,12 +1061,12 @@ const styles = StyleSheet.create({
   appTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORS.primary,
     letterSpacing: -0.5,
   },
   appSubtitle: {
     fontSize: 16,
-    color: '#666',
+    color: COLORS.midGray,
     marginTop: 4,
   },
   searchContainer: {
@@ -1002,17 +1079,17 @@ const styles = StyleSheet.create({
   searchBar: {
     flex: 1,
     height: 50,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: COLORS.lightGray,
     borderRadius: 12,
     paddingHorizontal: 16,
     fontSize: 16,
-    color: '#333',
+    color: COLORS.primary,
     borderWidth: 1,
     borderColor: '#eaeaea',
   },
   searchButton: {
     marginLeft: 10,
-    backgroundColor: '#007AFF',
+    backgroundColor: COLORS.secondary,
     paddingHorizontal: 20,
     height: 50,
     borderRadius: 12,
@@ -1020,12 +1097,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   searchButtonText: {
-    color: '#fff',
+    color: COLORS.light,
     fontSize: 16,
     fontWeight: '600',
   },
   
-  // New Selection Controls
+  // Social proof header
+  socialProofHeader: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    marginBottom: 20,
+  },
+  socialProofText: {
+    color: COLORS.light,
+    fontSize: 15,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  
+  // Selection Controls
   selectionControls: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1034,20 +1126,18 @@ const styles = StyleSheet.create({
   selectionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f0f0f0',
+    backgroundColor: COLORS.secondary,
     paddingHorizontal: 18,
     paddingVertical: 12,
     borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
   },
   selectionButtonText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#333',
+    color: COLORS.light,
   },
   selectionCountBadge: {
-    backgroundColor: '#007AFF',
+    backgroundColor: COLORS.light,
     width: 20,
     height: 20,
     borderRadius: 10,
@@ -1056,7 +1146,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   selectionCountText: {
-    color: '#fff',
+    color: COLORS.secondary,
     fontSize: 12,
     fontWeight: 'bold',
   },
@@ -1067,78 +1157,100 @@ const styles = StyleSheet.create({
   },
   clearButtonText: {
     fontSize: 14,
-    color: '#FF3B30',
+    color: COLORS.accent1,
     fontWeight: '600',
   },
   
   // Selection Panel Styles
   selectionPanel: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    marginTop: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 15,
-    overflow: 'hidden',
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1000,
+  },
+  panelBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  panelContent: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: COLORS.light,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+    paddingTop: 10,
+  },
+  panelHandle: {
+    width: 50,
+    height: 5,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 2.5,
+    alignSelf: 'center',
     marginBottom: 15,
   },
   panelHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eaeaea',
+    marginBottom: 20,
   },
   panelTitle: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORS.primary,
   },
   closePanel: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: '#f0f0f0',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.lightGray,
     justifyContent: 'center',
     alignItems: 'center',
   },
   closePanelText: {
-    fontSize: 20,
-    color: '#666',
-    fontWeight: 'bold',
-    lineHeight: 28,
+    fontSize: 24,
+    color: COLORS.midGray,
+    lineHeight: 30,
   },
   panelSections: {
-    padding: 15,
-  },
-  panelSection: {
     marginBottom: 20,
   },
-  sectionTitle: {
-    fontSize: 17,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 2,
+  panelSection: {
+    marginBottom: 25,
   },
-  sectionSubtitle: {
-    fontSize: 14,
-    color: '#666',
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.primary,
     marginBottom: 15,
   },
-  itemsScroll: {
-    paddingBottom: 5,
+  personaGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  momentGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
   personaItem: {
-    backgroundColor: '#fff',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    borderRadius: 14,
-    marginRight: 12,
-    width: 130,
-    shadowColor: '#000',
+    backgroundColor: COLORS.light,
+    padding: 15,
+    borderRadius: 16,
+    marginBottom: 12,
+    width: '48%',
+    shadowColor: COLORS.primary,
     shadowOffset: {
       width: 0,
       height: 2,
@@ -1147,62 +1259,54 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     borderWidth: 1,
     borderColor: '#eaeaea',
+    alignItems: 'center',
   },
-  momentItem: {
-    backgroundColor: '#fff',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    borderRadius: 14,
-    marginRight: 12,
-    width: 160,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    borderWidth: 1,
-    borderColor: '#eaeaea',
-  },
-  itemEmoji: {
-    fontSize: 28,
+  emojiCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 10,
   },
+  itemEmoji: {
+    fontSize: 24,
+  },
   itemName: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORS.primary,
+    textAlign: 'center',
   },
   selectedBadge: {
     position: 'absolute',
     top: 10,
     right: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    width: 20,
+    height: 20,
     borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   selectedBadgeText: {
-    color: 'white',
-    fontSize: 10,
+    color: COLORS.light,
+    fontSize: 12,
     fontWeight: 'bold',
   },
   panelFooter: {
-    padding: 15,
-    borderTopWidth: 1,
-    borderTopColor: '#eaeaea',
+    paddingVertical: 15,
     alignItems: 'center',
   },
   applyButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: COLORS.secondary,
     paddingHorizontal: 25,
-    paddingVertical: 12,
-    borderRadius: 12,
+    paddingVertical: 16,
+    borderRadius: 30,
     width: '100%',
     alignItems: 'center',
   },
   applyButtonText: {
-    color: '#fff',
+    color: COLORS.light,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -1216,14 +1320,18 @@ const styles = StyleSheet.create({
   filterTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 20,
+    borderRadius: 30,
     paddingVertical: 8,
     paddingHorizontal: 14,
     marginRight: 10,
     marginBottom: 10,
   },
+  filterTagEmoji: {
+    fontSize: 16,
+    marginRight: 5,
+  },
   filterTagText: {
-    color: '#fff',
+    color: COLORS.light,
     fontWeight: 'bold',
     fontSize: 14,
   },
@@ -1237,7 +1345,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   removeFilterText: {
-    color: '#fff',
+    color: COLORS.light,
     fontSize: 14,
     fontWeight: 'bold',
     lineHeight: 20,
@@ -1249,7 +1357,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   productList: {
-    gap: 20,
+    gap: 25,
   },
   loadingContainer: {
     padding: 40,
@@ -1258,18 +1366,18 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 16,
-    color: '#666',
+    color: COLORS.midGray,
   },
   errorContainer: {
     padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.light,
     borderRadius: 12,
     marginTop: 20,
     borderWidth: 1,
     borderColor: '#ffcccc',
   },
   errorText: {
-    color: '#FF3B30',
+    color: COLORS.accent1,
     fontSize: 16,
     textAlign: 'center',
   },
@@ -1282,41 +1390,43 @@ const styles = StyleSheet.create({
   emptyPrimary: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
+    color: COLORS.primary,
     textAlign: 'center',
     marginBottom: 10,
   },
   emptySecondary: {
     fontSize: 16,
-    color: '#666',
+    color: COLORS.midGray,
     textAlign: 'center',
     lineHeight: 22,
   },
   
   // Product card styles
   productCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
+    backgroundColor: COLORS.light,
+    borderRadius: 20,
     marginBottom: 20,
-    shadowColor: '#000',
+    shadowColor: COLORS.primary,
     shadowOffset: {
       width: 0,
-      height: 3,
+      height: 5,
     },
     shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowRadius: 15,
+    elevation: 5,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#eaeaea',
-    minHeight: 300,
+  },
+  trendingProductCard: {
+    height: 200,
   },
   cardContent: {
     padding: 20,
   },
   cardContentBack: {
     padding: 20,
-    minHeight: 300,
+    minHeight: 380,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -1324,17 +1434,30 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 10,
   },
-  productTitle: {
+  cardHeaderTextContainer: {
     flex: 1,
+  },
+  productTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#333',
-    marginRight: 10,
-    letterSpacing: -0.3,
+    color: COLORS.primary,
+    marginBottom: 5,
     lineHeight: 26,
   },
+  priceRatingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 5,
+  },
+  price: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: COLORS.secondary,
+    marginRight: 10,
+  },
   ratingContainer: {
-    backgroundColor: '#f0f0f0',
+    backgroundColor: COLORS.lightGray,
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 12,
@@ -1342,46 +1465,74 @@ const styles = StyleSheet.create({
   rating: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
+    color: COLORS.midGray,
   },
-  price: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#007AFF',
-    marginBottom: 12,
-    letterSpacing: -0.5,
+  cardDivider: {
+    height: 1,
+    backgroundColor: '#eaeaea',
+    marginVertical: 10,
   },
   description: {
     fontSize: 15,
-    color: '#666',
+    color: COLORS.midGray,
     lineHeight: 22,
     marginBottom: 16,
+  },
+  socialProofSection: {
+    marginBottom: 15,
+  },
+  whyBuyContainer: {
+    marginBottom: 10,
   },
   whyBuyLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: COLORS.primary,
     marginBottom: 4,
   },
   whyBuyText: {
     fontSize: 14,
-    color: '#666',
+    color: COLORS.midGray,
     lineHeight: 20,
-    marginBottom: 16,
     fontStyle: 'italic',
+  },
+  insightPreview: {
+    marginTop: 10,
+  },
+  insightPreviewItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+  insightDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 5,
+  },
+  insightPreviewText: {
+    fontSize: 13,
+    color: COLORS.midGray,
+  },
+  insightPreviewMore: {
+    fontSize: 13,
+    color: COLORS.secondary,
+    fontWeight: '600',
+    marginTop: 3,
   },
   cardFooter: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
+    marginTop: 10,
   },
   viewButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: COLORS.secondary,
     paddingHorizontal: 20,
     paddingVertical: 12,
-    borderRadius: 12,
+    borderRadius: 25,
   },
   viewButtonText: {
-    color: '#fff',
+    color: COLORS.light,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -1389,90 +1540,111 @@ const styles = StyleSheet.create({
   // Card back styles
   closeButton: {
     position: 'absolute',
-    top: 10,
-    right: 10,
+    top: 15,
+    right: 15,
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: COLORS.lightGray,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,
   },
   closeButtonText: {
     fontSize: 20,
-    color: '#666',
+    color: COLORS.midGray,
     fontWeight: 'bold',
   },
   detailsTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORS.primary,
     marginBottom: 20,
-    marginTop: 5,
-    letterSpacing: -0.3,
+    marginTop: 10,
+  },
+  insightCardsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  insightCard: {
+    width: '48%',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 10,
+    alignItems: 'center',
+  },
+  insightCardValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  insightCardLabel: {
+    fontSize: 14,
+    color: COLORS.midGray,
+    textAlign: 'center',
+  },
+  verdictSection: {
+    marginBottom: 20,
+    backgroundColor: COLORS.lightGray,
+    padding: 15,
+    borderRadius: 12,
   },
   detailsSubtitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 10,
-    marginTop: 5,
-  },
-  insightsContainer: {
-    marginBottom: 20,
-  },
-  insightContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    color: COLORS.primary,
     marginBottom: 8,
   },
-  insightLabel: {
-    width: 100,
-    fontSize: 13,
-    color: '#666',
-  },
-  insightBarBackground: {
-    flex: 1,
-    height: 6,
-    backgroundColor: '#eaeaea',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  insightBarFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  insightValue: {
-    width: 30,
-    textAlign: 'right',
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#666',
-    marginLeft: 8,
-  },
   verdictText: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
+    fontSize: 15,
+    color: COLORS.midGray,
+    lineHeight: 22,
+  },
+  socialActions: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     marginBottom: 20,
   },
+  socialActionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.lightGray,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    borderRadius: 20,
+    marginHorizontal: 5,
+  },
+  socialActionText: {
+    fontSize: 14,
+    color: COLORS.primary,
+    fontWeight: '600',
+    marginLeft: 5,
+  },
   buyButton: {
-    backgroundColor: '#32D74B',
+    backgroundColor: COLORS.accent2,
     paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 12,
+    paddingVertical: 14,
+    borderRadius: 30,
     alignItems: 'center',
   },
   buyButtonText: {
-    color: '#fff',
-    fontSize: 15,
+    color: COLORS.light,
+    fontSize: 16,
     fontWeight: '600',
   },
   
   // Trending section styles
   trendingSection: {
-    marginBottom: 20,
+    marginBottom: 25,
+    backgroundColor: COLORS.light,
+    borderRadius: 16,
+    padding: 15,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
   },
   trendingHeader: {
     flexDirection: 'row',
@@ -1480,76 +1652,110 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   trendingBadge: {
-    backgroundColor: '#007AFF',
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 12,
     marginRight: 10,
   },
   trendingBadgeText: {
-    color: '#fff',
+    color: COLORS.light,
     fontSize: 14,
     fontWeight: 'bold',
   },
   trendingTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORS.primary,
   },
   trendingSubtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 10,
+    fontSize: 15,
+    color: COLORS.midGray,
+    marginBottom: 15,
   },
   trendingScroll: {
     paddingBottom: 5,
   },
   trendingCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    marginRight: 10,
-    shadowColor: '#000',
+    backgroundColor: COLORS.light,
+    borderRadius: 16,
+    marginRight: 12,
+    shadowColor: COLORS.primary,
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 3,
     },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 3,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#eaeaea',
-    width: 200,
+    width: 220,
   },
   trendingCardContent: {
     padding: 15,
   },
+  trendingImagePlaceholder: {
+    height: 120,
+    backgroundColor: COLORS.secondary,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  trendingEmoji: {
+    fontSize: 50,
+  },
   trendingProductTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 5,
+    color: COLORS.primary,
+    marginBottom: 8,
+    height: 40,
+  },
+  trendingPriceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
   },
   trendingPrice: {
     fontSize: 16,
-    color: '#666',
-  },
-  trendingRating: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 5,
+    fontWeight: 'bold',
+    color: COLORS.secondary,
   },
   trendingRatingText: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORS.midGray,
   },
-  trendingFooter: {
+  trendingSocialProof: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    alignItems: 'center',
+    marginBottom: 12,
   },
-  viewTrendingText: {
-    color: '#007AFF',
+  trendingAvatarGroup: {
+    flexDirection: 'row',
+    marginRight: 8,
+  },
+  trendingAvatar: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 1,
+    borderColor: COLORS.light,
+  },
+  trendingSocialText: {
+    fontSize: 12,
+    color: COLORS.midGray,
+  },
+  trendingViewButton: {
+    backgroundColor: COLORS.secondary,
+    borderRadius: 20,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  trendingViewButtonText: {
+    color: COLORS.light,
     fontSize: 14,
     fontWeight: '600',
   },
