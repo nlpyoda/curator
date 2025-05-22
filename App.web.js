@@ -11,6 +11,7 @@ const mockProducts = [
     description: 'Latest MacBook Pro with M3 Pro chip, 16GB RAM, and 512GB SSD.',
     link: 'https://www.apple.com/macbook-pro',
     tags: ['pro', 'premium', 'power-user', 'creative'],
+    category: 'laptop',
     whyBuy: 'Industry-leading performance for demanding creative tasks with the M3 Pro chip.',
     insights: [
       { label: 'Performance', value: 98, color: '#FF5757' },
@@ -27,6 +28,7 @@ const mockProducts = [
     description: 'Ultra-thin and lightweight MacBook Air with M2 chip.',
     link: 'https://www.apple.com/macbook-air',
     tags: ['lightweight', 'portable', 'student', 'casual'],
+    category: 'laptop',
     whyBuy: 'Perfect balance of performance and portability for everyday tasks and light creative work.',
     insights: [
       { label: 'Performance', value: 82, color: '#FF5757' },
@@ -43,6 +45,7 @@ const mockProducts = [
     description: 'Powerful yet portable MacBook Pro with M3 chip.',
     link: 'https://www.apple.com/macbook-pro',
     tags: ['pro', 'premium', 'power-user', 'balanced'],
+    category: 'laptop',
     whyBuy: 'Ideal for professionals who need performance without sacrificing portability.',
     insights: [
       { label: 'Performance', value: 95, color: '#FF5757' },
@@ -59,12 +62,83 @@ const mockProducts = [
     description: 'Affordable MacBook Air with the efficient M1 chip.',
     link: 'https://www.apple.com/macbook-air',
     tags: ['budget', 'student', 'casual', 'entry-level'],
+    category: 'laptop',
     whyBuy: 'Best value MacBook with exceptional battery life and solid performance for students.',
     insights: [
       { label: 'Performance', value: 75, color: '#FF5757' },
       { label: 'Battery Life', value: 96, color: '#32D74B' },
       { label: 'Portability', value: 93, color: '#4E7CFF' },
       { label: 'Value', value: 95, color: '#BF5AF2' }
+    ]
+  },
+  // Baby Products
+  {
+    id: '5',
+    title: 'Ergobaby Omni 360 Carrier',
+    price: 179,
+    rating: 4.8,
+    description: 'All-in-one ergonomic baby carrier with 4 carrying positions for newborns to toddlers.',
+    link: 'https://ergobaby.com',
+    tags: ['newborn', 'baby', 'carrier', 'premium', 'ergonomic'],
+    category: 'baby',
+    whyBuy: 'Exceptionally comfortable with lumbar support for parents and ergonomic positioning for baby.',
+    insights: [
+      { label: 'Comfort', value: 95, color: '#FF5757' },
+      { label: 'Durability', value: 92, color: '#32D74B' },
+      { label: 'Versatility', value: 98, color: '#4E7CFF' },
+      { label: 'Value', value: 85, color: '#BF5AF2' }
+    ]
+  },
+  {
+    id: '6',
+    title: 'Nanit Pro Smart Baby Monitor',
+    price: 299,
+    rating: 4.7,
+    description: 'Smart baby monitor with breathing monitoring, sleep tracking and HD video.',
+    link: 'https://www.nanit.com',
+    tags: ['baby', 'monitor', 'smart-home', 'premium', 'tech'],
+    category: 'baby',
+    whyBuy: 'Best sleep insights with breathing monitoring for peace of mind and sleep coaching.',
+    insights: [
+      { label: 'Video Quality', value: 96, color: '#FF5757' },
+      { label: 'Smart Features', value: 98, color: '#32D74B' },
+      { label: 'Ease of Use', value: 92, color: '#4E7CFF' },
+      { label: 'Value', value: 78, color: '#BF5AF2' }
+    ]
+  },
+  // Graduation Gifts
+  {
+    id: '7',
+    title: 'Apple Watch Series 9',
+    price: 399,
+    rating: 4.9,
+    description: 'Advanced health monitoring and productivity in a sleek wearable.',
+    link: 'https://www.apple.com/apple-watch-series-9',
+    tags: ['smartwatch', 'fitness', 'tech', 'gift', 'premium'],
+    category: 'wearables',
+    whyBuy: 'Perfect graduation gift combining style, fitness tracking and productivity features.',
+    insights: [
+      { label: 'Features', value: 94, color: '#FF5757' },
+      { label: 'Battery Life', value: 85, color: '#32D74B' },
+      { label: 'Design', value: 96, color: '#4E7CFF' },
+      { label: 'Value', value: 82, color: '#BF5AF2' }
+    ]
+  },
+  {
+    id: '8',
+    title: 'Sony WH-1000XM5 Headphones',
+    price: 349,
+    rating: 4.8,
+    description: 'Industry-leading noise cancellation with exceptional audio quality.',
+    link: 'https://www.sony.com/headphones',
+    tags: ['audio', 'noise-cancelling', 'premium', 'gift', 'travel'],
+    category: 'audio',
+    whyBuy: 'Best-in-class noise cancellation with premium comfort for study, work or travel.',
+    insights: [
+      { label: 'Sound Quality', value: 96, color: '#FF5757' },
+      { label: 'Noise Cancelling', value: 98, color: '#32D74B' },
+      { label: 'Comfort', value: 95, color: '#4E7CFF' },
+      { label: 'Battery Life', value: 93, color: '#BF5AF2' }
     ]
   }
 ];
@@ -106,6 +180,50 @@ const personas = [
     tagWeights: { portable: 2, lightweight: 2, balanced: 1.5 },
     color: '#BF5AF2',
     insights: ['Portability', 'Battery Life']
+  }
+];
+
+// Life Moments definitions
+const lifeMoments = [
+  {
+    id: 'new-parent',
+    name: 'New Parent',
+    emoji: '👶',
+    description: 'Essential products for baby & parents',
+    primaryCategory: 'baby',
+    tagWeights: { baby: 3, newborn: 2.5, ergonomic: 1.8, monitor: 2, safety: 2.5 },
+    color: '#FF9500',
+    insights: ['Safety', 'Ease of Use']
+  },
+  {
+    id: 'graduation',
+    name: 'Recent Graduate',
+    emoji: '🎓',
+    description: 'Gifts & tools for the next chapter',
+    primaryCategory: null,
+    tagWeights: { gift: 2, premium: 1.5, tech: 2, portable: 1.5, productivity: 2 },
+    color: '#5856D6',
+    insights: ['Value', 'Features']
+  },
+  {
+    id: 'home-setup',
+    name: 'Home Office Setup',
+    emoji: '🏠',
+    description: 'Create an ideal WFH environment',
+    primaryCategory: null,
+    tagWeights: { ergonomic: 2, productivity: 2.5, comfort: 2, premium: 1.5 },
+    color: '#2CB9B0',
+    insights: ['Comfort', 'Productivity']
+  },
+  {
+    id: 'travel-prep',
+    name: 'Travel Preparation',
+    emoji: '🧳',
+    description: 'Must-haves for your next adventure',
+    primaryCategory: null,
+    tagWeights: { portable: 3, travel: 2.5, lightweight: 2, noise: 1.8, battery: 2 },
+    color: '#FF2D55',
+    insights: ['Portability', 'Durability']
   }
 ];
 
@@ -214,62 +332,117 @@ const ProductCard = ({ product, onPress }) => {
   );
 };
 
-// Persona selector component with cool hover effects
-const PersonaSelector = ({ personas, selectedPersona, onSelectPersona }) => {
+// Selection Panel Component
+const SelectionPanel = ({ 
+  personas, 
+  lifeMoments, 
+  selectedPersona, 
+  selectedMoment,
+  onSelectPersona,
+  onSelectMoment,
+  onClose,
+  isOpen 
+}) => {
+  
   return (
-    <View style={styles.personaContainer}>
-      <View style={styles.personaTitleContainer}>
-        <Text style={styles.personaTitle}>Personalize Your Results</Text>
-        <Text style={styles.personaSubtitle}>Select your vibe to get curated product recommendations</Text>
+    <Animated.View 
+      style={[
+        styles.selectionPanel,
+        { height: isOpen ? 'auto' : 0, opacity: isOpen ? 1 : 0 }
+      ]}
+    >
+      <View style={styles.panelHeader}>
+        <Text style={styles.panelTitle}>Personalize Your Experience</Text>
+        <TouchableOpacity style={styles.closePanel} onPress={onClose}>
+          <Text style={styles.closePanelText}>×</Text>
+        </TouchableOpacity>
       </View>
-      <ScrollView 
-        horizontal 
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.personaScroll}
-      >
-        {personas.map(persona => (
-          <TouchableOpacity
-            key={persona.id}
-            style={[
-              styles.personaCard,
-              selectedPersona?.id === persona.id && { 
-                borderColor: persona.color,
-                borderWidth: 3,
-                backgroundColor: `${persona.color}15`,
-              }
-            ]}
-            onPress={() => onSelectPersona(persona)}
-            activeOpacity={0.7}
+      
+      <View style={styles.panelSections}>
+        {/* Personas Section */}
+        <View style={styles.panelSection}>
+          <Text style={styles.sectionTitle}>Who are you?</Text>
+          <Text style={styles.sectionSubtitle}>Select your shopping persona</Text>
+          
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.itemsScroll}
           >
-            <Text style={styles.personaEmoji}>{persona.emoji}</Text>
-            <Text style={styles.personaName}>{persona.name}</Text>
-            <Text style={styles.personaDescription}>{persona.description}</Text>
-            
-            {selectedPersona?.id === persona.id && (
-              <View style={styles.personaActiveIndicator}>
-                <Text style={styles.personaActiveText}>Active</Text>
-              </View>
-            )}
-            
-            <View style={[styles.personaFocus, { borderColor: persona.color }]}>
-              <Text style={styles.personaFocusText}>Prioritizes</Text>
-              <View style={styles.personaTagsContainer}>
-                {persona.insights.map((insight, idx) => (
-                  <View 
-                    key={idx} 
-                    style={[styles.personaTag, { backgroundColor: `${persona.color}30` }]}
-                  >
-                    <Text style={[styles.personaTagText, { color: persona.color }]}>
-                      {insight}
-                    </Text>
+            {personas.map(persona => (
+              <TouchableOpacity
+                key={persona.id}
+                style={[
+                  styles.personaItem,
+                  selectedPersona?.id === persona.id && { 
+                    borderColor: persona.color,
+                    borderWidth: 3,
+                    backgroundColor: `${persona.color}15`,
+                  }
+                ]}
+                onPress={() => onSelectPersona(persona)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.itemEmoji}>{persona.emoji}</Text>
+                <Text style={styles.itemName}>{persona.name}</Text>
+                
+                {selectedPersona?.id === persona.id && (
+                  <View style={[styles.selectedBadge, { backgroundColor: persona.color }]}>
+                    <Text style={styles.selectedBadgeText}>Selected</Text>
                   </View>
-                ))}
-              </View>
-            </View>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-    </View>
+                )}
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+        
+        {/* Life Moments Section */}
+        <View style={styles.panelSection}>
+          <Text style={styles.sectionTitle}>What's your moment?</Text>
+          <Text style={styles.sectionSubtitle}>Shopping for a specific life event</Text>
+          
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.itemsScroll}
+          >
+            {lifeMoments.map(moment => (
+              <TouchableOpacity
+                key={moment.id}
+                style={[
+                  styles.momentItem,
+                  selectedMoment?.id === moment.id && { 
+                    borderColor: moment.color,
+                    borderWidth: 3,
+                    backgroundColor: `${moment.color}15`,
+                  }
+                ]}
+                onPress={() => onSelectMoment(moment)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.itemEmoji}>{moment.emoji}</Text>
+                <Text style={styles.itemName}>{moment.name}</Text>
+                
+                {selectedMoment?.id === moment.id && (
+                  <View style={[styles.selectedBadge, { backgroundColor: moment.color }]}>
+                    <Text style={styles.selectedBadgeText}>Selected</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      </View>
+      
+      <View style={styles.panelFooter}>
+        <TouchableOpacity 
+          style={styles.applyButton}
+          onPress={onClose}
+        >
+          <Text style={styles.applyButtonText}>Apply & See Results</Text>
+        </TouchableOpacity>
+      </View>
+    </Animated.View>
   );
 };
 
@@ -279,34 +452,55 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [selectedPersona, setSelectedPersona] = useState(null);
+  const [selectedMoment, setSelectedMoment] = useState(null);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [scrollY] = useState(new Animated.Value(0));
 
-  // Calculate product relevance score based on selected persona
-  const getRelevanceScore = (product, persona) => {
-    if (!persona) return 1; // No boost if no persona selected
-    
+  // Calculate product relevance score based on selected persona and life moment
+  const getRelevanceScore = (product) => {
     let score = 1;
-    product.tags.forEach(tag => {
-      Object.entries(persona.tagWeights).forEach(([weightTag, weight]) => {
-        if (tag.toLowerCase().includes(weightTag.toLowerCase())) {
-          score += weight;
-        }
+    
+    // Apply persona-based scoring
+    if (selectedPersona) {
+      product.tags.forEach(tag => {
+        Object.entries(selectedPersona.tagWeights).forEach(([weightTag, weight]) => {
+          if (tag.toLowerCase().includes(weightTag.toLowerCase())) {
+            score += weight;
+          }
+        });
       });
-    });
+    }
+    
+    // Apply life moment scoring
+    if (selectedMoment) {
+      // Boost products in the primary category for the selected life moment
+      if (selectedMoment.primaryCategory && product.category === selectedMoment.primaryCategory) {
+        score += 3;
+      }
+      
+      // Apply tag-based scoring
+      product.tags.forEach(tag => {
+        Object.entries(selectedMoment.tagWeights).forEach(([weightTag, weight]) => {
+          if (tag.toLowerCase().includes(weightTag.toLowerCase())) {
+            score += weight;
+          }
+        });
+      });
+    }
     
     return score;
   };
 
-  // Search immediately when persona changes
+  // Search immediately when persona or life moment changes
   useEffect(() => {
-    if (selectedPersona) {
+    if (selectedPersona || selectedMoment) {
       handleSearch();
     }
-  }, [selectedPersona]);
+  }, [selectedPersona, selectedMoment]);
 
   const handleSearch = async () => {
-    if (!searchQuery.trim() && !selectedPersona) {
-      setErrorMessage('Please enter a search query or select a persona.');
+    if (!searchQuery.trim() && !selectedPersona && !selectedMoment) {
+      setErrorMessage('Please enter a search query or select a persona/life moment.');
       return;
     }
     
@@ -326,11 +520,11 @@ export default function App() {
         );
       }
       
-      // Apply persona-based ranking if a persona is selected
-      if (selectedPersona) {
+      // Apply persona and life moment based ranking
+      if (selectedPersona || selectedMoment) {
         filteredProducts = filteredProducts.map(product => ({
           ...product,
-          relevanceScore: getRelevanceScore(product, selectedPersona)
+          relevanceScore: getRelevanceScore(product)
         }))
         .sort((a, b) => b.relevanceScore - a.relevanceScore);
       }
@@ -347,6 +541,11 @@ export default function App() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleClearSelections = () => {
+    setSelectedPersona(null);
+    setSelectedMoment(null);
   };
 
   // Header opacity animation based on scroll
@@ -398,13 +597,48 @@ export default function App() {
           </View>
         </View>
         
-        <PersonaSelector 
+        <View style={styles.selectionControls}>
+          <TouchableOpacity 
+            style={styles.selectionButton}
+            onPress={() => setIsPanelOpen(true)}
+          >
+            <Text style={styles.selectionButtonText}>
+              Personalize Results
+            </Text>
+            {(selectedPersona || selectedMoment) && (
+              <View style={styles.selectionCountBadge}>
+                <Text style={styles.selectionCountText}>
+                  {(selectedPersona ? 1 : 0) + (selectedMoment ? 1 : 0)}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+          
+          {(selectedPersona || selectedMoment) && (
+            <TouchableOpacity 
+              style={styles.clearButton}
+              onPress={handleClearSelections}
+            >
+              <Text style={styles.clearButtonText}>Clear All</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+        
+        <SelectionPanel
           personas={personas}
+          lifeMoments={lifeMoments}
           selectedPersona={selectedPersona}
+          selectedMoment={selectedMoment}
           onSelectPersona={(persona) => {
             // Toggle selection if clicking the same persona
             setSelectedPersona(selectedPersona?.id === persona.id ? null : persona);
           }}
+          onSelectMoment={(moment) => {
+            // Toggle selection if clicking the same moment
+            setSelectedMoment(selectedMoment?.id === moment.id ? null : moment);
+          }}
+          onClose={() => setIsPanelOpen(false)}
+          isOpen={isPanelOpen}
         />
       </Animated.View>
 
@@ -416,11 +650,36 @@ export default function App() {
         )}
         scrollEventThrottle={16}
       >
-        {selectedPersona && !isLoading && products.length > 0 && (
-          <View style={[styles.personaResultTag, { backgroundColor: selectedPersona.color }]}>
-            <Text style={styles.personaResultTagText}>
-              {selectedPersona.emoji} Recommendations tailored for {selectedPersona.name}
-            </Text>
+        {/* Active filters display */}
+        {(selectedPersona || selectedMoment) && !isLoading && products.length > 0 && (
+          <View style={styles.activeFiltersContainer}>
+            {selectedPersona && (
+              <View style={[styles.filterTag, { backgroundColor: selectedPersona.color }]}>
+                <Text style={styles.filterTagText}>
+                  {selectedPersona.emoji} {selectedPersona.name}
+                </Text>
+                <TouchableOpacity 
+                  style={styles.removeFilterButton}
+                  onPress={() => setSelectedPersona(null)}
+                >
+                  <Text style={styles.removeFilterText}>×</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+            
+            {selectedMoment && (
+              <View style={[styles.filterTag, { backgroundColor: selectedMoment.color }]}>
+                <Text style={styles.filterTagText}>
+                  {selectedMoment.emoji} {selectedMoment.name}
+                </Text>
+                <TouchableOpacity 
+                  style={styles.removeFilterButton}
+                  onPress={() => setSelectedMoment(null)}
+                >
+                  <Text style={styles.removeFilterText}>×</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
         )}
       
@@ -444,12 +703,13 @@ export default function App() {
         ) : (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyPrimary}>
-              {searchQuery.trim() || selectedPersona ? 'No matching products found' : 'Ready for product discovery'}
+              {searchQuery.trim() || selectedPersona || selectedMoment ? 
+                'No matching products found' : 'Ready for product discovery'}
             </Text>
             <Text style={styles.emptySecondary}>
-              {searchQuery.trim() || selectedPersona
-                ? 'Try broadening your search or selecting a different persona' 
-                : 'Enter a search term or select a persona to find personalized recommendations'}
+              {searchQuery.trim() || selectedPersona || selectedMoment
+                ? 'Try broadening your search or changing your persona/life moment' 
+                : 'Enter a search term or select a persona/life moment for personalized recommendations'}
             </Text>
           </View>
         )}
@@ -522,114 +782,225 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   
-  // Persona selector styles
-  personaContainer: {
-    marginTop: 10,
-    marginBottom: 10,
-  },
-  personaTitleContainer: {
+  // New Selection Controls
+  selectionControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 15,
   },
-  personaTitle: {
+  selectionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  selectionButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#333',
+  },
+  selectionCountBadge: {
+    backgroundColor: '#007AFF',
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  selectionCountText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  clearButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginLeft: 10,
+  },
+  clearButtonText: {
+    fontSize: 14,
+    color: '#FF3B30',
+    fontWeight: '600',
+  },
+  
+  // Selection Panel Styles
+  selectionPanel: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    marginTop: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 15,
+    overflow: 'hidden',
+    marginBottom: 15,
+  },
+  panelHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eaeaea',
+  },
+  panelTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
-    letterSpacing: -0.3,
   },
-  personaSubtitle: {
+  closePanel: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closePanelText: {
+    fontSize: 20,
+    color: '#666',
+    fontWeight: 'bold',
+    lineHeight: 28,
+  },
+  panelSections: {
+    padding: 15,
+  },
+  panelSection: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 17,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 2,
+  },
+  sectionSubtitle: {
     fontSize: 14,
     color: '#666',
-    marginTop: 2,
+    marginBottom: 15,
   },
-  personaScroll: {
-    paddingBottom: 10,
+  itemsScroll: {
+    paddingBottom: 5,
   },
-  personaCard: {
+  personaItem: {
     backgroundColor: '#fff',
     paddingVertical: 15,
     paddingHorizontal: 20,
-    borderRadius: 16,
-    marginRight: 15,
-    width: 200,
+    borderRadius: 14,
+    marginRight: 12,
+    width: 130,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.06,
+    shadowOpacity: 0.05,
     shadowRadius: 6,
     borderWidth: 1,
     borderColor: '#eaeaea',
   },
-  personaEmoji: {
-    fontSize: 30,
+  momentItem: {
+    backgroundColor: '#fff',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 14,
+    marginRight: 12,
+    width: 160,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    borderWidth: 1,
+    borderColor: '#eaeaea',
+  },
+  itemEmoji: {
+    fontSize: 28,
     marginBottom: 10,
   },
-  personaName: {
-    fontSize: 17,
+  itemName: {
+    fontSize: 15,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 4,
-    letterSpacing: -0.3,
   },
-  personaDescription: {
-    fontSize: 13,
-    color: '#666',
-    marginBottom: 12,
-    lineHeight: 18,
-  },
-  personaActiveIndicator: {
+  selectedBadge: {
     position: 'absolute',
-    top: 15,
-    right: 15,
-    backgroundColor: '#4CAF50',
+    top: 10,
+    right: 10,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 10,
   },
-  personaActiveText: {
+  selectedBadgeText: {
     color: 'white',
     fontSize: 10,
     fontWeight: 'bold',
   },
-  personaFocus: {
-    marginTop: 8,
+  panelFooter: {
+    padding: 15,
     borderTopWidth: 1,
-    paddingTop: 10,
+    borderTopColor: '#eaeaea',
+    alignItems: 'center',
   },
-  personaFocusText: {
-    fontSize: 12,
-    color: '#999',
-    marginBottom: 6,
+  applyButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 25,
+    paddingVertical: 12,
+    borderRadius: 12,
+    width: '100%',
+    alignItems: 'center',
   },
-  personaTagsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  personaTag: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-    marginRight: 5,
-    marginBottom: 5,
-  },
-  personaTagText: {
-    fontSize: 11,
+  applyButtonText: {
+    color: '#fff',
+    fontSize: 16,
     fontWeight: '600',
   },
-  personaResultTag: {
-    alignSelf: 'flex-start',
+  
+  // Active filters
+  activeFiltersContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 20,
+  },
+  filterTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
     borderRadius: 20,
     paddingVertical: 8,
     paddingHorizontal: 14,
-    marginBottom: 20,
+    marginRight: 10,
+    marginBottom: 10,
   },
-  personaResultTagText: {
+  filterTagText: {
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 14,
   },
+  removeFilterButton: {
+    marginLeft: 8,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  removeFilterText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+    lineHeight: 20,
+  },
   
+  // Content
   content: {
     flex: 1,
     padding: 20,
@@ -855,4 +1226,5 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
   },
+}); 
 }); 
