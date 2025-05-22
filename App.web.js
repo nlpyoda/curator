@@ -227,6 +227,171 @@ const lifeMoments = [
   }
 ];
 
+// Add trending products for life moments
+const trendingByLifeMoment = {
+  'new-parent': [
+    {
+      id: 'trend-np-1',
+      title: 'UPPAbaby VISTA V2 Stroller',
+      price: 999.99,
+      rating: 4.9,
+      description: 'Expandable stroller system with premium features and multiple configurations.',
+      link: 'https://uppababy.com',
+      tags: ['baby', 'stroller', 'premium', 'newborn'],
+      category: 'baby',
+      whyBuy: 'The gold standard for growing families with exceptional build quality and versatility.',
+      insights: [
+        { label: 'Quality', value: 97, color: '#FF5757' },
+        { label: 'Versatility', value: 95, color: '#32D74B' },
+        { label: 'Ease of Use', value: 90, color: '#4E7CFF' },
+        { label: 'Value', value: 82, color: '#BF5AF2' }
+      ]
+    },
+    {
+      id: 'trend-np-2',
+      title: 'Snoo Smart Bassinet',
+      price: 1495,
+      rating: 4.7,
+      description: 'Smart bassinet that automatically responds to your baby to improve sleep.',
+      link: 'https://www.happiestbaby.com',
+      tags: ['baby', 'bassinet', 'smart', 'premium', 'sleep'],
+      category: 'baby',
+      whyBuy: 'Helps babies sleep longer with responsive technology that mimics the womb.',
+      insights: [
+        { label: 'Sleep Tech', value: 98, color: '#FF5757' },
+        { label: 'Design', value: 95, color: '#32D74B' },
+        { label: 'Safety', value: 96, color: '#4E7CFF' },
+        { label: 'Value', value: 75, color: '#BF5AF2' }
+      ]
+    },
+    {
+      id: 'trend-np-3',
+      title: 'Owlet Smart Sock Plus',
+      price: 299,
+      rating: 4.6,
+      description: 'Tracks baby\'s oxygen and heart rate while they sleep, with notifications.',
+      link: 'https://owletcare.com',
+      tags: ['baby', 'monitor', 'smart', 'health', 'sleep'],
+      category: 'baby',
+      whyBuy: 'Peace of mind for anxious parents with medical-grade monitoring technology.',
+      insights: [
+        { label: 'Accuracy', value: 93, color: '#FF5757' },
+        { label: 'Ease of Use', value: 88, color: '#32D74B' },
+        { label: 'Battery Life', value: 85, color: '#4E7CFF' },
+        { label: 'Value', value: 83, color: '#BF5AF2' }
+      ]
+    }
+  ],
+  'graduation': [
+    {
+      id: 'trend-grad-1',
+      title: 'iPad Air 11"',
+      price: 599,
+      rating: 4.8,
+      description: 'Powerful and versatile tablet with M1 chip for productivity and creative work.',
+      link: 'https://www.apple.com/ipad-air',
+      tags: ['tech', 'tablet', 'gift', 'premium', 'productivity'],
+      category: 'electronics',
+      whyBuy: 'Perfect balance of power and portability for college or new job tasks.',
+      insights: [
+        { label: 'Performance', value: 92, color: '#FF5757' },
+        { label: 'Portability', value: 95, color: '#32D74B' },
+        { label: 'Display', value: 94, color: '#4E7CFF' },
+        { label: 'Value', value: 86, color: '#BF5AF2' }
+      ]
+    },
+    {
+      id: 'trend-grad-2',
+      title: 'Bose QC Ultra Headphones',
+      price: 429,
+      rating: 4.7,
+      description: 'Premium noise cancelling headphones with spatial audio and excellent comfort.',
+      link: 'https://www.bose.com',
+      tags: ['audio', 'noise-cancelling', 'premium', 'gift'],
+      category: 'audio',
+      whyBuy: 'Best-in-class noise cancellation perfect for focusing in shared spaces.',
+      insights: [
+        { label: 'Sound Quality', value: 96, color: '#FF5757' },
+        { label: 'Noise Cancelling', value: 98, color: '#32D74B' },
+        { label: 'Comfort', value: 95, color: '#4E7CFF' },
+        { label: 'Battery Life', value: 90, color: '#BF5AF2' }
+      ]
+    }
+  ],
+  'home-setup': [
+    {
+      id: 'trend-home-1',
+      title: 'Herman Miller Aeron Chair',
+      price: 1695,
+      rating: 4.9,
+      description: 'Ergonomic office chair with adjustable posture support and breathable mesh.',
+      link: 'https://www.hermanmiller.com',
+      tags: ['office', 'chair', 'ergonomic', 'premium', 'comfort'],
+      category: 'furniture',
+      whyBuy: 'The gold standard for ergonomic seating, essential for all-day comfort.',
+      insights: [
+        { label: 'Comfort', value: 96, color: '#FF5757' },
+        { label: 'Durability', value: 97, color: '#32D74B' },
+        { label: 'Adjustability', value: 95, color: '#4E7CFF' },
+        { label: 'Value', value: 80, color: '#BF5AF2' }
+      ]
+    },
+    {
+      id: 'trend-home-2',
+      title: 'LG 34" UltraWide Monitor',
+      price: 799,
+      rating: 4.7,
+      description: 'Ultra-wide curved monitor with high resolution for immersive multitasking.',
+      link: 'https://www.lg.com',
+      tags: ['monitor', 'tech', 'productivity', 'premium'],
+      category: 'electronics',
+      whyBuy: 'Significantly boosts productivity with screen space for multiple applications.',
+      insights: [
+        { label: 'Display Quality', value: 93, color: '#FF5757' },
+        { label: 'Screen Size', value: 96, color: '#32D74B' },
+        { label: 'Connectivity', value: 90, color: '#4E7CFF' },
+        { label: 'Value', value: 87, color: '#BF5AF2' }
+      ]
+    }
+  ],
+  'travel-prep': [
+    {
+      id: 'trend-travel-1',
+      title: 'Away The Medium Suitcase',
+      price: 345,
+      rating: 4.8,
+      description: 'Durable hardside suitcase with 360° spinner wheels and built-in battery.',
+      link: 'https://www.awaytravel.com',
+      tags: ['travel', 'luggage', 'premium', 'portable'],
+      category: 'travel',
+      whyBuy: 'Perfect checked luggage size with thoughtful features and lifetime warranty.',
+      insights: [
+        { label: 'Durability', value: 94, color: '#FF5757' },
+        { label: 'Design', value: 96, color: '#32D74B' },
+        { label: 'Features', value: 92, color: '#4E7CFF' },
+        { label: 'Value', value: 88, color: '#BF5AF2' }
+      ]
+    },
+    {
+      id: 'trend-travel-2',
+      title: 'Apple AirTag (4 Pack)',
+      price: 99,
+      rating: 4.7,
+      description: 'Precision finding devices to track and locate your important items.',
+      link: 'https://www.apple.com/airtag',
+      tags: ['travel', 'tech', 'accessories', 'tracking'],
+      category: 'electronics',
+      whyBuy: 'Peace of mind for all your valuable luggage and items when traveling.',
+      insights: [
+        { label: 'Tracking Accuracy', value: 95, color: '#FF5757' },
+        { label: 'Battery Life', value: 90, color: '#32D74B' },
+        { label: 'Ecosystem', value: 98, color: '#4E7CFF' },
+        { label: 'Value', value: 85, color: '#BF5AF2' }
+      ]
+    }
+  ]
+};
+
 // InsightBar component for visualizing product metrics
 const InsightBar = ({ label, value, color }) => {
   return (
@@ -446,6 +611,61 @@ const SelectionPanel = ({
   );
 };
 
+// Trending products section component
+const TrendingSection = ({ lifeMoment, onProductSelect }) => {
+  if (!lifeMoment || !trendingByLifeMoment[lifeMoment.id]) return null;
+  
+  const trendingProducts = trendingByLifeMoment[lifeMoment.id];
+  
+  return (
+    <View style={styles.trendingSection}>
+      <View style={styles.trendingHeader}>
+        <View style={[styles.trendingBadge, { backgroundColor: lifeMoment.color }]}>
+          <Text style={styles.trendingBadgeText}>Trending</Text>
+        </View>
+        <Text style={styles.trendingTitle}>Popular for {lifeMoment.name}s</Text>
+      </View>
+      
+      <Text style={styles.trendingSubtitle}>
+        Here's what's trending for your life moment
+      </Text>
+      
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.trendingScroll}
+      >
+        {trendingProducts.map(product => (
+          <TouchableOpacity 
+            key={product.id}
+            style={styles.trendingCard}
+            onPress={() => onProductSelect(product)}
+            activeOpacity={0.8}
+          >
+            <View style={styles.trendingCardContent}>
+              <Text style={styles.trendingProductTitle} numberOfLines={2}>
+                {product.title}
+              </Text>
+              
+              <Text style={styles.trendingPrice}>
+                ${product.price.toLocaleString()}
+              </Text>
+              
+              <View style={styles.trendingRating}>
+                <Text style={styles.trendingRatingText}>★ {product.rating}</Text>
+              </View>
+              
+              <View style={styles.trendingFooter}>
+                <Text style={styles.viewTrendingText}>View Details →</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </View>
+  );
+};
+
 export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [products, setProducts] = useState([]);
@@ -455,6 +675,7 @@ export default function App() {
   const [selectedMoment, setSelectedMoment] = useState(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [scrollY] = useState(new Animated.Value(0));
+  const [selectedTrendingProduct, setSelectedTrendingProduct] = useState(null);
 
   // Calculate product relevance score based on selected persona and life moment
   const getRelevanceScore = (product) => {
@@ -561,6 +782,20 @@ export default function App() {
     extrapolate: 'clamp',
   });
 
+  // Add this function to handle selecting a trending product
+  const handleTrendingProductSelect = (product) => {
+    // Add the product to the products list if it's not already there
+    if (!products.some(p => p.id === product.id)) {
+      setProducts(prevProducts => [product, ...prevProducts]);
+    }
+    
+    // Scroll to the product section
+    setTimeout(() => {
+      // This would ideally scroll to the product
+      window.scrollTo({ top: 300, behavior: 'smooth' });
+    }, 100);
+  };
+
   return (
     <View style={styles.container}>
       <Animated.View 
@@ -650,6 +885,14 @@ export default function App() {
         )}
         scrollEventThrottle={16}
       >
+        {/* Life moment trending products section */}
+        {selectedMoment && !isLoading && (
+          <TrendingSection 
+            lifeMoment={selectedMoment}
+            onProductSelect={handleTrendingProductSelect}
+          />
+        )}
+
         {/* Active filters display */}
         {(selectedPersona || selectedMoment) && !isLoading && products.length > 0 && (
           <View style={styles.activeFiltersContainer}>
@@ -1224,6 +1467,90 @@ const styles = StyleSheet.create({
   buyButtonText: {
     color: '#fff',
     fontSize: 15,
+    fontWeight: '600',
+  },
+  
+  // Trending section styles
+  trendingSection: {
+    marginBottom: 20,
+  },
+  trendingHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  trendingBadge: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+    marginRight: 10,
+  },
+  trendingBadgeText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  trendingTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  trendingSubtitle: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 10,
+  },
+  trendingScroll: {
+    paddingBottom: 5,
+  },
+  trendingCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    marginRight: 10,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 3,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#eaeaea',
+    width: 200,
+  },
+  trendingCardContent: {
+    padding: 15,
+  },
+  trendingProductTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 5,
+  },
+  trendingPrice: {
+    fontSize: 16,
+    color: '#666',
+  },
+  trendingRating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+  trendingRatingText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  trendingFooter: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  viewTrendingText: {
+    color: '#007AFF',
+    fontSize: 14,
     fontWeight: '600',
   },
 }); 
