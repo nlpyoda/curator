@@ -1109,6 +1109,59 @@ const EnhancedHero = ({ socialData, onClose, onGetStarted }) => {
   );
 };
 
+// Add trending ticker data
+const trendingTickerItems = [
+  { text: "Sony WH-1000XM5 sales up 28% this week", color: COLORS.secondary },
+  { text: "Away Luggage just went viral on TikTok", color: COLORS.accent1 },
+  { text: "Dyson Air Purifier trending in Home category", color: COLORS.accent2 },
+  { text: "MacBook Air M2 most searched laptop today", color: COLORS.accent3 },
+  { text: "New parent essentials seeing 37% growth", color: COLORS.accent4 },
+];
+
+// Add TrendingTicker component
+const TrendingTicker = ({ items }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const fadeAnim = useState(new Animated.Value(1))[0];
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Fade out
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: true
+      }).start(() => {
+        // Change content
+        setCurrentIndex((prevIndex) => (prevIndex + 1) % items.length);
+        
+        // Fade in
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true
+        }).start();
+      });
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, []);
+  
+  const currentItem = items[currentIndex];
+  
+  return (
+    <View style={styles.tickerContainer}>
+      <View style={styles.tickerIconContainer}>
+        <Text style={styles.tickerIcon}>📊</Text>
+      </View>
+      <Animated.View style={[styles.tickerTextContainer, { opacity: fadeAnim }]}>
+        <Text style={[styles.tickerText, { color: currentItem.color }]}>
+          {currentItem.text}
+        </Text>
+      </Animated.View>
+    </View>
+  );
+};
+
 export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [products, setProducts] = useState([]);
@@ -1267,10 +1320,24 @@ export default function App() {
     setIsLoadingAnimation(true);
     setSelectedMood(mood);
     
-    // Simulate API call for mood-based products
+    // Set products based on mood's aesthetic
     setTimeout(() => {
-      // In a real app, this would fetch products matching the mood's aesthetic
-      setProducts(mockProducts.slice(0, 4));
+      // Match products to the mood aesthetic
+      let moodProducts = [];
+      
+      if (mood.id === 'minimalist') {
+        moodProducts = [mockProducts[1], mockProducts[3]]; // MacBook Air models
+      } else if (mood.id === 'cottagecore') {
+        moodProducts = [mockProducts[4], mockProducts[5]]; // Baby products
+      } else if (mood.id === 'cyberpunk') {
+        moodProducts = [mockProducts[0], mockProducts[2]]; // MacBook Pro models
+      } else if (mood.id === 'clean-girl') {
+        moodProducts = [mockProducts[6], mockProducts[7]]; // Apple Watch and Headphones
+      } else {
+        moodProducts = mockProducts.slice(0, 4);
+      }
+      
+      setProducts(moodProducts);
       setIsLoadingAnimation(false);
       setIsDiscoveryMode(false);
     }, 1000);
@@ -1293,11 +1360,23 @@ export default function App() {
   const handleTrendSelect = (trendItem) => {
     setIsLoadingAnimation(true);
     
-    // Simulate API call for trending product
+    // Match trending items to specific products
     setTimeout(() => {
-      const matchingProduct = mockProducts.find(p => 
-        p.title.includes(trendItem.title.split(' ')[0])
-      ) || mockProducts[0];
+      let matchingProduct;
+      
+      if (trendItem.title.includes('Sony')) {
+        matchingProduct = mockProducts[7]; // Sony WH-1000XM5
+      } else if (trendItem.title.includes('Away')) {
+        matchingProduct = trendingByLifeMoment['travel-prep'][0]; // Away luggage
+      } else if (trendItem.title.includes('Dyson')) {
+        // Default to a product since we don't have Dyson in our data
+        matchingProduct = mockProducts[5]; // Nanit (technology product)
+      } else if (trendItem.title.includes('Kindle')) {
+        // Default to a tech product
+        matchingProduct = mockProducts[6]; // Apple Watch
+      } else {
+        matchingProduct = mockProducts[0]; // Default to MacBook Pro
+      }
       
       setProducts([matchingProduct]);
       setIsLoadingAnimation(false);
@@ -1415,6 +1494,9 @@ export default function App() {
           isOpen={isPanelOpen}
         />
       </Animated.View>
+
+      {/* Add TrendingTicker here */}
+      <TrendingTicker items={trendingTickerItems} />
 
       <Animated.ScrollView 
         style={[styles.content, darkMode && styles.contentDark]}
@@ -1564,6 +1646,45 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.lightGray,
   },
+  
+  // Add ticker styles here
+  tickerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.light,
+    borderRadius: 12,
+    padding: 10,
+    marginHorizontal: 20,
+    marginBottom: 10,
+    shadowColor: COLORS.primary,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    zIndex: 2,
+  },
+  tickerIconContainer: {
+    marginRight: 10,
+  },
+  tickerIcon: {
+    fontSize: 20,
+  },
+  tickerTextContainer: {
+    flex: 1,
+  },
+  tickerText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  tickerDark: {
+    backgroundColor: '#1A1A1A',
+  },
+  tickerTextDark: {
+    color: COLORS.light,
+  },
+  
   header: {
     backgroundColor: COLORS.light,
     padding: 20,
@@ -2571,43 +2692,55 @@ const styles = StyleSheet.create({
     marginBottom: 25,
     backgroundColor: COLORS.light,
     borderRadius: 16,
-    padding: 15,
+    padding: 0,
     shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
+    overflow: 'hidden',
+    position: 'relative',
+    zIndex: 1, // Add this line to ensure proper layering
   },
   heroImageStrip: {
-    height: 120,
-    backgroundColor: COLORS.secondary,
-    borderRadius: 12,
-    marginBottom: 10,
+    height: 180,
+    flexDirection: 'row',
+    backgroundColor: COLORS.primary,
   },
   heroImage: {
-    width: '100%',
+    width: '20%',
     height: '100%',
-    borderRadius: 12,
   },
   heroContent: {
-    marginBottom: 20,
+    padding: 20,
+    paddingBottom: 30,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
   },
   heroTitle: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
-    color: COLORS.primary,
+    color: COLORS.light,
     marginBottom: 10,
+    textAlign: 'center',
   },
   heroSubtitle: {
     fontSize: 16,
-    color: COLORS.midGray,
+    color: '#CCCCCC',
     marginBottom: 20,
+    textAlign: 'center',
   },
   getStartedButton: {
     backgroundColor: COLORS.secondary,
-    paddingHorizontal: 20,
+    paddingHorizontal: 30,
     paddingVertical: 14,
     borderRadius: 30,
     alignItems: 'center',
+    alignSelf: 'center',
+    width: '80%',
+    maxWidth: 300,
   },
   getStartedButtonText: {
     color: COLORS.light,
@@ -2621,15 +2754,16 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: COLORS.lightGray,
+    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,
   },
   closeHeroText: {
     fontSize: 20,
-    color: COLORS.midGray,
+    color: COLORS.light,
     fontWeight: 'bold',
+    lineHeight: 22,
   },
   
   // Dark mode
@@ -2711,84 +2845,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.secondary,
     marginBottom: 15,
     opacity: 0.7,
-  },
-  
-  // Enhanced Hero section styles
-  enhancedHeroContainer: {
-    marginBottom: 25,
-    backgroundColor: COLORS.light,
-    borderRadius: 16,
-    padding: 0,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  heroImageStrip: {
-    height: 180,
-    flexDirection: 'row',
-    backgroundColor: COLORS.primary,
-  },
-  heroImage: {
-    width: '20%',
-    height: '100%',
-  },
-  heroContent: {
-    padding: 20,
-    paddingBottom: 30,
-    backgroundColor: 'rgba(0,0,0,0.8)',
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-  heroTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: COLORS.light,
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  heroSubtitle: {
-    fontSize: 16,
-    color: '#CCCCCC',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  getStartedButton: {
-    backgroundColor: COLORS.secondary,
-    paddingHorizontal: 30,
-    paddingVertical: 14,
-    borderRadius: 30,
-    alignItems: 'center',
-    alignSelf: 'center',
-    width: '80%',
-    maxWidth: 300,
-  },
-  getStartedButtonText: {
-    color: COLORS.light,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  closeHeroButton: {
-    position: 'absolute',
-    top: 15,
-    right: 15,
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 10,
-  },
-  closeHeroText: {
-    fontSize: 20,
-    color: COLORS.light,
-    fontWeight: 'bold',
-    lineHeight: 22,
   },
   
   // Category styles
