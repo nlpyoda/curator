@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Animated } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Animated, Image } from 'react-native';
 
 // For trendy, minimalist color palette
 const COLORS = {
@@ -407,6 +407,142 @@ const trendingByLifeMoment = {
   ]
 };
 
+// Add mood board aesthetics and social bundles to the top level data
+const moodBoards = [
+  {
+    id: 'minimalist',
+    name: 'Minimalist',
+    emoji: '◻️',
+    color: '#1D1D1F',
+    description: 'Clean lines, neutral colors, clutter-free design',
+    coverImage: 'https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?q=80&w=500&auto=format'
+  },
+  {
+    id: 'cottagecore',
+    name: 'Cottagecore',
+    emoji: '🌿',
+    color: '#8A9A5B',
+    description: 'Cozy, rustic aesthetic inspired by romanticized rural life',
+    coverImage: 'https://images.unsplash.com/photo-1550254478-ead40cc54513?q=80&w=500&auto=format'
+  },
+  {
+    id: 'cyberpunk',
+    name: 'Cyberpunk',
+    emoji: '⚡',
+    color: '#FF00FF',
+    description: 'Futuristic, neon-lit tech aesthetic with dystopian flair',
+    coverImage: 'https://images.unsplash.com/photo-1563089145-599997674d42?q=80&w=500&auto=format'
+  },
+  {
+    id: 'clean-girl',
+    name: 'Clean Girl',
+    emoji: '✨',
+    color: '#E8C4C4',
+    description: 'Effortless, minimal, polished aesthetic with neutral tones',
+    coverImage: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?q=80&w=500&auto=format'
+  }
+];
+
+const socialBundles = [
+  {
+    id: 'travel-essentials',
+    title: 'Travel Essentials',
+    creator: {
+      name: 'Alex Chen',
+      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format',
+      verified: true
+    },
+    likes: 3426,
+    saves: 874,
+    products: [
+      mockProducts[7], // Sony Headphones
+      trendingByLifeMoment['travel-prep'][0], // Away Suitcase
+      trendingByLifeMoment['travel-prep'][1] // Apple AirTag
+    ],
+    coverImage: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=500&auto=format'
+  },
+  {
+    id: 'wfh-setup',
+    title: 'Dream WFH Setup',
+    creator: {
+      name: 'Mia Johnson',
+      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format',
+      verified: true
+    },
+    likes: 5218,
+    saves: 1284,
+    products: [
+      mockProducts[0], // MacBook Pro
+      trendingByLifeMoment['home-setup'][0], // Herman Miller chair
+      trendingByLifeMoment['home-setup'][1] // LG Monitor
+    ],
+    coverImage: 'https://images.unsplash.com/photo-1605565348518-bef3e7d6fed8?q=80&w=500&auto=format'
+  },
+  {
+    id: 'new-parent',
+    title: 'New Parent Starter Pack',
+    creator: {
+      name: 'Taylor Wilson',
+      avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&auto=format',
+      verified: false
+    },
+    likes: 2189,
+    saves: 956,
+    products: [
+      trendingByLifeMoment['new-parent'][0], // Stroller
+      trendingByLifeMoment['new-parent'][1], // Bassinet
+      trendingByLifeMoment['new-parent'][2] // Baby monitor
+    ],
+    coverImage: 'https://images.unsplash.com/photo-1544126592-807ade215a0b?q=80&w=500&auto=format'
+  }
+];
+
+// Add trending data for TrendRadar
+const trendRadarData = [
+  {
+    id: 'tr-1',
+    title: 'Sony WH-1000XM5',
+    category: 'Electronics',
+    percentageChange: 28,
+    status: 'rising',
+    image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=200&auto=format'
+  },
+  {
+    id: 'tr-2',
+    title: 'Dyson Air Purifier',
+    category: 'Home',
+    percentageChange: 16,
+    status: 'rising',
+    image: 'https://images.unsplash.com/photo-1585155770447-2f66e2a397b5?q=80&w=200&auto=format'
+  },
+  {
+    id: 'tr-3',
+    title: 'Away Luggage',
+    category: 'Travel',
+    percentageChange: 45,
+    status: 'viral',
+    image: 'https://images.unsplash.com/photo-1565026057447-bc90a3dceb87?q=80&w=200&auto=format'
+  },
+  {
+    id: 'tr-4',
+    title: 'Kindle Paperwhite',
+    category: 'Reading',
+    percentageChange: 12,
+    status: 'rising',
+    image: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?q=80&w=200&auto=format'
+  }
+];
+
+// Product categories for visual entry points
+const productCategories = [
+  { id: 'tech', name: 'Tech', emoji: '📱', color: '#007AFF' },
+  { id: 'audio', name: 'Audio', emoji: '🎧', color: '#FF2D55' },
+  { id: 'home', name: 'Home', emoji: '🏠', color: '#5856D6' },
+  { id: 'travel', name: 'Travel', emoji: '✈️', color: '#FF9500' },
+  { id: 'fitness', name: 'Fitness', emoji: '💪', color: '#32D74B' },
+  { id: 'beauty', name: 'Beauty', emoji: '✨', color: '#AF52DE' }
+];
+
 // InsightBar component for visualizing product metrics
 const InsightBar = ({ label, value, color }) => {
   return (
@@ -740,6 +876,239 @@ const TrendingSection = ({ lifeMoment, onProductSelect }) => {
   );
 };
 
+// Visual Category Entry Points
+const CategoryEntryPoints = ({ categories, onSelect }) => {
+  return (
+    <View style={styles.categoryEntryContainer}>
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.categoryScroll}
+      >
+        {categories.map(category => (
+          <TouchableOpacity
+            key={category.id}
+            style={[styles.categoryItem, { backgroundColor: `${category.color}15` }]}
+            onPress={() => onSelect(category)}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.categoryIcon, { backgroundColor: category.color }]}>
+              <Text style={styles.categoryEmoji}>{category.emoji}</Text>
+            </View>
+            <Text style={styles.categoryName}>{category.name}</Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </View>
+  );
+};
+
+// TrendRadar Component
+const TrendRadar = ({ items, onItemPress }) => {
+  return (
+    <View style={styles.trendRadarContainer}>
+      <View style={styles.sectionHeaderRow}>
+        <View style={styles.sectionTitleContainer}>
+          <Text style={styles.sectionIcon}>📊</Text>
+          <Text style={styles.sectionTitle}>TrendRadar</Text>
+        </View>
+        <TouchableOpacity>
+          <Text style={styles.sectionAction}>View all</Text>
+        </TouchableOpacity>
+      </View>
+      
+      <Text style={styles.sectionSubtitle}>
+        See what's trending right now in real-time
+      </Text>
+      
+      <View style={styles.trendRadarList}>
+        {items.map(item => (
+          <TouchableOpacity 
+            key={item.id}
+            style={styles.trendRadarItem}
+            onPress={() => onItemPress(item)}
+          >
+            <View style={styles.trendRadarImageContainer}>
+              <Image 
+                source={{ uri: item.image }} 
+                style={styles.trendRadarImage} 
+                resizeMode="cover"
+              />
+              {item.status === 'viral' && (
+                <View style={styles.viralBadge}>
+                  <Text style={styles.viralBadgeText}>🔥 VIRAL</Text>
+                </View>
+              )}
+            </View>
+            <View style={styles.trendRadarContent}>
+              <Text style={styles.trendRadarTitle} numberOfLines={1}>{item.title}</Text>
+              <Text style={styles.trendRadarCategory}>{item.category}</Text>
+              <View style={styles.trendRadarStats}>
+                <Text style={[
+                  styles.trendRadarChange,
+                  item.percentageChange > 20 ? styles.highChangeText : styles.normalChangeText
+                ]}>
+                  ↑ {item.percentageChange}%
+                </Text>
+                <Text style={styles.trendRadarPeriod}>last 24h</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  );
+};
+
+// Social Bundles Component
+const SocialBundles = ({ bundles, onBundlePress }) => {
+  return (
+    <View style={styles.socialBundlesContainer}>
+      <View style={styles.sectionHeaderRow}>
+        <View style={styles.sectionTitleContainer}>
+          <Text style={styles.sectionIcon}>🛍️</Text>
+          <Text style={styles.sectionTitle}>Curated Bundles</Text>
+        </View>
+        <TouchableOpacity>
+          <Text style={styles.sectionAction}>View all</Text>
+        </TouchableOpacity>
+      </View>
+      
+      <Text style={styles.sectionSubtitle}>Complete collections curated by our community</Text>
+      
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.bundlesScroll}
+      >
+        {bundles.map(bundle => (
+          <TouchableOpacity 
+            key={bundle.id}
+            style={styles.bundleCard}
+            onPress={() => onBundlePress(bundle)}
+            activeOpacity={0.9}
+          >
+            <Image 
+              source={{ uri: bundle.coverImage }}
+              style={styles.bundleCover}
+              resizeMode="cover"
+            />
+            <View style={styles.bundleContent}>
+              <Text style={styles.bundleTitle}>{bundle.title}</Text>
+              <View style={styles.bundleCreatorRow}>
+                <Image 
+                  source={{ uri: bundle.creator.avatar }}
+                  style={styles.creatorAvatar}
+                />
+                <Text style={styles.creatorName}>{bundle.creator.name}</Text>
+                {bundle.creator.verified && (
+                  <Text style={styles.verifiedBadge}>✓</Text>
+                )}
+              </View>
+              <View style={styles.bundleStats}>
+                <Text style={styles.bundleStat}>❤️ {bundle.likes.toLocaleString()}</Text>
+                <Text style={styles.bundleStat}>🔖 {bundle.saves.toLocaleString()}</Text>
+                <Text style={styles.bundleStat}>📦 {bundle.products.length} items</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </View>
+  );
+};
+
+// Shop by Vibe (Mood Boards) Component
+const ShopByVibe = ({ moods, onMoodSelect }) => {
+  return (
+    <View style={styles.shopByVibeContainer}>
+      <View style={styles.sectionHeaderRow}>
+        <View style={styles.sectionTitleContainer}>
+          <Text style={styles.sectionIcon}>✨</Text>
+          <Text style={styles.sectionTitle}>Shop by Vibe</Text>
+        </View>
+        <TouchableOpacity>
+          <Text style={styles.sectionAction}>View all</Text>
+        </TouchableOpacity>
+      </View>
+      
+      <Text style={styles.sectionSubtitle}>Explore products by aesthetic style</Text>
+      
+      <View style={styles.moodsGrid}>
+        {moods.map(mood => (
+          <TouchableOpacity 
+            key={mood.id}
+            style={styles.moodCard}
+            onPress={() => onMoodSelect(mood)}
+            activeOpacity={0.9}
+          >
+            <Image 
+              source={{ uri: mood.coverImage }}
+              style={styles.moodCover}
+              resizeMode="cover"
+            />
+            <View style={[styles.moodOverlay, { backgroundColor: mood.color + '80' }]}>
+              <Text style={styles.moodEmoji}>{mood.emoji}</Text>
+              <Text style={styles.moodName}>{mood.name}</Text>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  );
+};
+
+// Enhanced Hero Section with imagery
+const EnhancedHero = ({ socialData, onClose, onGetStarted }) => {
+  return (
+    <View style={styles.enhancedHeroContainer}>
+      <View style={styles.heroImageStrip}>
+        <Image 
+          source={{ uri: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=100&auto=format' }}
+          style={styles.heroImage}
+          resizeMode="cover"
+        />
+        <Image 
+          source={{ uri: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format' }}
+          style={styles.heroImage}
+          resizeMode="cover"
+        />
+        <Image 
+          source={{ uri: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&auto=format' }}
+          style={styles.heroImage}
+          resizeMode="cover"
+        />
+        <Image 
+          source={{ uri: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format' }}
+          style={styles.heroImage}
+          resizeMode="cover"
+        />
+        <Image 
+          source={{ uri: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&auto=format' }}
+          style={styles.heroImage}
+          resizeMode="cover"
+        />
+      </View>
+      
+      <View style={styles.heroContent}>
+        <Text style={styles.heroTitle}>
+          Join 10,000+ people finding their perfect products
+        </Text>
+        <Text style={styles.heroSubtitle}>
+          Personalized recommendations based on your style, needs, and vibe
+        </Text>
+        <TouchableOpacity style={styles.getStartedButton} onPress={onGetStarted}>
+          <Text style={styles.getStartedButtonText}>Get Started</Text>
+        </TouchableOpacity>
+      </View>
+      
+      <TouchableOpacity style={styles.closeHeroButton} onPress={onClose}>
+        <Text style={styles.closeHeroText}>×</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
 export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [products, setProducts] = useState([]);
@@ -750,6 +1119,14 @@ export default function App() {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [scrollY] = useState(new Animated.Value(0));
   const [selectedTrendingProduct, setSelectedTrendingProduct] = useState(null);
+  
+  // New states for social features
+  const [showHero, setShowHero] = useState(true);
+  const [selectedMood, setSelectedMood] = useState(null);
+  const [selectedBundle, setSelectedBundle] = useState(null);
+  const [darkMode, setDarkMode] = useState(false);
+  const [isDiscoveryMode, setIsDiscoveryMode] = useState(true);
+  const [isLoadingAnimation, setIsLoadingAnimation] = useState(false);
 
   // Calculate product relevance score based on selected persona and life moment
   const getRelevanceScore = (product) => {
@@ -794,11 +1171,12 @@ export default function App() {
   }, [selectedPersona, selectedMoment]);
 
   const handleSearch = async () => {
-    if (!searchQuery.trim() && !selectedPersona && !selectedMoment) {
-      setErrorMessage('Please enter a search query or select a persona/life moment.');
+    if (!searchQuery.trim() && !selectedPersona && !selectedMoment && !selectedMood && !selectedBundle) {
+      setErrorMessage('Please enter a search query or select a persona/life moment/vibe.');
       return;
     }
     
+    setIsLoadingAnimation(true);
     setIsLoading(true);
     setErrorMessage(null);
     
@@ -825,6 +1203,7 @@ export default function App() {
       }
       
       setProducts(filteredProducts);
+      setIsDiscoveryMode(false);
       
       if (filteredProducts.length === 0) {
         setErrorMessage('No products found matching your criteria.');
@@ -835,6 +1214,7 @@ export default function App() {
       setProducts([]);
     } finally {
       setIsLoading(false);
+      setIsLoadingAnimation(false);
     }
   };
 
@@ -870,11 +1250,86 @@ export default function App() {
     }, 100);
   };
 
+  // Function to handle category selection
+  const handleCategorySelect = (category) => {
+    setIsLoadingAnimation(true);
+    
+    // Simulate loading state for visual feedback
+    setTimeout(() => {
+      setSearchQuery(category.name.toLowerCase());
+      handleSearch();
+      setIsLoadingAnimation(false);
+    }, 800);
+  };
+
+  // Function to handle mood selection
+  const handleMoodSelect = (mood) => {
+    setIsLoadingAnimation(true);
+    setSelectedMood(mood);
+    
+    // Simulate API call for mood-based products
+    setTimeout(() => {
+      // In a real app, this would fetch products matching the mood's aesthetic
+      setProducts(mockProducts.slice(0, 4));
+      setIsLoadingAnimation(false);
+      setIsDiscoveryMode(false);
+    }, 1000);
+  };
+
+  // Function to handle bundle selection
+  const handleBundleSelect = (bundle) => {
+    setIsLoadingAnimation(true);
+    setSelectedBundle(bundle);
+    
+    // Add bundle products to the product list
+    setTimeout(() => {
+      setProducts(bundle.products);
+      setIsLoadingAnimation(false);
+      setIsDiscoveryMode(false);
+    }, 800);
+  };
+
+  // Function to handle trend item selection
+  const handleTrendSelect = (trendItem) => {
+    setIsLoadingAnimation(true);
+    
+    // Simulate API call for trending product
+    setTimeout(() => {
+      const matchingProduct = mockProducts.find(p => 
+        p.title.includes(trendItem.title.split(' ')[0])
+      ) || mockProducts[0];
+      
+      setProducts([matchingProduct]);
+      setIsLoadingAnimation(false);
+      setIsDiscoveryMode(false);
+    }, 800);
+  };
+
+  // Toggle dark mode
+  const toggleDarkMode = () => {
+    setDarkMode(!darkMode);
+  };
+
+  // Reset to discovery mode
+  const resetToDiscovery = () => {
+    setProducts([]);
+    setSelectedPersona(null);
+    setSelectedMoment(null);
+    setSelectedMood(null);
+    setSelectedBundle(null);
+    setSearchQuery('');
+    setIsDiscoveryMode(true);
+  };
+
   return (
-    <View style={styles.container}>
+    <View style={[
+      styles.container,
+      darkMode && styles.containerDark
+    ]}>
       <Animated.View 
         style={[
           styles.header, 
+          darkMode && styles.headerDark,
           {
             opacity: headerOpacity,
             transform: [{ translateY: headerTranslate }]
@@ -882,26 +1337,38 @@ export default function App() {
         ]}
       >
         <View style={styles.headerContent}>
-          <Text style={styles.appTitle}>curator</Text>
-          <Text style={styles.appSubtitle}>AI-driven product discovery</Text>
+          <View style={styles.headerTopRow}>
+            <Text style={[styles.appTitle, darkMode && styles.appTitleDark]}>curator</Text>
+            <TouchableOpacity onPress={toggleDarkMode} style={styles.darkModeToggle}>
+              <Text style={styles.darkModeIcon}>{darkMode ? '☀️' : '🌙'}</Text>
+            </TouchableOpacity>
+          </View>
+          <Text style={[styles.appSubtitle, darkMode && styles.appSubtitleDark]}>
+            AI-driven product discovery
+          </Text>
         </View>
         
         <View style={styles.searchContainer}>
-          <View style={styles.searchInputWrapper}>
+          <View style={[
+            styles.searchInputWrapper,
+            isLoadingAnimation && styles.searchInputLoading
+          ]}>
             <TextInput
-              style={styles.searchBar}
+              style={[styles.searchBar, darkMode && styles.searchBarDark]}
               placeholder="What are you looking for?"
               value={searchQuery}
               onChangeText={setSearchQuery}
               onSubmitEditing={handleSearch}
               returnKeyType="search"
-              placeholderTextColor={COLORS.midGray}
+              placeholderTextColor={darkMode ? COLORS.midGray : COLORS.midGray}
             />
             <TouchableOpacity 
-              style={styles.searchButton} 
+              style={[styles.searchButton, isLoadingAnimation && styles.searchButtonLoading]} 
               onPress={handleSearch}
             >
-              <Text style={styles.searchButtonText}>Search</Text>
+              <Text style={styles.searchButtonText}>
+                {isLoadingAnimation ? '...' : 'Search'}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -923,12 +1390,12 @@ export default function App() {
             )}
           </TouchableOpacity>
           
-          {(selectedPersona || selectedMoment) && (
+          {!isDiscoveryMode && (
             <TouchableOpacity 
               style={styles.clearButton}
-              onPress={handleClearSelections}
+              onPress={resetToDiscovery}
             >
-              <Text style={styles.clearButtonText}>Clear</Text>
+              <Text style={styles.clearButtonText}>Discover</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -950,30 +1417,23 @@ export default function App() {
       </Animated.View>
 
       <Animated.ScrollView 
-        style={styles.content}
+        style={[styles.content, darkMode && styles.contentDark]}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
           { useNativeDriver: false }
         )}
         scrollEventThrottle={16}
       >
-        {/* Social proof header for viral appeal */}
-        <View style={styles.socialProofHeader}>
-          <Text style={styles.socialProofText}>
-            Join 10,000+ others finding their perfect products
-          </Text>
-        </View>
-        
-        {/* Life moment trending products section */}
-        {selectedMoment && !isLoading && (
-          <TrendingSection 
-            lifeMoment={selectedMoment}
-            onProductSelect={handleTrendingProductSelect}
+        {/* Enhanced Hero Section */}
+        {showHero && (
+          <EnhancedHero 
+            onClose={() => setShowHero(false)}
+            onGetStarted={() => setIsPanelOpen(true)}
           />
         )}
-
+        
         {/* Active filters display with modern design */}
-        {(selectedPersona || selectedMoment) && !isLoading && (
+        {(selectedPersona || selectedMoment || selectedMood || selectedBundle) && !isLoading && (
           <View style={styles.activeFiltersContainer}>
             {selectedPersona && (
               <View style={[styles.filterTag, { backgroundColor: selectedPersona.color }]}>
@@ -1000,15 +1460,50 @@ export default function App() {
                 </TouchableOpacity>
               </View>
             )}
+            
+            {selectedMood && (
+              <View style={[styles.filterTag, { backgroundColor: selectedMood.color }]}>
+                <Text style={styles.filterTagEmoji}>{selectedMood.emoji}</Text>
+                <Text style={styles.filterTagText}>{selectedMood.name}</Text>
+                <TouchableOpacity 
+                  style={styles.removeFilterButton}
+                  onPress={() => setSelectedMood(null)}
+                >
+                  <Text style={styles.removeFilterText}>×</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+            
+            {selectedBundle && (
+              <View style={[styles.filterTag, { backgroundColor: COLORS.secondary }]}>
+                <Text style={styles.filterTagEmoji}>🛍️</Text>
+                <Text style={styles.filterTagText}>{selectedBundle.title}</Text>
+                <TouchableOpacity 
+                  style={styles.removeFilterButton}
+                  onPress={() => setSelectedBundle(null)}
+                >
+                  <Text style={styles.removeFilterText}>×</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
+        )}
+        
+        {/* Life moment trending products section */}
+        {selectedMoment && !isLoading && (
+          <TrendingSection 
+            lifeMoment={selectedMoment}
+            onProductSelect={handleTrendingProductSelect}
+          />
         )}
       
         {isLoading ? (
           <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>Finding your perfect match...</Text>
+            <View style={styles.loadingPulse} />
+            <Text style={[styles.loadingText, darkMode && styles.loadingTextDark]}>Finding your perfect match...</Text>
           </View>
         ) : errorMessage ? (
-          <View style={styles.errorContainer}>
+          <View style={[styles.errorContainer, darkMode && styles.errorContainerDark]}>
             <Text style={styles.errorText}>{errorMessage}</Text>
           </View>
         ) : products.length > 0 ? (
@@ -1020,13 +1515,39 @@ export default function App() {
               />
             ))}
           </View>
+        ) : isDiscoveryMode ? (
+          <View style={styles.discoveryContainer}>
+            {/* Visual Category Entry Points */}
+            <CategoryEntryPoints 
+              categories={productCategories}
+              onSelect={handleCategorySelect}
+            />
+            
+            {/* TrendRadar */}
+            <TrendRadar 
+              items={trendRadarData}
+              onItemPress={handleTrendSelect}
+            />
+            
+            {/* Shop by Vibe */}
+            <ShopByVibe 
+              moods={moodBoards}
+              onMoodSelect={handleMoodSelect}
+            />
+            
+            {/* Social Bundles */}
+            <SocialBundles 
+              bundles={socialBundles}
+              onBundlePress={handleBundleSelect}
+            />
+          </View>
         ) : (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyPrimary}>
+          <View style={[styles.emptyContainer, darkMode && styles.emptyContainerDark]}>
+            <Text style={[styles.emptyPrimary, darkMode && styles.emptyPrimaryDark]}>
               {searchQuery.trim() || selectedPersona || selectedMoment ? 
                 'No matching products found' : 'Ready to discover'}
             </Text>
-            <Text style={styles.emptySecondary}>
+            <Text style={[styles.emptySecondary, darkMode && styles.emptySecondaryDark]}>
               {searchQuery.trim() || selectedPersona || selectedMoment
                 ? 'Try broadening your search or changing your persona/life moment' 
                 : 'Select a persona or life moment to see tailored recommendations'}
@@ -1363,6 +1884,13 @@ const styles = StyleSheet.create({
     padding: 40,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  loadingPulse: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: COLORS.secondary,
+    marginBottom: 10,
   },
   loadingText: {
     fontSize: 16,
@@ -1758,5 +2286,826 @@ const styles = StyleSheet.create({
     color: COLORS.light,
     fontSize: 14,
     fontWeight: '600',
+  },
+  
+  // Visual Category Entry Points
+  categoryEntryContainer: {
+    marginBottom: 20,
+  },
+  categoryScroll: {
+    paddingHorizontal: 10,
+  },
+  categoryItem: {
+    padding: 15,
+    borderRadius: 16,
+    marginRight: 10,
+    width: 100,
+    shadowColor: COLORS.primary,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    borderWidth: 1,
+    borderColor: '#eaeaea',
+    alignItems: 'center',
+  },
+  categoryIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  categoryEmoji: {
+    fontSize: 24,
+  },
+  categoryName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+    textAlign: 'center',
+  },
+  
+  // TrendRadar
+  trendRadarContainer: {
+    marginBottom: 25,
+    backgroundColor: COLORS.light,
+    borderRadius: 16,
+    padding: 15,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  sectionTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sectionIcon: {
+    fontSize: 24,
+    marginRight: 10,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+  },
+  sectionAction: {
+    fontSize: 14,
+    color: COLORS.secondary,
+    fontWeight: '600',
+  },
+  sectionSubtitle: {
+    fontSize: 15,
+    color: COLORS.midGray,
+    marginBottom: 15,
+  },
+  trendRadarList: {
+    paddingBottom: 5,
+  },
+  trendRadarItem: {
+    backgroundColor: COLORS.light,
+    borderRadius: 16,
+    marginRight: 12,
+    shadowColor: COLORS.primary,
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#eaeaea',
+    width: 220,
+  },
+  trendRadarImageContainer: {
+    height: 120,
+    backgroundColor: COLORS.secondary,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  trendRadarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 12,
+  },
+  trendRadarContent: {
+    padding: 15,
+  },
+  trendRadarTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+    marginBottom: 8,
+    height: 40,
+  },
+  trendRadarCategory: {
+    fontSize: 14,
+    color: COLORS.midGray,
+  },
+  trendRadarStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  trendRadarChange: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: COLORS.secondary,
+  },
+  normalChangeText: {
+    color: COLORS.midGray,
+  },
+  highChangeText: {
+    color: COLORS.accent2,
+  },
+  trendRadarPeriod: {
+    fontSize: 12,
+    color: COLORS.midGray,
+  },
+  
+  // Social Bundles
+  socialBundlesContainer: {
+    marginBottom: 25,
+    backgroundColor: COLORS.light,
+    borderRadius: 16,
+    padding: 15,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+  },
+  bundlesScroll: {
+    paddingBottom: 5,
+  },
+  bundleCard: {
+    backgroundColor: COLORS.light,
+    borderRadius: 16,
+    marginRight: 12,
+    shadowColor: COLORS.primary,
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#eaeaea',
+    width: 220,
+  },
+  bundleCover: {
+    width: '100%',
+    height: 120,
+    borderRadius: 12,
+  },
+  bundleContent: {
+    padding: 15,
+  },
+  bundleTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+    marginBottom: 8,
+  },
+  bundleCreatorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  creatorAvatar: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    marginRight: 5,
+  },
+  creatorName: {
+    fontSize: 14,
+    color: COLORS.primary,
+  },
+  verifiedBadge: {
+    fontSize: 12,
+    color: COLORS.accent2,
+    fontWeight: 'bold',
+  },
+  bundleStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  bundleStat: {
+    fontSize: 14,
+    color: COLORS.midGray,
+  },
+  
+  // Shop by Vibe
+  shopByVibeContainer: {
+    marginBottom: 25,
+    backgroundColor: COLORS.light,
+    borderRadius: 16,
+    padding: 15,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+  },
+  moodsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  moodCard: {
+    backgroundColor: COLORS.light,
+    borderRadius: 16,
+    marginRight: 12,
+    shadowColor: COLORS.primary,
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#eaeaea',
+    width: 100,
+  },
+  moodCover: {
+    width: '100%',
+    height: 120,
+    borderRadius: 12,
+  },
+  moodOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  moodEmoji: {
+    fontSize: 24,
+  },
+  moodName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+  },
+  
+  // Enhanced Hero
+  enhancedHeroContainer: {
+    marginBottom: 25,
+    backgroundColor: COLORS.light,
+    borderRadius: 16,
+    padding: 15,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+  },
+  heroImageStrip: {
+    height: 120,
+    backgroundColor: COLORS.secondary,
+    borderRadius: 12,
+    marginBottom: 10,
+  },
+  heroImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 12,
+  },
+  heroContent: {
+    marginBottom: 20,
+  },
+  heroTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+    marginBottom: 10,
+  },
+  heroSubtitle: {
+    fontSize: 16,
+    color: COLORS.midGray,
+    marginBottom: 20,
+  },
+  getStartedButton: {
+    backgroundColor: COLORS.secondary,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderRadius: 30,
+    alignItems: 'center',
+  },
+  getStartedButtonText: {
+    color: COLORS.light,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  closeHeroButton: {
+    position: 'absolute',
+    top: 15,
+    right: 15,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: COLORS.lightGray,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  closeHeroText: {
+    fontSize: 20,
+    color: COLORS.midGray,
+    fontWeight: 'bold',
+  },
+  
+  // Dark mode
+  containerDark: {
+    backgroundColor: COLORS.darkGray,
+  },
+  headerDark: {
+    backgroundColor: COLORS.darkGray,
+  },
+  appTitleDark: {
+    color: COLORS.light,
+  },
+  appSubtitleDark: {
+    color: COLORS.midGray,
+  },
+  searchInputLoading: {
+    borderColor: COLORS.accent2,
+  },
+  searchBarDark: {
+    backgroundColor: COLORS.darkGray,
+    borderColor: '#eaeaea',
+  },
+  contentDark: {
+    backgroundColor: COLORS.darkGray,
+  },
+  loadingTextDark: {
+    color: COLORS.light,
+  },
+  errorContainerDark: {
+    backgroundColor: COLORS.darkGray,
+    borderColor: '#ffcccc',
+  },
+  emptyPrimaryDark: {
+    color: COLORS.light,
+  },
+  emptySecondaryDark: {
+    color: COLORS.midGray,
+  },
+  
+  // Discovery Container
+  discoveryContainer: {
+    marginBottom: 20,
+  },
+  
+  // Header
+  headerTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+  darkModeToggle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.lightGray,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  darkModeIcon: {
+    fontSize: 18,
+  },
+  
+  // Search Animation
+  searchInputLoading: {
+    borderWidth: 2,
+    borderColor: COLORS.secondary,
+    borderRadius: 12,
+  },
+  searchButtonLoading: {
+    backgroundColor: COLORS.accent2,
+  },
+  
+  // Loading Animation 
+  loadingPulse: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.secondary,
+    marginBottom: 15,
+    opacity: 0.7,
+  },
+  
+  // Enhanced Hero section styles
+  enhancedHeroContainer: {
+    marginBottom: 25,
+    backgroundColor: COLORS.light,
+    borderRadius: 16,
+    padding: 0,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  heroImageStrip: {
+    height: 180,
+    flexDirection: 'row',
+    backgroundColor: COLORS.primary,
+  },
+  heroImage: {
+    width: '20%',
+    height: '100%',
+  },
+  heroContent: {
+    padding: 20,
+    paddingBottom: 30,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+  heroTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: COLORS.light,
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  heroSubtitle: {
+    fontSize: 16,
+    color: '#CCCCCC',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  getStartedButton: {
+    backgroundColor: COLORS.secondary,
+    paddingHorizontal: 30,
+    paddingVertical: 14,
+    borderRadius: 30,
+    alignItems: 'center',
+    alignSelf: 'center',
+    width: '80%',
+    maxWidth: 300,
+  },
+  getStartedButtonText: {
+    color: COLORS.light,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  closeHeroButton: {
+    position: 'absolute',
+    top: 15,
+    right: 15,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  closeHeroText: {
+    fontSize: 20,
+    color: COLORS.light,
+    fontWeight: 'bold',
+    lineHeight: 22,
+  },
+  
+  // Category styles
+  categoryEntryContainer: {
+    marginBottom: 30,
+  },
+  categoryScroll: {
+    paddingVertical: 10,
+  },
+  categoryItem: {
+    padding: 15,
+    borderRadius: 16,
+    marginRight: 15,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#eaeaea',
+    width: 100,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+  },
+  categoryIcon: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  categoryEmoji: {
+    fontSize: 28,
+  },
+  categoryName: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+    textAlign: 'center',
+  },
+  
+  // TrendRadar styles
+  trendRadarContainer: {
+    marginBottom: 30,
+    backgroundColor: COLORS.light,
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  sectionTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sectionIcon: {
+    fontSize: 20,
+    marginRight: 10,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+  },
+  sectionAction: {
+    fontSize: 14,
+    color: COLORS.secondary,
+    fontWeight: '600',
+  },
+  sectionSubtitle: {
+    fontSize: 15,
+    color: COLORS.midGray,
+    marginBottom: 20,
+  },
+  trendRadarList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  trendRadarItem: {
+    width: '48%',
+    backgroundColor: COLORS.light,
+    borderRadius: 16,
+    marginBottom: 15,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#eaeaea',
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+  },
+  trendRadarImageContainer: {
+    height: 120,
+    position: 'relative',
+  },
+  trendRadarImage: {
+    width: '100%',
+    height: '100%',
+  },
+  viralBadge: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: COLORS.accent1,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  viralBadgeText: {
+    color: COLORS.light,
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  trendRadarContent: {
+    padding: 12,
+  },
+  trendRadarTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+    marginBottom: 4,
+  },
+  trendRadarCategory: {
+    fontSize: 14,
+    color: COLORS.midGray,
+    marginBottom: 6,
+  },
+  trendRadarStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  trendRadarChange: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginRight: 5,
+  },
+  highChangeText: {
+    color: COLORS.accent2,
+  },
+  normalChangeText: {
+    color: COLORS.secondary,
+  },
+  trendRadarPeriod: {
+    fontSize: 12,
+    color: COLORS.midGray,
+  },
+  
+  // Shop by Vibe styles
+  shopByVibeContainer: {
+    marginBottom: 30,
+    backgroundColor: COLORS.light,
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+  },
+  moodsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  moodCard: {
+    width: '48%',
+    height: 150,
+    backgroundColor: COLORS.light,
+    borderRadius: 16,
+    marginBottom: 15,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  moodCover: {
+    width: '100%',
+    height: '100%',
+  },
+  moodOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  moodEmoji: {
+    fontSize: 32,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  moodName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.light,
+    textAlign: 'center',
+  },
+  
+  // Social bundles styles
+  socialBundlesContainer: {
+    marginBottom: 30,
+    backgroundColor: COLORS.light,
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+  },
+  bundlesScroll: {
+    paddingVertical: 10,
+  },
+  bundleCard: {
+    width: 250,
+    backgroundColor: COLORS.light,
+    borderRadius: 16,
+    marginRight: 15,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#eaeaea',
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+  },
+  bundleCover: {
+    width: '100%',
+    height: 140,
+  },
+  bundleContent: {
+    padding: 15,
+  },
+  bundleTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+    marginBottom: 10,
+  },
+  bundleCreatorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  creatorAvatar: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    marginRight: 8,
+  },
+  creatorName: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: COLORS.primary,
+    marginRight: 5,
+  },
+  verifiedBadge: {
+    fontSize: 12,
+    color: COLORS.secondary,
+    backgroundColor: `${COLORS.secondary}20`,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    textAlign: 'center',
+    lineHeight: 16,
+  },
+  bundleStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  bundleStat: {
+    fontSize: 12,
+    color: COLORS.midGray,
+  },
+  
+  // Dark mode enhancements
+  containerDark: {
+    backgroundColor: '#121212',
+  },
+  headerDark: {
+    backgroundColor: '#1A1A1A',
+    borderBottomColor: '#333',
+  },
+  contentDark: {
+    backgroundColor: '#121212',
+  },
+  appTitleDark: {
+    color: COLORS.light,
+  },
+  appSubtitleDark: {
+    color: '#BBBBBB',
+  },
+  searchBarDark: {
+    backgroundColor: '#2A2A2A',
+    borderColor: '#444',
+    color: COLORS.light,
+  },
+  loadingTextDark: {
+    color: '#BBBBBB',
+  },
+  errorContainerDark: {
+    backgroundColor: '#2A2A2A',
+    borderColor: COLORS.accent1 + '40',
+  },
+  emptyContainerDark: {
+    backgroundColor: '#1A1A1A',
+  },
+  emptyPrimaryDark: {
+    color: COLORS.light,
+  },
+  emptySecondaryDark: {
+    color: '#BBBBBB',
   },
 }); 
