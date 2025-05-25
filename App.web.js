@@ -4,16 +4,17 @@ import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Animat
 // For trendy, minimalist color palette
 const COLORS = {
   primary: '#0F0F0F',       // Near black
-  secondary: '#007AFF',     // Bright blue
-  accent1: '#FF375F',       // Hot pink
-  accent2: '#53D769',       // Mint green
-  accent3: '#AF52DE',       // Purple
-  accent4: '#FF9500',       // Orange
+  secondary: '#333333',     // Dark gray
+  accent1: '#555555',       // Mid gray
+  accent2: '#777777',       // Light mid gray
+  accent3: '#999999',       // Light gray
+  accent4: '#BBBBBB',       // Very light gray
   light: '#FFFFFF',         // White
-  lightGray: '#F5F5F7',     // Ultra light gray
-  midGray: '#86868B',       // Mid gray
-  darkGray: '#1D1D1F',      // Dark gray
-  glassBg: 'rgba(255,255,255,0.85)' // Glass effect background
+  lightGray: '#F8F8F8',     // Ultra light gray
+  midGray: '#AAAAAA',       // Mid gray
+  darkGray: '#222222',      // Dark gray
+  glassBg: 'rgba(255,255,255,0.92)', // Glass effect background
+  highlight: '#E5E5E5',     // Subtle highlight
 };
 
 // Mock data for testing
@@ -1111,35 +1112,51 @@ const EnhancedHero = ({ socialData, onClose, onGetStarted }) => {
 
 // Add trending ticker data
 const trendingTickerItems = [
-  { text: "Sony WH-1000XM5 sales up 28% this week", color: COLORS.secondary },
-  { text: "Away Luggage just went viral on TikTok", color: COLORS.accent1 },
-  { text: "Dyson Air Purifier trending in Home category", color: COLORS.accent2 },
-  { text: "MacBook Air M2 most searched laptop today", color: COLORS.accent3 },
-  { text: "New parent essentials seeing 37% growth", color: COLORS.accent4 },
+  { text: "Sony WH-1000XM5 in high demand this week", color: COLORS.primary },
+  { text: "Away Luggage favored by design professionals", color: COLORS.primary },
+  { text: "Dyson's premium air purifier now trending", color: COLORS.primary },
+  { text: "MacBook Air M2 most coveted laptop of the season", color: COLORS.primary },
+  { text: "Curated essentials for discerning new parents", color: COLORS.primary },
 ];
 
 // Add TrendingTicker component
 const TrendingTicker = ({ items }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const fadeAnim = useState(new Animated.Value(1))[0];
+  const slideAnim = useState(new Animated.Value(0))[0];
   
   useEffect(() => {
     const interval = setInterval(() => {
-      // Fade out
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 500,
-        useNativeDriver: true
-      }).start(() => {
+      // Fade and slide out
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 400,
+          useNativeDriver: true
+        }),
+        Animated.timing(slideAnim, {
+          toValue: -20,
+          duration: 400,
+          useNativeDriver: true
+        })
+      ]).start(() => {
         // Change content
         setCurrentIndex((prevIndex) => (prevIndex + 1) % items.length);
+        slideAnim.setValue(20);
         
-        // Fade in
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 500,
-          useNativeDriver: true
-        }).start();
+        // Fade and slide in
+        Animated.parallel([
+          Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 400,
+            useNativeDriver: true
+          }),
+          Animated.timing(slideAnim, {
+            toValue: 0,
+            duration: 400,
+            useNativeDriver: true
+          })
+        ]).start();
       });
     }, 5000);
     
@@ -1150,14 +1167,36 @@ const TrendingTicker = ({ items }) => {
   
   return (
     <View style={styles.tickerContainer}>
-      <View style={styles.tickerIconContainer}>
-        <Text style={styles.tickerIcon}>📊</Text>
+      <View style={styles.tickerProgress}>
+        {items.map((_, idx) => (
+          <View 
+            key={idx} 
+            style={[
+              styles.tickerProgressDot, 
+              idx === currentIndex && styles.tickerProgressDotActive
+            ]} 
+          />
+        ))}
       </View>
-      <Animated.View style={[styles.tickerTextContainer, { opacity: fadeAnim }]}>
-        <Text style={[styles.tickerText, { color: currentItem.color }]}>
-          {currentItem.text}
-        </Text>
-      </Animated.View>
+      <View style={styles.tickerContent}>
+        <View style={styles.tickerIconContainer}>
+          <Text style={styles.tickerIcon}>✦</Text>
+        </View>
+        <Animated.View 
+          style={[
+            styles.tickerTextContainer, 
+            { 
+              opacity: fadeAnim,
+              transform: [{ translateX: slideAnim }]
+            }
+          ]}
+        >
+          <Text style={styles.tickerLabel}>TRENDING</Text>
+          <Text style={styles.tickerText}>
+            {currentItem.text}
+          </Text>
+        </Animated.View>
+      </View>
     </View>
   );
 };
@@ -1563,7 +1602,7 @@ export default function App() {
         />
       </Animated.View>
 
-      {/* Add TrendingTicker here */}
+      {/* Updated ticker */}
       <TrendingTicker items={trendingTickerItems} />
 
       {/* Add vertical persona cycler */}
@@ -1751,32 +1790,6 @@ export default function App() {
             </Text>
           </View>
         )}
-        
-        {/* Add information about connecting to a database */}
-        <View style={styles.dbInfoContainer}>
-          <Text style={styles.dbInfoTitle}>Ready for Production</Text>
-          <Text style={styles.dbInfoText}>
-            This app is prepared to connect to your database service of choice. 
-            Replace the simulated database functions with your actual database 
-            implementation to make this app fully operational.
-          </Text>
-          
-          <Text style={styles.dbInfoSubtitle}>Supported Operations:</Text>
-          <View style={styles.dbOperationsList}>
-            <View style={styles.dbOperation}>
-              <Text style={styles.dbOperationName}>fetchProducts</Text>
-              <Text style={styles.dbOperationDesc}>Fetch products with filters</Text>
-            </View>
-            <View style={styles.dbOperation}>
-              <Text style={styles.dbOperationName}>saveUserPreferences</Text>
-              <Text style={styles.dbOperationDesc}>Save user persona preferences</Text>
-            </View>
-            <View style={styles.dbOperation}>
-              <Text style={styles.dbOperationName}>trackProductView</Text>
-              <Text style={styles.dbOperationDesc}>Track product interactions</Text>
-            </View>
-          </View>
-        </View>
       </Animated.ScrollView>
     </View>
   );
@@ -1785,42 +1798,75 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.lightGray,
+    backgroundColor: COLORS.light,
   },
   
-  // Add ticker styles here
+  // Update ticker styles for luxury look
   tickerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.light,
-    borderRadius: 12,
-    padding: 10,
     marginHorizontal: 20,
-    marginBottom: 10,
+    marginBottom: 15,
+    marginTop: 5,
+    backgroundColor: COLORS.light,
+    borderRadius: 8,
     shadowColor: COLORS.primary,
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.04,
     shadowRadius: 8,
     zIndex: 2,
+    borderWidth: 1,
+    borderColor: COLORS.highlight,
+  },
+  tickerProgress: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    paddingTop: 8,
+    paddingBottom: 4,
+  },
+  tickerProgressDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: COLORS.highlight,
+    marginHorizontal: 3,
+  },
+  tickerProgressDotActive: {
+    backgroundColor: COLORS.primary,
+  },
+  tickerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
   },
   tickerIconContainer: {
-    marginRight: 10,
+    marginRight: 12,
   },
   tickerIcon: {
-    fontSize: 20,
+    fontSize: 18,
+    color: COLORS.primary,
   },
   tickerTextContainer: {
     flex: 1,
   },
+  tickerLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    letterSpacing: 1.5,
+    marginBottom: 4,
+    color: COLORS.accent2,
+  },
   tickerText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '500',
+    color: COLORS.primary,
+    lineHeight: 18,
   },
   tickerDark: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: COLORS.darkGray,
+    borderColor: '#333',
   },
   tickerTextDark: {
     color: COLORS.light,
@@ -1831,10 +1877,10 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 40,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: COLORS.highlight,
     shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.03,
     shadowRadius: 5,
     zIndex: 10,
   },
@@ -1863,19 +1909,19 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 50,
     backgroundColor: COLORS.lightGray,
-    borderRadius: 12,
+    borderRadius: 6,
     paddingHorizontal: 16,
     fontSize: 16,
     color: COLORS.primary,
     borderWidth: 1,
-    borderColor: '#eaeaea',
+    borderColor: COLORS.highlight,
   },
   searchButton: {
     marginLeft: 10,
-    backgroundColor: COLORS.secondary,
+    backgroundColor: COLORS.primary,
     paddingHorizontal: 20,
     height: 50,
-    borderRadius: 12,
+    borderRadius: 6,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1909,20 +1955,20 @@ const styles = StyleSheet.create({
   selectionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.secondary,
+    backgroundColor: COLORS.primary,
     paddingHorizontal: 18,
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: 6,
     flex: 1,
     marginRight: 10,
   },
   lifeMomentButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.accent3,
+    backgroundColor: COLORS.secondary,
     paddingHorizontal: 18,
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: 6,
     flex: 1,
   },
   selectionButtonText: {
@@ -2184,7 +2230,7 @@ const styles = StyleSheet.create({
   },
   emptySecondary: {
     fontSize: 16,
-    color: COLORS.midGray,
+    color: COLORS.accent2,
     textAlign: 'center',
     lineHeight: 22,
   },
@@ -2192,19 +2238,19 @@ const styles = StyleSheet.create({
   // Product card styles
   productCard: {
     backgroundColor: COLORS.light,
-    borderRadius: 20,
+    borderRadius: 8,
     marginBottom: 20,
     shadowColor: COLORS.primary,
     shadowOffset: {
       width: 0,
-      height: 5,
+      height: 4,
     },
-    shadowOpacity: 0.08,
-    shadowRadius: 15,
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
     elevation: 5,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#eaeaea',
+    borderColor: COLORS.highlight,
   },
   trendingProductCard: {
     height: 200,
@@ -3312,16 +3358,19 @@ const styles = StyleSheet.create({
     bottom: 20,
     width: 280,
     backgroundColor: COLORS.light,
-    borderTopLeftRadius: 16,
-    borderBottomLeftRadius: 16,
+    borderTopLeftRadius: 8,
+    borderBottomLeftRadius: 8,
     zIndex: 100,
     shadowColor: COLORS.primary,
     shadowOffset: { width: -2, height: 0 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: 10,
     padding: 15,
     display: 'flex',
     flexDirection: 'column',
+    borderWidth: 1,
+    borderColor: COLORS.highlight,
+    borderRightWidth: 0,
   },
   personaCyclerHeader: {
     flexDirection: 'row',
@@ -3400,9 +3449,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   cycleThroughButton: {
-    backgroundColor: COLORS.secondary,
+    backgroundColor: COLORS.primary,
     paddingVertical: 12,
-    borderRadius: 25,
+    borderRadius: 6,
     alignItems: 'center',
     marginTop: 10,
   },
@@ -3411,58 +3460,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  
-  // Database info section
-  dbInfoContainer: {
-    backgroundColor: COLORS.light,
-    borderRadius: 16,
-    padding: 20,
-    marginTop: 30,
-    marginBottom: 30,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    borderWidth: 1,
-    borderColor: '#eaeaea',
-  },
-  dbInfoTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-    marginBottom: 10,
-  },
-  dbInfoText: {
-    fontSize: 15,
-    color: COLORS.midGray,
-    lineHeight: 22,
-    marginBottom: 15,
-  },
-  dbInfoSubtitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.primary,
-    marginBottom: 10,
-  },
-  dbOperationsList: {
-    backgroundColor: COLORS.lightGray,
-    borderRadius: 12,
-    padding: 15,
-  },
-  dbOperation: {
-    marginBottom: 10,
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eaeaea',
-  },
-  dbOperationName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.secondary,
-    marginBottom: 4,
-  },
-  dbOperationDesc: {
-    fontSize: 14,
-    color: COLORS.midGray,
-  }
 }); 
