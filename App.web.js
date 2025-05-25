@@ -3,18 +3,19 @@ import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Animat
 
 // For trendy, minimalist color palette
 const COLORS = {
-  primary: '#0F0F0F',       // Near black
-  secondary: '#333333',     // Dark gray
-  accent1: '#555555',       // Mid gray
-  accent2: '#777777',       // Light mid gray
-  accent3: '#999999',       // Light gray
-  accent4: '#BBBBBB',       // Very light gray
+  primary: '#0A0A0A',       // Pure black
+  secondary: '#1A1A1A',     // Near black
+  accent1: '#333333',       // Dark gray
+  accent2: '#555555',       // Mid gray
+  accent3: '#777777',       // Light mid gray
+  accent4: '#999999',       // Very light gray
   light: '#FFFFFF',         // White
-  lightGray: '#F8F8F8',     // Ultra light gray
+  lightGray: '#F9F9F9',     // Ultra light gray
   midGray: '#AAAAAA',       // Mid gray
   darkGray: '#222222',      // Dark gray
-  glassBg: 'rgba(255,255,255,0.92)', // Glass effect background
-  highlight: '#E5E5E5',     // Subtle highlight
+  glassBg: 'rgba(255,255,255,0.95)', // Glass effect background
+  highlight: '#EEEEEE',     // Subtle highlight
+  border: '#E0E0E0',        // Border color
 };
 
 // Mock data for testing
@@ -1221,7 +1222,10 @@ export default function App() {
   
   // Add state for the new vertical persona cycler
   const [showPersonaCycler, setShowPersonaCycler] = useState(false);
-
+  
+  // Add new state for life moment cycler
+  const [showMomentCycler, setShowMomentCycler] = useState(false);
+  
   // Now add a simulated database connection function that we'll use later
   const connectToDatabase = () => {
     console.log('Connecting to database...');
@@ -1308,6 +1312,7 @@ export default function App() {
   const togglePersonaCycler = () => {
     setShowPersonaCycler(!showPersonaCycler);
     setIsPanelOpen(false); // Close the panel if it's open
+    setShowMomentCycler(false); // Close moment cycler if it's open
   };
 
   // Add function to cycle to the next persona
@@ -1320,6 +1325,26 @@ export default function App() {
       setSelectedPersona(personas[nextIndex]);
     }
     // Trigger a search with the new persona
+    setTimeout(() => handleSearch(), 100);
+  };
+
+  // Add function to toggle the life moment cycler
+  const toggleMomentCycler = () => {
+    setShowMomentCycler(!showMomentCycler);
+    setIsPanelOpen(false); // Close the panel if it's open
+    setShowPersonaCycler(false); // Close persona cycler if it's open
+  };
+
+  // Add function to cycle to the next life moment
+  const cycleToNextMoment = () => {
+    if (!selectedMoment) {
+      setSelectedMoment(lifeMoments[0]);
+    } else {
+      const currentIndex = lifeMoments.findIndex(m => m.id === selectedMoment.id);
+      const nextIndex = (currentIndex + 1) % lifeMoments.length;
+      setSelectedMoment(lifeMoments[nextIndex]);
+    }
+    // Trigger a search with the new life moment
     setTimeout(() => handleSearch(), 100);
   };
 
@@ -1538,7 +1563,7 @@ export default function App() {
               onChangeText={setSearchQuery}
               onSubmitEditing={handleSearch}
               returnKeyType="search"
-              placeholderTextColor={darkMode ? COLORS.midGray : COLORS.midGray}
+              placeholderTextColor={darkMode ? COLORS.accent3 : COLORS.accent3}
             />
             <TouchableOpacity 
               style={[styles.searchButton, isLoadingAnimation && styles.searchButtonLoading]} 
@@ -1566,7 +1591,7 @@ export default function App() {
           
           <TouchableOpacity 
             style={styles.lifeMomentButton}
-            onPress={() => setIsPanelOpen(true)}
+            onPress={toggleMomentCycler}
           >
             <Text style={styles.lifeMomentButtonText}>
               {selectedMoment ? selectedMoment.name : 'Life Moment'}
@@ -1605,26 +1630,26 @@ export default function App() {
       {/* Updated ticker */}
       <TrendingTicker items={trendingTickerItems} />
 
-      {/* Add vertical persona cycler */}
+      {/* Persona cycler */}
       {showPersonaCycler && (
         <View style={styles.personaCyclerContainer}>
-          <View style={styles.personaCyclerHeader}>
-            <Text style={styles.personaCyclerTitle}>Who are you?</Text>
+          <View style={styles.cyclerHeader}>
+            <Text style={styles.cyclerTitle}>Who are you?</Text>
             <TouchableOpacity onPress={togglePersonaCycler} style={styles.closeCyclerButton}>
               <Text style={styles.closeCyclerText}>×</Text>
             </TouchableOpacity>
           </View>
           
-          <ScrollView style={styles.personaList}>
+          <ScrollView style={styles.cyclerList}>
             {personas.map(persona => (
               <TouchableOpacity
                 key={persona.id}
                 style={[
-                  styles.personaCyclerItem,
+                  styles.cyclerItem,
                   selectedPersona?.id === persona.id && { 
-                    borderColor: persona.color,
+                    borderColor: COLORS.primary,
                     borderWidth: 2,
-                    backgroundColor: `${persona.color}15`,
+                    backgroundColor: `${COLORS.primary}08`,
                   }
                 ]}
                 onPress={() => {
@@ -1632,16 +1657,16 @@ export default function App() {
                   setTimeout(() => handleSearch(), 100);
                 }}
               >
-                <View style={[styles.personaCyclerEmoji, {backgroundColor: `${persona.color}20`}]}>
-                  <Text style={styles.personaCyclerEmojiText}>{persona.emoji}</Text>
+                <View style={[styles.cyclerEmoji, {backgroundColor: `${COLORS.primary}08`}]}>
+                  <Text style={styles.cyclerEmojiText}>{persona.emoji}</Text>
                 </View>
-                <View style={styles.personaCyclerInfo}>
-                  <Text style={styles.personaCyclerName}>{persona.name}</Text>
-                  <Text style={styles.personaCyclerDesc}>{persona.description}</Text>
+                <View style={styles.cyclerInfo}>
+                  <Text style={styles.cyclerName}>{persona.name}</Text>
+                  <Text style={styles.cyclerDesc}>{persona.description}</Text>
                 </View>
                 {selectedPersona?.id === persona.id && (
-                  <View style={[styles.personaSelectedBadge, { backgroundColor: persona.color }]}>
-                    <Text style={styles.personaSelectedText}>✓</Text>
+                  <View style={[styles.cyclerSelectedBadge, { backgroundColor: COLORS.primary }]}>
+                    <Text style={styles.cyclerSelectedText}>✓</Text>
                   </View>
                 )}
               </TouchableOpacity>
@@ -1651,6 +1676,58 @@ export default function App() {
           <TouchableOpacity 
             style={styles.cycleThroughButton}
             onPress={cycleToNextPersona}
+          >
+            <Text style={styles.cycleThroughText}>Cycle Through</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      
+      {/* Life moment cycler */}
+      {showMomentCycler && (
+        <View style={styles.momentCyclerContainer}>
+          <View style={styles.cyclerHeader}>
+            <Text style={styles.cyclerTitle}>Your Life Moment</Text>
+            <TouchableOpacity onPress={toggleMomentCycler} style={styles.closeCyclerButton}>
+              <Text style={styles.closeCyclerText}>×</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <ScrollView style={styles.cyclerList}>
+            {lifeMoments.map(moment => (
+              <TouchableOpacity
+                key={moment.id}
+                style={[
+                  styles.cyclerItem,
+                  selectedMoment?.id === moment.id && { 
+                    borderColor: COLORS.primary,
+                    borderWidth: 2,
+                    backgroundColor: `${COLORS.primary}08`,
+                  }
+                ]}
+                onPress={() => {
+                  setSelectedMoment(selectedMoment?.id === moment.id ? null : moment);
+                  setTimeout(() => handleSearch(), 100);
+                }}
+              >
+                <View style={[styles.cyclerEmoji, {backgroundColor: `${COLORS.primary}08`}]}>
+                  <Text style={styles.cyclerEmojiText}>{moment.emoji}</Text>
+                </View>
+                <View style={styles.cyclerInfo}>
+                  <Text style={styles.cyclerName}>{moment.name}</Text>
+                  <Text style={styles.cyclerDesc}>{moment.description}</Text>
+                </View>
+                {selectedMoment?.id === moment.id && (
+                  <View style={[styles.cyclerSelectedBadge, { backgroundColor: COLORS.primary }]}>
+                    <Text style={styles.cyclerSelectedText}>✓</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+          
+          <TouchableOpacity 
+            style={styles.cycleThroughButton}
+            onPress={cycleToNextMoment}
           >
             <Text style={styles.cycleThroughText}>Cycle Through</Text>
           </TouchableOpacity>
@@ -1877,7 +1954,7 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 40,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.highlight,
+    borderBottomColor: COLORS.border,
     shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.03,
@@ -1889,14 +1966,17 @@ const styles = StyleSheet.create({
   },
   appTitle: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: '300', // More elegant thin font
     color: COLORS.primary,
-    letterSpacing: -0.5,
+    letterSpacing: 1, // More spacing for luxury look
+    textTransform: 'lowercase', // Luxury brands often use lowercase
   },
   appSubtitle: {
-    fontSize: 16,
-    color: COLORS.midGray,
+    fontSize: 14,
+    fontWeight: '300',
+    color: COLORS.accent2,
     marginTop: 4,
+    letterSpacing: 0.5,
   },
   searchContainer: {
     marginBottom: 20,
@@ -1904,31 +1984,34 @@ const styles = StyleSheet.create({
   searchInputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginTop: 5,
   },
   searchBar: {
     flex: 1,
-    height: 50,
+    height: 48,
     backgroundColor: COLORS.lightGray,
-    borderRadius: 6,
+    borderRadius: 4, // Even more subtle radius
     paddingHorizontal: 16,
     fontSize: 16,
     color: COLORS.primary,
     borderWidth: 1,
-    borderColor: COLORS.highlight,
+    borderColor: COLORS.border,
+    fontWeight: '300', // Thinner text for luxury
   },
   searchButton: {
     marginLeft: 10,
     backgroundColor: COLORS.primary,
     paddingHorizontal: 20,
-    height: 50,
-    borderRadius: 6,
+    height: 48,
+    borderRadius: 4,
     justifyContent: 'center',
     alignItems: 'center',
   },
   searchButtonText: {
     color: COLORS.light,
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '400',
+    letterSpacing: 0.5,
   },
   
   // Social proof header
@@ -1951,6 +2034,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 15,
+    marginTop: 5,
   },
   selectionButton: {
     flexDirection: 'row',
@@ -1958,7 +2042,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     paddingHorizontal: 18,
     paddingVertical: 12,
-    borderRadius: 6,
+    borderRadius: 4,
     flex: 1,
     marginRight: 10,
   },
@@ -1968,23 +2052,25 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.secondary,
     paddingHorizontal: 18,
     paddingVertical: 12,
-    borderRadius: 6,
+    borderRadius: 4,
     flex: 1,
   },
   selectionButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '400',
     color: COLORS.light,
     flex: 1,
+    letterSpacing: 0.3,
   },
   lifeMomentButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '400',
     color: COLORS.light,
     flex: 1,
+    letterSpacing: 0.3,
   },
   selectionEmoji: {
-    fontSize: 18,
+    fontSize: 16,
     marginLeft: 8,
   },
   
@@ -2238,19 +2324,19 @@ const styles = StyleSheet.create({
   // Product card styles
   productCard: {
     backgroundColor: COLORS.light,
-    borderRadius: 8,
-    marginBottom: 20,
+    borderRadius: 4,
+    marginBottom: 25,
     shadowColor: COLORS.primary,
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 3,
     },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 5,
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+    elevation: 3,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: COLORS.highlight,
+    borderColor: COLORS.border,
   },
   trendingProductCard: {
     height: 200,
@@ -2272,11 +2358,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   productTitle: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '400',
     color: COLORS.primary,
     marginBottom: 5,
-    lineHeight: 26,
+    lineHeight: 24,
+    letterSpacing: 0.3,
   },
   priceRatingContainer: {
     flexDirection: 'row',
@@ -2285,9 +2372,9 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   price: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: COLORS.secondary,
+    fontSize: 18,
+    fontWeight: '500',
+    color: COLORS.primary,
     marginRight: 10,
   },
   ratingContainer: {
@@ -3358,18 +3445,18 @@ const styles = StyleSheet.create({
     bottom: 20,
     width: 280,
     backgroundColor: COLORS.light,
-    borderTopLeftRadius: 8,
-    borderBottomLeftRadius: 8,
+    borderTopLeftRadius: 4,
+    borderBottomLeftRadius: 4,
     zIndex: 100,
     shadowColor: COLORS.primary,
     shadowOffset: { width: -2, height: 0 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.05,
     shadowRadius: 10,
     padding: 15,
     display: 'flex',
     flexDirection: 'column',
     borderWidth: 1,
-    borderColor: COLORS.highlight,
+    borderColor: COLORS.border,
     borderRightWidth: 0,
   },
   personaCyclerHeader: {
@@ -3382,22 +3469,25 @@ const styles = StyleSheet.create({
     borderBottomColor: '#eaeaea',
   },
   personaCyclerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '400',
     color: COLORS.primary,
+    letterSpacing: 0.5,
   },
   closeCyclerButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: COLORS.lightGray,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
   closeCyclerText: {
-    fontSize: 20,
-    color: COLORS.midGray,
-    lineHeight: 24,
+    fontSize: 18,
+    color: COLORS.accent2,
+    lineHeight: 22,
   },
   personaList: {
     flex: 1,
@@ -3406,7 +3496,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    borderRadius: 12,
+    borderRadius: 4,
     marginBottom: 10,
     backgroundColor: COLORS.light,
     borderWidth: 1,
@@ -3427,19 +3517,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   personaCyclerName: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 15,
+    fontWeight: '500',
     color: COLORS.primary,
     marginBottom: 4,
   },
   personaCyclerDesc: {
     fontSize: 12,
-    color: COLORS.midGray,
+    color: COLORS.accent2,
+    lineHeight: 16,
   },
   personaSelectedBadge: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -3451,13 +3542,104 @@ const styles = StyleSheet.create({
   cycleThroughButton: {
     backgroundColor: COLORS.primary,
     paddingVertical: 12,
-    borderRadius: 6,
+    borderRadius: 4,
     alignItems: 'center',
     marginTop: 10,
   },
   cycleThroughText: {
     color: COLORS.light,
+    fontSize: 14,
+    fontWeight: '400',
+    letterSpacing: 0.5,
+  },
+  
+  // New moment cycler container
+  momentCyclerContainer: {
+    position: 'fixed',
+    right: 0,
+    top: 120,
+    bottom: 20,
+    width: 280,
+    backgroundColor: COLORS.light,
+    borderTopLeftRadius: 4,
+    borderBottomLeftRadius: 4,
+    zIndex: 100,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: -2, height: 0 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    padding: 15,
+    display: 'flex',
+    flexDirection: 'column',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRightWidth: 0,
+  },
+  
+  // Unified cycler component styles
+  cyclerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eaeaea',
+  },
+  cyclerTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '400',
+    color: COLORS.primary,
+    letterSpacing: 0.5,
+  },
+  cyclerList: {
+    flex: 1,
+  },
+  cyclerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 4,
+    marginBottom: 10,
+    backgroundColor: COLORS.light,
+    borderWidth: 1,
+    borderColor: '#eaeaea',
+  },
+  cyclerEmoji: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  cyclerEmojiText: {
+    fontSize: 20,
+  },
+  cyclerInfo: {
+    flex: 1,
+  },
+  cyclerName: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: COLORS.primary,
+    marginBottom: 4,
+  },
+  cyclerDesc: {
+    fontSize: 12,
+    color: COLORS.accent2,
+    lineHeight: 16,
+  },
+  cyclerSelectedBadge: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cyclerSelectedText: {
+    color: COLORS.light,
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 }); 
