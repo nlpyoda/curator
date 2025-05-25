@@ -1174,12 +1174,120 @@ export default function App() {
   const [selectedTrendingProduct, setSelectedTrendingProduct] = useState(null);
   
   // New states for social features
-  const [showHero, setShowHero] = useState(true);
   const [selectedMood, setSelectedMood] = useState(null);
   const [selectedBundle, setSelectedBundle] = useState(null);
   const [darkMode, setDarkMode] = useState(false);
   const [isDiscoveryMode, setIsDiscoveryMode] = useState(true);
   const [isLoadingAnimation, setIsLoadingAnimation] = useState(false);
+  
+  // Add state for the new vertical persona cycler
+  const [showPersonaCycler, setShowPersonaCycler] = useState(false);
+
+  // Now add a simulated database connection function that we'll use later
+  const connectToDatabase = () => {
+    console.log('Connecting to database...');
+    // In a real app, this would establish a connection to your database
+    // This would use something like Firebase, MongoDB, or another database service
+    return {
+      fetchProducts: async (query, filters) => {
+        console.log('Fetching products from DB with query:', query, 'and filters:', filters);
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 800));
+        return mockProducts.filter(product => 
+          !query || product.title.toLowerCase().includes(query.toLowerCase())
+        );
+      },
+      saveUserPreferences: async (userId, preferences) => {
+        console.log('Saving user preferences to DB:', preferences);
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 500));
+        return { success: true };
+      },
+      trackProductView: async (productId, userId) => {
+        console.log('Tracking product view in DB:', productId);
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 300));
+        return { success: true };
+      }
+    };
+  };
+
+  // Simulated database instance
+  const db = React.useMemo(() => connectToDatabase(), []);
+
+  // Update the search function to use our simulated database
+  const handleSearch = async () => {
+    if (!searchQuery.trim() && !selectedPersona && !selectedMoment && !selectedMood && !selectedBundle) {
+      setErrorMessage('Please enter a search query or select a persona/life moment/vibe.');
+      return;
+    }
+    
+    setIsLoadingAnimation(true);
+    setIsLoading(true);
+    setErrorMessage(null);
+    
+    try {
+      // Use our simulated database to fetch products
+      const filters = {
+        persona: selectedPersona?.id,
+        lifeMoment: selectedMoment?.id,
+        mood: selectedMood?.id,
+        bundle: selectedBundle?.id
+      };
+      
+      const filteredProducts = await db.fetchProducts(searchQuery.trim(), filters);
+      
+      // Apply persona and life moment based ranking
+      if (selectedPersona || selectedMoment) {
+        const rankedProducts = filteredProducts.map(product => ({
+          ...product,
+          relevanceScore: getRelevanceScore(product)
+        }))
+        .sort((a, b) => b.relevanceScore - a.relevanceScore);
+        
+        setProducts(rankedProducts);
+      } else {
+        setProducts(filteredProducts);
+      }
+      
+      setIsDiscoveryMode(false);
+      
+      if (filteredProducts.length === 0) {
+        setErrorMessage('No products found matching your criteria.');
+      }
+    } catch (error) {
+      console.error('Search failed:', error);
+      setErrorMessage('Search failed. Please try again.');
+      setProducts([]);
+    } finally {
+      setIsLoading(false);
+      setIsLoadingAnimation(false);
+    }
+  };
+
+  // Add this function to toggle the persona cycler
+  const togglePersonaCycler = () => {
+    setShowPersonaCycler(!showPersonaCycler);
+    setIsPanelOpen(false); // Close the panel if it's open
+  };
+
+  // Add function to cycle to the next persona
+  const cycleToNextPersona = () => {
+    if (!selectedPersona) {
+      setSelectedPersona(personas[0]);
+    } else {
+      const currentIndex = personas.findIndex(p => p.id === selectedPersona.id);
+      const nextIndex = (currentIndex + 1) % personas.length;
+      setSelectedPersona(personas[nextIndex]);
+    }
+    // Trigger a search with the new persona
+    setTimeout(() => handleSearch(), 100);
+  };
+
+  // Add function to track product view when a user views details
+  const handleProductView = (product) => {
+    db.trackProductView(product.id, 'anonymous-user');
+  };
 
   // Calculate product relevance score based on selected persona and life moment
   const getRelevanceScore = (product) => {
@@ -1222,54 +1330,6 @@ export default function App() {
       handleSearch();
     }
   }, [selectedPersona, selectedMoment]);
-
-  const handleSearch = async () => {
-    if (!searchQuery.trim() && !selectedPersona && !selectedMoment && !selectedMood && !selectedBundle) {
-      setErrorMessage('Please enter a search query or select a persona/life moment/vibe.');
-      return;
-    }
-    
-    setIsLoadingAnimation(true);
-    setIsLoading(true);
-    setErrorMessage(null);
-    
-    try {
-      // Simulate API call with mock data
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Filter products based on search query
-      let filteredProducts = mockProducts;
-      
-      if (searchQuery.trim()) {
-        filteredProducts = filteredProducts.filter(product => 
-          product.title.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-      }
-      
-      // Apply persona and life moment based ranking
-      if (selectedPersona || selectedMoment) {
-        filteredProducts = filteredProducts.map(product => ({
-          ...product,
-          relevanceScore: getRelevanceScore(product)
-        }))
-        .sort((a, b) => b.relevanceScore - a.relevanceScore);
-      }
-      
-      setProducts(filteredProducts);
-      setIsDiscoveryMode(false);
-      
-      if (filteredProducts.length === 0) {
-        setErrorMessage('No products found matching your criteria.');
-      }
-    } catch (error) {
-      console.error('Search failed:', error);
-      setErrorMessage('Search failed. Please try again.');
-      setProducts([]);
-    } finally {
-      setIsLoading(false);
-      setIsLoadingAnimation(false);
-    }
-  };
 
   const handleClearSelections = () => {
     setSelectedPersona(null);
@@ -1455,17 +1515,25 @@ export default function App() {
         <View style={styles.selectionControls}>
           <TouchableOpacity 
             style={styles.selectionButton}
-            onPress={() => setIsPanelOpen(true)}
+            onPress={togglePersonaCycler}
           >
             <Text style={styles.selectionButtonText}>
-              Personalize
+              {selectedPersona ? selectedPersona.name : 'Choose Persona'}
             </Text>
-            {(selectedPersona || selectedMoment) && (
-              <View style={styles.selectionCountBadge}>
-                <Text style={styles.selectionCountText}>
-                  {(selectedPersona ? 1 : 0) + (selectedMoment ? 1 : 0)}
-                </Text>
-              </View>
+            {selectedPersona && (
+              <Text style={styles.selectionEmoji}>{selectedPersona.emoji}</Text>
+            )}
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.lifeMomentButton}
+            onPress={() => setIsPanelOpen(true)}
+          >
+            <Text style={styles.lifeMomentButtonText}>
+              {selectedMoment ? selectedMoment.name : 'Life Moment'}
+            </Text>
+            {selectedMoment && (
+              <Text style={styles.selectionEmoji}>{selectedMoment.emoji}</Text>
             )}
           </TouchableOpacity>
           
@@ -1498,6 +1566,58 @@ export default function App() {
       {/* Add TrendingTicker here */}
       <TrendingTicker items={trendingTickerItems} />
 
+      {/* Add vertical persona cycler */}
+      {showPersonaCycler && (
+        <View style={styles.personaCyclerContainer}>
+          <View style={styles.personaCyclerHeader}>
+            <Text style={styles.personaCyclerTitle}>Who are you?</Text>
+            <TouchableOpacity onPress={togglePersonaCycler} style={styles.closeCyclerButton}>
+              <Text style={styles.closeCyclerText}>×</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <ScrollView style={styles.personaList}>
+            {personas.map(persona => (
+              <TouchableOpacity
+                key={persona.id}
+                style={[
+                  styles.personaCyclerItem,
+                  selectedPersona?.id === persona.id && { 
+                    borderColor: persona.color,
+                    borderWidth: 2,
+                    backgroundColor: `${persona.color}15`,
+                  }
+                ]}
+                onPress={() => {
+                  setSelectedPersona(selectedPersona?.id === persona.id ? null : persona);
+                  setTimeout(() => handleSearch(), 100);
+                }}
+              >
+                <View style={[styles.personaCyclerEmoji, {backgroundColor: `${persona.color}20`}]}>
+                  <Text style={styles.personaCyclerEmojiText}>{persona.emoji}</Text>
+                </View>
+                <View style={styles.personaCyclerInfo}>
+                  <Text style={styles.personaCyclerName}>{persona.name}</Text>
+                  <Text style={styles.personaCyclerDesc}>{persona.description}</Text>
+                </View>
+                {selectedPersona?.id === persona.id && (
+                  <View style={[styles.personaSelectedBadge, { backgroundColor: persona.color }]}>
+                    <Text style={styles.personaSelectedText}>✓</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+          
+          <TouchableOpacity 
+            style={styles.cycleThroughButton}
+            onPress={cycleToNextPersona}
+          >
+            <Text style={styles.cycleThroughText}>Cycle Through</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       <Animated.ScrollView 
         style={[styles.content, darkMode && styles.contentDark]}
         onScroll={Animated.event(
@@ -1506,13 +1626,7 @@ export default function App() {
         )}
         scrollEventThrottle={16}
       >
-        {/* Enhanced Hero Section */}
-        {showHero && (
-          <EnhancedHero 
-            onClose={() => setShowHero(false)}
-            onGetStarted={() => setIsPanelOpen(true)}
-          />
-        )}
+        {/* Hero banner removed */}
         
         {/* Active filters display with modern design */}
         {(selectedPersona || selectedMoment || selectedMood || selectedBundle) && !isLoading && (
@@ -1594,6 +1708,7 @@ export default function App() {
               <ProductCard
                 key={product.id}
                 product={product}
+                onPress={() => handleProductView(product)}
               />
             ))}
           </View>
@@ -1636,6 +1751,32 @@ export default function App() {
             </Text>
           </View>
         )}
+        
+        {/* Add information about connecting to a database */}
+        <View style={styles.dbInfoContainer}>
+          <Text style={styles.dbInfoTitle}>Ready for Production</Text>
+          <Text style={styles.dbInfoText}>
+            This app is prepared to connect to your database service of choice. 
+            Replace the simulated database functions with your actual database 
+            implementation to make this app fully operational.
+          </Text>
+          
+          <Text style={styles.dbInfoSubtitle}>Supported Operations:</Text>
+          <View style={styles.dbOperationsList}>
+            <View style={styles.dbOperation}>
+              <Text style={styles.dbOperationName}>fetchProducts</Text>
+              <Text style={styles.dbOperationDesc}>Fetch products with filters</Text>
+            </View>
+            <View style={styles.dbOperation}>
+              <Text style={styles.dbOperationName}>saveUserPreferences</Text>
+              <Text style={styles.dbOperationDesc}>Save user persona preferences</Text>
+            </View>
+            <View style={styles.dbOperation}>
+              <Text style={styles.dbOperationName}>trackProductView</Text>
+              <Text style={styles.dbOperationDesc}>Track product interactions</Text>
+            </View>
+          </View>
+        </View>
       </Animated.ScrollView>
     </View>
   );
@@ -1772,35 +1913,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 12,
     borderRadius: 10,
+    flex: 1,
+    marginRight: 10,
+  },
+  lifeMomentButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.accent3,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 10,
+    flex: 1,
   },
   selectionButtonText: {
     fontSize: 15,
     fontWeight: '600',
     color: COLORS.light,
+    flex: 1,
   },
-  selectionCountBadge: {
-    backgroundColor: COLORS.light,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 8,
-  },
-  selectionCountText: {
-    color: COLORS.secondary,
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  clearButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginLeft: 10,
-  },
-  clearButtonText: {
-    fontSize: 14,
-    color: COLORS.accent1,
+  lifeMomentButtonText: {
+    fontSize: 15,
     fontWeight: '600',
+    color: COLORS.light,
+    flex: 1,
+  },
+  selectionEmoji: {
+    fontSize: 18,
+    marginLeft: 8,
   },
   
   // Selection Panel Styles
@@ -3164,4 +3303,166 @@ const styles = StyleSheet.create({
   emptySecondaryDark: {
     color: '#BBBBBB',
   },
+  
+  // Add styles for vertical persona cycler
+  personaCyclerContainer: {
+    position: 'fixed',
+    right: 0,
+    top: 120,
+    bottom: 20,
+    width: 280,
+    backgroundColor: COLORS.light,
+    borderTopLeftRadius: 16,
+    borderBottomLeftRadius: 16,
+    zIndex: 100,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: -2, height: 0 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    padding: 15,
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  personaCyclerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eaeaea',
+  },
+  personaCyclerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+  },
+  closeCyclerButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: COLORS.lightGray,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeCyclerText: {
+    fontSize: 20,
+    color: COLORS.midGray,
+    lineHeight: 24,
+  },
+  personaList: {
+    flex: 1,
+  },
+  personaCyclerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 10,
+    backgroundColor: COLORS.light,
+    borderWidth: 1,
+    borderColor: '#eaeaea',
+  },
+  personaCyclerEmoji: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  personaCyclerEmojiText: {
+    fontSize: 20,
+  },
+  personaCyclerInfo: {
+    flex: 1,
+  },
+  personaCyclerName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+    marginBottom: 4,
+  },
+  personaCyclerDesc: {
+    fontSize: 12,
+    color: COLORS.midGray,
+  },
+  personaSelectedBadge: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  personaSelectedText: {
+    color: COLORS.light,
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  cycleThroughButton: {
+    backgroundColor: COLORS.secondary,
+    paddingVertical: 12,
+    borderRadius: 25,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  cycleThroughText: {
+    color: COLORS.light,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  
+  // Database info section
+  dbInfoContainer: {
+    backgroundColor: COLORS.light,
+    borderRadius: 16,
+    padding: 20,
+    marginTop: 30,
+    marginBottom: 30,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    borderWidth: 1,
+    borderColor: '#eaeaea',
+  },
+  dbInfoTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+    marginBottom: 10,
+  },
+  dbInfoText: {
+    fontSize: 15,
+    color: COLORS.midGray,
+    lineHeight: 22,
+    marginBottom: 15,
+  },
+  dbInfoSubtitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.primary,
+    marginBottom: 10,
+  },
+  dbOperationsList: {
+    backgroundColor: COLORS.lightGray,
+    borderRadius: 12,
+    padding: 15,
+  },
+  dbOperation: {
+    marginBottom: 10,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eaeaea',
+  },
+  dbOperationName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.secondary,
+    marginBottom: 4,
+  },
+  dbOperationDesc: {
+    fontSize: 14,
+    color: COLORS.midGray,
+  }
 }); 
