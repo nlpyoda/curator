@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Animated, Image, PanResponder, Vibration } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Animated, Image, PanResponder, Vibration, Easing } from 'react-native';
 
 // For trendy, minimalist color palette
 const COLORS = {
@@ -563,21 +563,171 @@ const InsightBar = ({ label, value, color }) => {
   );
 };
 
-// AR Preview simulation
-const ARPreviewOverlay = ({ product, visible, onClose }) => {
-  const [arStatus, setArStatus] = useState('initializing'); // 'initializing', 'ready', 'error'
+// Product Preview simulation
+const ProductPreviewOverlay = ({ product, visible, onClose }) => {
+  const [previewStatus, setPreviewStatus] = useState('loading'); // 'loading', 'ready', 'error'
+  
+  // Preview images based on product category
+  const getCategoryPreviewImage = (category) => {
+    switch(category) {
+      case 'laptop':
+        return 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=600&auto=format';
+      case 'baby':
+        return 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=600&auto=format';
+      case 'wearables':
+        return 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format';
+      case 'audio':
+        return 'https://images.unsplash.com/photo-1545127398-14699f92334b?w=600&auto=format';
+      default:
+        return 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format';
+    }
+  };
   
   useEffect(() => {
     if (visible) {
-      // Simulate AR initialization
-      setArStatus('initializing');
+      setPreviewStatus('loading');
+      // Simulate loading preview
       setTimeout(() => {
-        // Randomly succeed or fail to simulate real-world conditions
-        const success = Math.random() > 0.3;
-        setArStatus(success ? 'ready' : 'error');
-      }, 1500);
+        setPreviewStatus('ready');
+      }, 800);
     }
   }, [visible]);
+  
+  if (!visible) return null;
+  
+  return (
+    <View style={styles.previewOverlay}>
+      <View style={styles.previewContent}>
+        <Text style={styles.previewTitle}>
+          {previewStatus === 'loading' ? 'Loading Preview...' : 
+           previewStatus === 'ready' ? 'Product Preview' : 
+           'Preview Unavailable'}
+        </Text>
+        
+        <View style={styles.previewImageContainer}>
+          {previewStatus === 'loading' ? (
+            <View style={styles.previewLoading}>
+              <Text style={styles.previewLoadingText}>Preparing preview...</Text>
+            </View>
+          ) : previewStatus === 'ready' ? (
+            <>
+              <Image 
+                source={{ uri: getCategoryPreviewImage(product.category) }}
+                style={styles.previewImage}
+                resizeMode="contain"
+              />
+              <View style={styles.previewProductInfo}>
+                <Text style={styles.previewProductTitle}>{product.title}</Text>
+                <Text style={styles.previewProductPrice}>${product.price}</Text>
+              </View>
+            </>
+          ) : (
+            <View style={styles.previewError}>
+              <Text style={styles.previewErrorEmoji}>⚠️</Text>
+              <Text style={styles.previewErrorText}>
+                Unable to load preview. Please try again.
+              </Text>
+            </View>
+          )}
+        </View>
+        
+        <View style={styles.previewActions}>
+          <TouchableOpacity 
+            style={styles.previewCloseButton} 
+            onPress={onClose}
+          >
+            <Text style={styles.previewCloseText}>Close</Text>
+          </TouchableOpacity>
+          
+          {previewStatus === 'ready' && (
+            <TouchableOpacity 
+              style={styles.previewBuyButton}
+              onPress={() => {
+                onClose();
+                setTimeout(() => openExternalLink(product.link), 300);
+              }}
+            >
+              <Text style={styles.previewBuyText}>Buy Now</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+    </View>
+  );
+};
+
+// Add WebXR AR integration
+const WebXRARViewer = ({ product, visible, onClose }) => {
+  const [arSupported, setArSupported] = useState(false);
+  const [arStatus, setArStatus] = useState('checking'); // 'checking', 'supported', 'unsupported', 'running'
+  const arContainerRef = useRef(null);
+  
+  // Check for WebXR support on component mount
+  useEffect(() => {
+    if (visible) {
+      checkARSupport();
+    }
+  }, [visible]);
+  
+  // Check if AR is supported on this device/browser
+  const checkARSupport = () => {
+    setArStatus('checking');
+    
+    if ('xr' in navigator) {
+      navigator.xr.isSessionSupported('immersive-ar')
+        .then((supported) => {
+          setArSupported(supported);
+          setArStatus(supported ? 'supported' : 'unsupported');
+        })
+        .catch(error => {
+          console.error('Error checking AR support:', error);
+          setArSupported(false);
+          setArStatus('unsupported');
+        });
+    } else {
+      setArSupported(false);
+      setArStatus('unsupported');
+    }
+  };
+  
+  // Start AR session
+  const startARSession = () => {
+    if (!arSupported) return;
+    
+    setArStatus('running');
+    
+    // WebXR session initialization would go here
+    // This requires Three.js or another WebGL library to handle the rendering
+    // For demo purposes, we'll simulate the session
+    
+    // In a real implementation, you would:
+    // 1. Create a WebGL context
+    // 2. Initialize Three.js scene
+    // 3. Request an immersive-ar session
+    // 4. Set up the AR hit testing and model placement
+    
+    // For this demo, we'll just show a placeholder
+    setTimeout(() => {
+      alert('AR session would start here with a 3D model of the product.');
+    }, 1000);
+  };
+  
+  // Get appropriate model URL based on product category
+  const getARModelURL = (category) => {
+    // In a real app, these would be links to actual 3D models (.glb or .usdz files)
+    switch(category) {
+      case 'laptop':
+        return 'https://example.com/models/laptop.glb';
+      case 'baby':
+        return 'https://example.com/models/baby_product.glb';
+      case 'wearables':
+        return 'https://example.com/models/watch.glb';
+      case 'audio':
+        return 'https://example.com/models/headphones.glb';
+      default:
+        return 'https://example.com/models/generic.glb';
+    }
+  };
   
   if (!visible) return null;
   
@@ -585,18 +735,22 @@ const ARPreviewOverlay = ({ product, visible, onClose }) => {
     <View style={styles.arOverlay}>
       <View style={styles.arContent}>
         <Text style={styles.arTitle}>
-          {arStatus === 'initializing' ? 'Initializing AR...' : 
-           arStatus === 'ready' ? 'AR Preview Ready' : 
-           'AR Preview Unavailable'}
+          {arStatus === 'checking' ? 'Checking AR Capability...' : 
+           arStatus === 'supported' ? 'AR Ready' : 
+           arStatus === 'running' ? 'AR Session Active' :
+           'AR Not Supported'}
         </Text>
         
-        <View style={styles.arImageContainer}>
-          {arStatus === 'initializing' ? (
+        <View 
+          style={styles.arViewport}
+          ref={arContainerRef}
+        >
+          {arStatus === 'checking' ? (
             <View style={styles.arLoading}>
-              <Text style={styles.arLoadingText}>Loading...</Text>
+              <Text style={styles.arLoadingText}>Initializing AR...</Text>
             </View>
-          ) : arStatus === 'ready' ? (
-            <>
+          ) : arStatus === 'supported' ? (
+            <View style={styles.arReadyContainer}>
               <Text style={styles.arEmoji}>
                 {product.category === 'laptop' ? '💻' : 
                  product.category === 'baby' ? '👶' : 
@@ -604,52 +758,271 @@ const ARPreviewOverlay = ({ product, visible, onClose }) => {
                  product.category === 'audio' ? '🎧' : '📱'}
               </Text>
               <Text style={styles.arMessage}>
-                Point your camera to see this product in your space
+                Your device supports AR. Tap Start to view {product.title} in your space.
               </Text>
-            </>
+              <TouchableOpacity 
+                style={styles.arStartButton}
+                onPress={startARSession}
+              >
+                <Text style={styles.arStartButtonText}>Start AR Experience</Text>
+              </TouchableOpacity>
+            </View>
+          ) : arStatus === 'running' ? (
+            <View style={styles.arActiveContainer}>
+              <Text style={styles.arActiveText}>
+                AR Session Active. Move your device to scan the environment.
+              </Text>
+            </View>
           ) : (
-            <View style={styles.arError}>
+            <View style={styles.arUnsupportedContainer}>
               <Text style={styles.arErrorEmoji}>⚠️</Text>
               <Text style={styles.arErrorText}>
-                Unable to initialize AR. Please check if your device supports AR and try again.
+                AR is not supported on your device or browser. Try using the latest Chrome on Android or Safari on iOS.
               </Text>
             </View>
           )}
         </View>
         
-        <TouchableOpacity 
-          style={[
-            styles.arCloseButton,
-            arStatus === 'error' && styles.arRetryButton
-          ]} 
-          onPress={arStatus === 'error' ? () => {
-            setArStatus('initializing');
-            setTimeout(() => setArStatus('ready'), 1500);
-          } : onClose}
-        >
-          <Text style={styles.arCloseText}>
-            {arStatus === 'error' ? 'Retry' : 'Close Preview'}
-          </Text>
-        </TouchableOpacity>
-        
-        {arStatus !== 'error' && (
+        <View style={styles.arActions}>
           <TouchableOpacity 
-            style={styles.arHelpButton}
-            onPress={() => alert('AR Help would be shown here')}
+            style={styles.arCloseButton} 
+            onPress={onClose}
           >
-            <Text style={styles.arHelpText}>Need help with AR?</Text>
+            <Text style={styles.arCloseText}>Close AR</Text>
           </TouchableOpacity>
-        )}
+          
+          {arStatus === 'supported' && (
+            <TouchableOpacity 
+              style={styles.arHelpButton}
+              onPress={() => {
+                alert('AR Help: Make sure you have good lighting and a clear space. Move your device around to let it scan the environment before placing objects.');
+              }}
+            >
+              <Text style={styles.arHelpText}>AR Tips</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
     </View>
   );
 };
 
-// Enhanced ProductCard with gesture handling, dynamic theming and haptic feedback
+// Add virtual try-on functionality for apparel
+const VirtualTryOn = ({ product, visible, onClose }) => {
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [processingImage, setProcessingImage] = useState(false);
+  const [processedImage, setProcessedImage] = useState(null);
+  const [error, setError] = useState(null);
+  const fileInputRef = useRef(null);
+  
+  // Reset state when visibility changes
+  useEffect(() => {
+    if (!visible) {
+      setSelectedImage(null);
+      setProcessedImage(null);
+      setError(null);
+    }
+  }, [visible]);
+  
+  // Handle file selection for try-on
+  const handleFileSelect = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    // Check if file is an image
+    if (!file.type.startsWith('image/')) {
+      setError('Please select an image file.');
+      return;
+    }
+    
+    // Check file size (limit to 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image size should be less than 5MB.');
+      return;
+    }
+    
+    // Create a preview URL for the selected image
+    const imageUrl = URL.createObjectURL(file);
+    setSelectedImage(imageUrl);
+    setError(null);
+    
+    // In a real app, you would upload this to a server for processing
+    // For demo, we'll simulate the process
+    processImage(imageUrl);
+  };
+  
+  // Simulate image processing for virtual try-on
+  const processImage = (imageUrl) => {
+    setProcessingImage(true);
+    
+    // In a real app, this would be an API call to an AI model
+    // that overlays the product on the user's image
+    setTimeout(() => {
+      // For demo, we'll just return a mock processed image
+      // In reality, this would come from a ML model that does virtual try-on
+      setProcessedImage(getVirtualTryOnImage(product.category));
+      setProcessingImage(false);
+    }, 2000);
+  };
+  
+  // Get a mock processed image for the demo
+  const getVirtualTryOnImage = (category) => {
+    // These would be actual processed images from the ML model
+    // For demo, we're using static images
+    switch(category) {
+      case 'clothing':
+        return 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&auto=format';
+      case 'shoes':
+        return 'https://images.unsplash.com/photo-1463100099107-aa0980c362e6?w=600&auto=format';
+      case 'accessories':
+        return 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=600&auto=format';
+      default:
+        return 'https://images.unsplash.com/photo-1586363104862-3a5e2ab60d99?w=600&auto=format';
+    }
+  };
+  
+  // Trigger file input click
+  const selectImage = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+  
+  // Take a photo using webcam (simplified for demo)
+  const takePhoto = () => {
+    alert('In a real app, this would open your camera to take a photo for virtual try-on.');
+    // For demo, we'll just use a mock image
+    setSelectedImage('https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600&auto=format');
+    processImage('https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600&auto=format');
+  };
+  
+  if (!visible) return null;
+  
+  return (
+    <View style={styles.tryOnOverlay}>
+      <View style={styles.tryOnContent}>
+        <Text style={styles.tryOnTitle}>
+          Virtual Try-On: {product.title}
+        </Text>
+        
+        <View style={styles.tryOnWorkspace}>
+          {!selectedImage ? (
+            // Image selection UI
+            <View style={styles.tryOnUploadArea}>
+              <Text style={styles.tryOnInstructions}>
+                Upload a photo or take a picture to see how this item looks on you.
+              </Text>
+              
+              <View style={styles.tryOnButtonsRow}>
+                <TouchableOpacity 
+                  style={styles.tryOnButton}
+                  onPress={selectImage}
+                >
+                  <Text style={styles.tryOnButtonText}>Upload Photo</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.tryOnButton}
+                  onPress={takePhoto}
+                >
+                  <Text style={styles.tryOnButtonText}>Take Photo</Text>
+                </TouchableOpacity>
+              </View>
+              
+              {error && (
+                <Text style={styles.tryOnError}>{error}</Text>
+              )}
+              
+              <input
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={handleFileSelect}
+                ref={fileInputRef}
+              />
+            </View>
+          ) : processingImage ? (
+            // Processing indicator
+            <View style={styles.tryOnProcessing}>
+              <Text style={styles.tryOnProcessingText}>
+                Processing your image...
+              </Text>
+              <View style={styles.tryOnLoader} />
+            </View>
+          ) : processedImage ? (
+            // Display processed image with try-on
+            <View style={styles.tryOnResult}>
+              <Image 
+                source={{ uri: processedImage }}
+                style={styles.tryOnResultImage}
+                resizeMode="contain"
+              />
+              <Text style={styles.tryOnResultCaption}>
+                Here's how {product.title} looks on you!
+              </Text>
+              <View style={styles.tryOnActionRow}>
+                <TouchableOpacity 
+                  style={styles.tryOnShareButton}
+                  onPress={() => alert('Share functionality would be implemented here.')}
+                >
+                  <Text style={styles.tryOnShareButtonText}>Share</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={styles.tryOnTryAgainButton}
+                  onPress={() => {
+                    setSelectedImage(null);
+                    setProcessedImage(null);
+                  }}
+                >
+                  <Text style={styles.tryOnTryAgainButtonText}>Try Another Photo</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : (
+            // Fallback
+            <View style={styles.tryOnError}>
+              <Text>Something went wrong. Please try again.</Text>
+            </View>
+          )}
+        </View>
+        
+        <View style={styles.tryOnFooter}>
+          <TouchableOpacity 
+            style={styles.tryOnCloseButton} 
+            onPress={onClose}
+          >
+            <Text style={styles.tryOnCloseButtonText}>Close</Text>
+          </TouchableOpacity>
+          
+          {processedImage && (
+            <TouchableOpacity 
+              style={styles.tryOnBuyButton}
+              onPress={() => {
+                onClose();
+                setTimeout(() => openExternalLink(product.link), 300);
+              }}
+            >
+              <Text style={styles.tryOnBuyButtonText}>Buy This Look</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+    </View>
+  );
+};
+
+// Update the ProductCard component to use WebXRARViewer
 const ProductCard = ({ product, onPress, isTrending = false }) => {
   const [isFlipped, setIsFlipped] = useState(false);
-  const [showARPreview, setShowARPreview] = useState(false);
+  const [showARView, setShowARView] = useState(false);
+  const [showProductPreview, setShowProductPreview] = useState(false);
+  const [showVirtualTryOn, setShowVirtualTryOn] = useState(false);
   const { title, price, rating, description, whyBuy, insights } = product;
+  
+  // Check if product is apparel and can be tried on
+  const isApparel = product.category === 'clothing' || 
+                   product.category === 'shoes' || 
+                   product.category === 'accessories';
   
   // Calculate dynamic theme color based on product
   const themeColor = insights && insights.length > 0 
@@ -664,21 +1037,16 @@ const ProductCard = ({ product, onPress, isTrending = false }) => {
       // Swipe left to flip
       if (gestureState.dx < -50) {
         handleFlip();
-        // Simulate haptic feedback
-        try {
-          Vibration.vibrate(10);
-        } catch (e) {
-          console.log('Vibration not supported');
-        }
+        try { Vibration.vibrate(10); } catch (e) {}
       }
-      // Swipe up to show AR preview
+      // Swipe up to show AR view
       else if (gestureState.dy < -50) {
-        handleARPreview();
-        try {
-          Vibration.vibrate(15);
-        } catch (e) {
-          console.log('Vibration not supported');
+        if (isApparel) {
+          handleVirtualTryOn();
+        } else {
+          handleARView();
         }
+        try { Vibration.vibrate(15); } catch (e) {}
       }
     },
   });
@@ -690,13 +1058,19 @@ const ProductCard = ({ product, onPress, isTrending = false }) => {
     }
   };
   
-  const handleARPreview = () => {
-    setShowARPreview(true);
-    try {
-      Vibration.vibrate(10);
-    } catch (e) {
-      console.log('Vibration not supported');
-    }
+  const handleARView = () => {
+    setShowARView(true);
+    try { Vibration.vibrate(10); } catch (e) {}
+  };
+  
+  const handleProductPreview = () => {
+    setShowProductPreview(true);
+    try { Vibration.vibrate(10); } catch (e) {}
+  };
+  
+  const handleVirtualTryOn = () => {
+    setShowVirtualTryOn(true);
+    try { Vibration.vibrate(10); } catch (e) {}
   };
   
   return (
@@ -704,14 +1078,14 @@ const ProductCard = ({ product, onPress, isTrending = false }) => {
       style={[
         styles.productCard,
         isTrending ? styles.trendingProductCard : null,
-        { borderColor: `${themeColor}30` } // Dynamic color theme
+        { borderColor: `${themeColor}30` } 
       ]}
       onPress={handleFlip}
       activeOpacity={0.9}
       {...panResponder.panHandlers}
     >
       {!isFlipped ? (
-        // Front of card with Uniqlo-inspired clean design elements
+        // Front of card
         <View style={styles.cardContent}>
           <View style={styles.cardImageContainer}>
             <View style={[styles.cardImagePlaceholder, {backgroundColor: `${themeColor}10`}]}>
@@ -719,7 +1093,10 @@ const ProductCard = ({ product, onPress, isTrending = false }) => {
                 {product.category === 'laptop' ? '💻' : 
                  product.category === 'baby' ? '👶' : 
                  product.category === 'wearables' ? '⌚' :
-                 product.category === 'audio' ? '🎧' : '📱'}
+                 product.category === 'audio' ? '🎧' :
+                 product.category === 'clothing' ? '👕' :
+                 product.category === 'shoes' ? '👟' :
+                 product.category === 'accessories' ? '👜' : '📱'}
               </Text>
             </View>
             
@@ -727,20 +1104,40 @@ const ProductCard = ({ product, onPress, isTrending = false }) => {
               <Text style={styles.ratingText}>★ {rating}</Text>
             </View>
             
-            {/* Uniqlo-inspired clean price tag */}
             <View style={[styles.priceTag, {backgroundColor: themeColor}]}>
               <Text style={styles.priceTagText}>${price.toLocaleString()}</Text>
             </View>
             
-            {/* AR Preview button */}
+            {/* Show either AR or Try-On button based on product type */}
+            {isApparel ? (
+              <TouchableOpacity 
+                style={styles.tryOnButton}
+                onPress={handleVirtualTryOn}
+              >
+                <Text style={styles.tryOnButtonText}>Try On</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity 
+                style={styles.arButton}
+                onPress={handleARView}
+              >
+                <Text style={styles.arButtonText}>AR View</Text>
+              </TouchableOpacity>
+            )}
+            
+            {/* Preview button */}
             <TouchableOpacity 
-              style={styles.arButton}
-              onPress={handleARPreview}
+              style={[
+                styles.previewButton,
+                isApparel && { right: 70 } // Adjust position if Try On button is present
+              ]}
+              onPress={handleProductPreview}
             >
-              <Text style={styles.arButtonText}>AR View</Text>
+              <Text style={styles.previewButtonText}>Preview</Text>
             </TouchableOpacity>
           </View>
           
+          {/* Rest of the front card content remains the same */}
           <View style={styles.uniqloStyleHeader}>
             <Text style={styles.uniqloStyleCategory}>{product.category.toUpperCase()}</Text>
             <Text style={styles.productTitle}>{title}</Text>
@@ -821,8 +1218,9 @@ const ProductCard = ({ product, onPress, isTrending = false }) => {
           </TouchableOpacity>
         </View>
       ) : (
-        // Back of card - product details view with Uniqlo-inspired cleanliness
+        // Back of card content
         <View style={styles.cardContentBack}>
+          {/* Back card content remains the same */}
           <View style={[styles.backHeader, {backgroundColor: `${themeColor}15`}]}>
             <View style={styles.backHeaderContent}>
               <TouchableOpacity onPress={handleFlip}>
@@ -883,7 +1281,7 @@ const ProductCard = ({ product, onPress, isTrending = false }) => {
             
             <View style={styles.gestureHintContainer}>
               <Text style={styles.gestureHintText}>
-                Swipe up for AR preview
+                Swipe up for {isApparel ? 'virtual try-on' : 'AR view'}
               </Text>
             </View>
           </ScrollView>
@@ -893,7 +1291,7 @@ const ProductCard = ({ product, onPress, isTrending = false }) => {
               style={[styles.buyNowButton, {backgroundColor: themeColor}]}
               onPress={() => {
                 try { Vibration.vibrate(20); } catch (e) {}
-                window.open(product.link, '_blank');
+                openExternalLink(product.link);
               }}
             >
               <Text style={styles.buyNowButtonText}>Buy Now</Text>
@@ -902,1023 +1300,611 @@ const ProductCard = ({ product, onPress, isTrending = false }) => {
         </View>
       )}
       
-      {/* AR Preview Overlay */}
-      <ARPreviewOverlay 
+      {/* AR Viewer Overlay */}
+      <WebXRARViewer 
         product={product}
-        visible={showARPreview}
-        onClose={() => setShowARPreview(false)}
+        visible={showARView}
+        onClose={() => setShowARView(false)}
+      />
+      
+      {/* Product Preview Overlay */}
+      <ProductPreviewOverlay 
+        product={product}
+        visible={showProductPreview}
+        onClose={() => setShowProductPreview(false)}
+      />
+      
+      {/* Virtual Try-On Overlay */}
+      <VirtualTryOn 
+        product={product}
+        visible={showVirtualTryOn}
+        onClose={() => setShowVirtualTryOn(false)}
       />
     </TouchableOpacity>
   );
 };
 
-// Selection Panel Component
-const SelectionPanel = ({ 
-  personas, 
-  lifeMoments, 
-  selectedPersona, 
-  selectedMoment,
-  onSelectPersona,
-  onSelectMoment,
-  onClose,
-  isOpen 
-}) => {
+// Add Visual Search feature
+const VisualSearch = ({ visible, onClose, onSearch }) => {
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [detectedObjects, setDetectedObjects] = useState([]);
+  const [selectedObjects, setSelectedObjects] = useState([]);
+  const [analyzeStage, setAnalyzeStage] = useState('initial'); // initial, analyzing, detected, searching
+  const [error, setError] = useState(null);
+  const fileInputRef = useRef(null);
   
-  return (
-    <Animated.View 
-      style={[
-        styles.selectionPanel,
-        { 
-          height: isOpen ? '100%' : 0, 
-          opacity: isOpen ? 1 : 0,
-          transform: [{ 
-            translateY: isOpen ? 0 : 20 
-          }]
-        }
-      ]}
-    >
-      <View style={styles.panelBackdrop} />
-      <View style={styles.panelContent}>
-        <View style={styles.panelHandle} />
-        
-        <View style={styles.panelHeader}>
-          <Text style={styles.panelTitle}>Your Vibe</Text>
-          <TouchableOpacity style={styles.closePanel} onPress={onClose}>
-            <Text style={styles.closePanelText}>×</Text>
-          </TouchableOpacity>
-        </View>
-        
-        <View style={styles.panelSections}>
-          {/* Personas Section */}
-          <View style={styles.panelSection}>
-            <Text style={styles.sectionTitle}>Who are you?</Text>
-            
-            <View style={styles.personaGrid}>
-              {personas.map(persona => (
-                <TouchableOpacity
-                  key={persona.id}
-                  style={[
-                    styles.personaItem,
-                    selectedPersona?.id === persona.id && { 
-                      borderColor: persona.color,
-                      borderWidth: 2,
-                      backgroundColor: `${persona.color}15`,
-                    }
-                  ]}
-                  onPress={() => onSelectPersona(persona)}
-                  activeOpacity={0.7}
-                >
-                  <View style={[styles.emojiCircle, {backgroundColor: `${persona.color}20`}]}>
-                    <Text style={styles.itemEmoji}>{persona.emoji}</Text>
-                  </View>
-                  <Text style={styles.itemName}>{persona.name}</Text>
-                  
-                  {selectedPersona?.id === persona.id && (
-                    <View style={[styles.selectedBadge, { backgroundColor: persona.color }]}>
-                      <Text style={styles.selectedBadgeText}>✓</Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-          
-          {/* Life Moments Section */}
-          <View style={styles.panelSection}>
-            <Text style={styles.sectionTitle}>Life moment?</Text>
-            
-            <View style={styles.momentGrid}>
-              {lifeMoments.map(moment => (
-                <TouchableOpacity
-                  key={moment.id}
-                  style={[
-                    styles.momentItem,
-                    selectedMoment?.id === moment.id && { 
-                      borderColor: moment.color,
-                      borderWidth: 2,
-                      backgroundColor: `${moment.color}15`,
-                    }
-                  ]}
-                  onPress={() => onSelectMoment(moment)}
-                  activeOpacity={0.7}
-                >
-                  <View style={[styles.emojiCircle, {backgroundColor: `${moment.color}20`}]}>
-                    <Text style={styles.itemEmoji}>{moment.emoji}</Text>
-                  </View>
-                  <Text style={styles.itemName}>{moment.name}</Text>
-                  
-                  {selectedMoment?.id === moment.id && (
-                    <View style={[styles.selectedBadge, { backgroundColor: moment.color }]}>
-                      <Text style={styles.selectedBadgeText}>✓</Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        </View>
-        
-        <View style={styles.panelFooter}>
-          <TouchableOpacity 
-            style={styles.applyButton}
-            onPress={onClose}
-          >
-            <Text style={styles.applyButtonText}>Find My Perfect Products</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </Animated.View>
-  );
-};
-
-// Trending products section component
-const TrendingSection = ({ lifeMoment, onProductSelect }) => {
-  if (!lifeMoment || !trendingByLifeMoment[lifeMoment.id]) return null;
-  
-  const trendingProducts = trendingByLifeMoment[lifeMoment.id];
-  
-  return (
-    <View style={styles.trendingSection}>
-      <View style={styles.trendingHeader}>
-        <View style={[styles.trendingBadge, { backgroundColor: lifeMoment.color }]}>
-          <Text style={styles.trendingBadgeText}>#trending</Text>
-        </View>
-        <Text style={styles.trendingTitle}>For {lifeMoment.name}s</Text>
-      </View>
-      
-      <Text style={styles.trendingSubtitle}>
-        What others in your situation are buying right now
-      </Text>
-      
-      <ScrollView 
-        horizontal 
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.trendingScroll}
-      >
-        {trendingProducts.map(product => (
-          <TouchableOpacity 
-            key={product.id}
-            style={styles.trendingCard}
-            onPress={() => onProductSelect(product)}
-            activeOpacity={0.8}
-          >
-            <View style={styles.trendingCardContent}>
-              <View style={styles.trendingImagePlaceholder}>
-                <Text style={styles.trendingEmoji}>
-                  {product.category === 'baby' ? '👶' : 
-                   product.category === 'electronics' ? '📱' :
-                   product.category === 'audio' ? '🎧' :
-                   product.category === 'furniture' ? '🪑' :
-                   product.category === 'travel' ? '✈️' : '🛍️'}
-                </Text>
-              </View>
-              
-              <Text style={styles.trendingProductTitle} numberOfLines={2}>
-                {product.title}
-              </Text>
-              
-              <View style={styles.trendingPriceRow}>
-                <Text style={styles.trendingPrice}>
-                  ${product.price.toLocaleString()}
-                </Text>
-                <Text style={styles.trendingRatingText}>★ {product.rating}</Text>
-              </View>
-              
-              <View style={styles.trendingSocialProof}>
-                <View style={styles.trendingAvatarGroup}>
-                  <View style={[styles.trendingAvatar, {backgroundColor: COLORS.accent1}]} />
-                  <View style={[styles.trendingAvatar, {backgroundColor: COLORS.accent2, marginLeft: -8}]} />
-                  <View style={[styles.trendingAvatar, {backgroundColor: COLORS.accent3, marginLeft: -8}]} />
-                </View>
-                <Text style={styles.trendingSocialText}>+149 bought recently</Text>
-              </View>
-              
-              <TouchableOpacity style={styles.trendingViewButton}>
-                <Text style={styles.trendingViewButtonText}>View</Text>
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-    </View>
-  );
-};
-
-// Visual Category Entry Points
-const CategoryEntryPoints = ({ categories, onSelect }) => {
-  return (
-    <View style={styles.categoryEntryContainer}>
-      <View style={styles.uniqloHeader}>
-        <Text style={styles.uniqloHeaderText}>CATEGORIES</Text>
-      </View>
-      <ScrollView 
-        horizontal 
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.categoryScroll}
-        decelerationRate="fast"
-        snapToInterval={80}
-      >
-        {categories.map(category => (
-          <TouchableOpacity
-            key={category.id}
-            style={styles.categoryStory}
-            onPress={() => {
-              try { Vibration.vibrate(5); } catch (e) {}
-              onSelect(category);
-            }}
-            activeOpacity={0.8}
-          >
-            <View style={styles.categoryStoryRing}>
-              <View style={styles.categoryStoryInner}>
-                <Text style={styles.categoryStoryEmoji}>{category.emoji}</Text>
-              </View>
-            </View>
-            <Text style={styles.categoryStoryName}>{category.name}</Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-    </View>
-  );
-};
-
-// Add a function to get taglines for categories
-const getCategoryTagline = (categoryId) => {
-  switch(categoryId) {
-    case 'tech':
-      return 'Powerful. Versatile. Essential.';
-    case 'audio':
-      return 'Hear what you\'ve been missing.';
-    case 'home':
-      return 'Smart solutions for everyday living.';
-    case 'travel':
-      return 'Go further with premium gear.';
-    case 'fitness':
-      return 'Elevate your performance.';
-    case 'beauty':
-      return 'Refined essentials for self-care.';
-    default:
-      return 'Discover the best products.';
-  }
-};
-
-// TrendRadar Component
-const TrendRadar = ({ items, onItemPress }) => {
-  // Swipe gesture handling
-  const [currentPage, setCurrentPage] = useState(0);
-  const pageSize = 4;
-  const pageCount = Math.ceil(items.length / pageSize);
-  
-  const swipeResponder = PanResponder.create({
-    onStartShouldSetPanResponder: () => true,
-    onMoveShouldSetPanResponder: () => true,
-    onPanResponderRelease: (evt, gestureState) => {
-      if (gestureState.dx > 50 && currentPage > 0) {
-        setCurrentPage(currentPage - 1);
-        try { Vibration.vibrate(5); } catch (e) {}
-      } else if (gestureState.dx < -50 && currentPage < pageCount - 1) {
-        setCurrentPage(currentPage + 1);
-        try { Vibration.vibrate(5); } catch (e) {}
-      }
-    },
-  });
-  
-  const paginatedItems = items.slice(
-    currentPage * pageSize, 
-    (currentPage + 1) * pageSize
-  );
-  
-  return (
-    <View 
-      style={styles.trendRadarContainer}
-      {...swipeResponder.panHandlers}
-    >
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Explore</Text>
-        <View style={styles.pagination}>
-          {Array(pageCount).fill(0).map((_, idx) => (
-            <View 
-              key={idx} 
-              style={[
-                styles.paginationDot, 
-                idx === currentPage && styles.paginationDotActive
-              ]} 
-            />
-          ))}
-        </View>
-      </View>
-      
-      <View style={styles.exploreGrid}>
-        {paginatedItems.map(item => (
-          <TouchableOpacity 
-            key={item.id}
-            style={styles.exploreItem}
-            onPress={() => {
-              try { Vibration.vibrate(10); } catch (e) {}
-              onItemPress(item);
-            }}
-            activeOpacity={0.9}
-          >
-            <Image 
-              source={{ uri: item.image }} 
-              style={styles.exploreImage} 
-              resizeMode="cover"
-            />
-            {item.status === 'viral' && (
-              <View style={styles.trendingBadge}>
-                <Text style={styles.trendingBadgeText}>🔥 TRENDING</Text>
-              </View>
-            )}
-            <View style={styles.exploreInfo}>
-              <Text style={styles.exploreCategory}>{item.category}</Text>
-              <Text style={styles.exploreTitle} numberOfLines={1}>
-                {item.title}
-              </Text>
-              <Text style={styles.exploreChange}>
-                ↑ {item.percentageChange}%
-              </Text>
-            </View>
-          </TouchableOpacity>
-        ))}
-      </View>
-      
-      <View style={styles.swipeIndicator}>
-        <Text style={styles.swipeIndicatorText}>
-          Swipe to see more trending items
-        </Text>
-      </View>
-    </View>
-  );
-};
-
-// Social Bundles Component
-const SocialBundles = ({ bundles, onBundlePress }) => {
-  return (
-    <View style={styles.socialBundlesContainer}>
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Collections</Text>
-        <TouchableOpacity>
-          <Text style={styles.seeAllButton}>See All</Text>
-        </TouchableOpacity>
-      </View>
-      
-      <ScrollView 
-        horizontal 
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.bundlesScroll}
-      >
-        {bundles.map(bundle => (
-          <TouchableOpacity 
-            key={bundle.id}
-            style={styles.bundleCard}
-            onPress={() => onBundlePress(bundle)}
-            activeOpacity={0.9}
-          >
-            <Image 
-              source={{ uri: bundle.coverImage }}
-              style={styles.bundleCover}
-              resizeMode="cover"
-            />
-            <View style={styles.bundleCreatorContainer}>
-              <Image 
-                source={{ uri: bundle.creator.avatar }}
-                style={styles.bundleCreatorAvatar}
-              />
-              <View style={styles.bundleTextContainer}>
-                <Text style={styles.bundleTitle}>{bundle.title}</Text>
-                <Text style={styles.bundleCreatorName}>
-                  {bundle.creator.name} {bundle.creator.verified && '✓'}
-                </Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-    </View>
-  );
-};
-
-// Shop by Vibe (Mood Boards) Component
-const ShopByVibe = ({ moods, onMoodSelect }) => {
-  return (
-    <View style={styles.shopByVibeContainer}>
-      <View style={styles.sectionHeaderRow}>
-        <View style={styles.sectionTitleContainer}>
-          <Text style={styles.sectionIcon}>✨</Text>
-          <Text style={styles.sectionTitle}>Shop by Vibe</Text>
-        </View>
-        <TouchableOpacity>
-          <Text style={styles.sectionAction}>View all</Text>
-        </TouchableOpacity>
-      </View>
-      
-      <Text style={styles.sectionSubtitle}>Explore products by aesthetic style</Text>
-      
-      <View style={styles.moodsGrid}>
-        {moods.map(mood => (
-          <TouchableOpacity 
-            key={mood.id}
-            style={styles.moodCard}
-            onPress={() => onMoodSelect(mood)}
-            activeOpacity={0.9}
-          >
-            <Image 
-              source={{ uri: mood.coverImage }}
-              style={styles.moodCover}
-              resizeMode="cover"
-            />
-            <View style={[styles.moodOverlay, { backgroundColor: mood.color + '80' }]}>
-              <Text style={styles.moodEmoji}>{mood.emoji}</Text>
-              <Text style={styles.moodName}>{mood.name}</Text>
-            </View>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </View>
-  );
-};
-
-// Enhanced Hero Section with imagery
-const EnhancedHero = ({ socialData, onClose, onGetStarted }) => {
-  return (
-    <View style={styles.enhancedHeroContainer}>
-      <View style={styles.heroImageStrip}>
-        <Image 
-          source={{ uri: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=100&auto=format' }}
-          style={styles.heroImage}
-          resizeMode="cover"
-        />
-        <Image 
-          source={{ uri: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format' }}
-          style={styles.heroImage}
-          resizeMode="cover"
-        />
-        <Image 
-          source={{ uri: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&auto=format' }}
-          style={styles.heroImage}
-          resizeMode="cover"
-        />
-        <Image 
-          source={{ uri: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format' }}
-          style={styles.heroImage}
-          resizeMode="cover"
-        />
-        <Image 
-          source={{ uri: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&auto=format' }}
-          style={styles.heroImage}
-          resizeMode="cover"
-        />
-      </View>
-      
-      <View style={styles.heroContent}>
-        <Text style={styles.heroTitle}>
-          Join 10,000+ people finding their perfect products
-        </Text>
-        <Text style={styles.heroSubtitle}>
-          Personalized recommendations based on your style, needs, and vibe
-        </Text>
-        <TouchableOpacity style={styles.getStartedButton} onPress={onGetStarted}>
-          <Text style={styles.getStartedButtonText}>Get Started</Text>
-        </TouchableOpacity>
-      </View>
-      
-      <TouchableOpacity style={styles.closeHeroButton} onPress={onClose}>
-        <Text style={styles.closeHeroText}>×</Text>
-      </TouchableOpacity>
-    </View>
-  );
-};
-
-// Add trending ticker data
-const trendingTickerItems = [
-  { text: "Sony WH-1000XM5 in high demand this week", color: COLORS.primary },
-  { text: "Away Luggage favored by design professionals", color: COLORS.primary },
-  { text: "Dyson's premium air purifier now trending", color: COLORS.primary },
-  { text: "MacBook Air M2 most coveted laptop of the season", color: COLORS.primary },
-  { text: "Curated essentials for discerning new parents", color: COLORS.primary },
-];
-
-// Add TrendingTicker component
-const TrendingTicker = ({ items }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const fadeAnim = useState(new Animated.Value(1))[0];
-  const slideAnim = useState(new Animated.Value(0))[0];
-  
+  // Reset state when visibility changes
   useEffect(() => {
-    const interval = setInterval(() => {
-      // Fade and slide out
-      Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: 400,
-          useNativeDriver: true
-        }),
-        Animated.timing(slideAnim, {
-          toValue: -20,
-          duration: 400,
-          useNativeDriver: true
-        })
-      ]).start(() => {
-        // Change content
-        setCurrentIndex((prevIndex) => (prevIndex + 1) % items.length);
-        slideAnim.setValue(20);
-        
-        // Fade and slide in
-        Animated.parallel([
-          Animated.timing(fadeAnim, {
-            toValue: 1,
-            duration: 400,
-            useNativeDriver: true
-          }),
-          Animated.timing(slideAnim, {
-            toValue: 0,
-            duration: 400,
-            useNativeDriver: true
-          })
-        ]).start();
-      });
-    }, 5000);
-    
-    return () => clearInterval(interval);
-  }, []);
-  
-  const currentItem = items[currentIndex];
-  
-  return (
-    <View style={styles.tickerContainer}>
-      <View style={styles.tickerProgress}>
-        {items.map((_, idx) => (
-          <View 
-            key={idx} 
-            style={[
-              styles.tickerProgressDot, 
-              idx === currentIndex && styles.tickerProgressDotActive
-            ]} 
-          />
-        ))}
-      </View>
-      <View style={styles.tickerContent}>
-        <View style={styles.tickerIconContainer}>
-          <Text style={styles.tickerIcon}>✦</Text>
-        </View>
-        <Animated.View 
-          style={[
-            styles.tickerTextContainer, 
-            { 
-              opacity: fadeAnim,
-              transform: [{ translateX: slideAnim }]
-            }
-          ]}
-        >
-          <Text style={styles.tickerLabel}>TRENDING</Text>
-          <Text style={styles.tickerText}>
-            {currentItem.text}
-          </Text>
-        </Animated.View>
-      </View>
-    </View>
-  );
-};
-
-// Add this right after the imports
-const useSimulatedSpeechRecognition = () => {
-  const [isListening, setIsListening] = useState(false);
-  const [transcript, setTranscript] = useState('');
-  
-  const startListening = () => {
-    setIsListening(true);
-    // Simulate recognition with timeout
-    setTimeout(() => {
-      setIsListening(false);
-      // Simulate random transcripts
-      const possibleTranscripts = [
-        "show me tech products",
-        "find audio devices",
-        "search for laptops",
-        "show trending items"
-      ];
-      const randomTranscript = possibleTranscripts[
-        Math.floor(Math.random() * possibleTranscripts.length)
-      ];
-      setTranscript(randomTranscript);
-    }, 2000);
-  };
-  
-  const stopListening = () => {
-    setIsListening(false);
-  };
-  
-  return {
-    transcript,
-    isListening,
-    startListening,
-    stopListening,
-    resetTranscript: () => setTranscript('')
-  };
-};
-
-// Now update the VoiceNavigation component to use the simulated hook
-const VoiceNavigation = ({ onCommand }) => {
-  const [error, setError] = useState('');
-  const { 
-    transcript, 
-    isListening, 
-    startListening, 
-    stopListening,
-    resetTranscript
-  } = useSimulatedSpeechRecognition();
-
-  // Watch for transcript changes and process commands
-  useEffect(() => {
-    if (transcript && !isListening) {
-      // Process command
-      if (transcript.includes("tech")) {
-        onCommand && onCommand({ type: 'category', value: 'tech' });
-      } else if (transcript.includes("audio")) {
-        onCommand && onCommand({ type: 'category', value: 'audio' });
-      } else if (transcript.includes("laptop")) {
-        onCommand && onCommand({ type: 'category', value: 'tech' });
-      } else if (transcript.includes("trending")) {
-        onCommand && onCommand({ type: 'trending', value: true });
-      } else {
-        setError('Command not recognized. Try again.');
-        setTimeout(() => setError(''), 3000);
-      }
-      
-      // Reset transcript after processing
-      setTimeout(() => resetTranscript(), 3000);
+    if (!visible) {
+      resetState();
     }
-  }, [transcript, isListening]);
-
-  return (
-    <View style={styles.voiceNavContainer}>
-      <TouchableOpacity 
-        style={[
-          styles.voiceButton, 
-          isListening && styles.voiceButtonActive
-        ]}
-        onPress={isListening ? stopListening : startListening}
-      >
-        <Text style={styles.voiceButtonIcon}>🎤</Text>
-      </TouchableOpacity>
-      
-      {isListening && (
-        <View style={styles.listeningIndicator}>
-          <Text style={styles.listeningText}>Listening...</Text>
-        </View>
-      )}
-      
-      {transcript && !error && !isListening && (
-        <View style={styles.transcriptContainer}>
-          <Text style={styles.transcriptText}>"{transcript}"</Text>
-        </View>
-      )}
-      
-      {error && (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
-        </View>
-      )}
-    </View>
-  );
-};
-
-export default function App() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [products, setProducts] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(null);
-  const [selectedPersona, setSelectedPersona] = useState(null);
-  const [selectedMoment, setSelectedMoment] = useState(null);
-  const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [scrollY] = useState(new Animated.Value(0));
-  const [selectedTrendingProduct, setSelectedTrendingProduct] = useState(null);
+  }, [visible]);
   
-  // New states for social features
-  const [selectedMood, setSelectedMood] = useState(null);
-  const [selectedBundle, setSelectedBundle] = useState(null);
-  const [darkMode, setDarkMode] = useState(false);
-  const [isDiscoveryMode, setIsDiscoveryMode] = useState(true);
-  const [isLoadingAnimation, setIsLoadingAnimation] = useState(false);
-  
-  // Add state for the new vertical persona cycler
-  const [showPersonaCycler, setShowPersonaCycler] = useState(false);
-  
-  // Add new state for life moment cycler
-  const [showMomentCycler, setShowMomentCycler] = useState(false);
-  
-  // Now add a simulated database connection function that we'll use later
-  const connectToDatabase = () => {
-    console.log('Connecting to database...');
-    // In a real app, this would establish a connection to your database
-    // This would use something like Firebase, MongoDB, or another database service
-    return {
-      fetchProducts: async (query, filters) => {
-        console.log('Fetching products from DB with query:', query, 'and filters:', filters);
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 800));
-        return mockProducts.filter(product => 
-          !query || product.title.toLowerCase().includes(query.toLowerCase())
-        );
-      },
-      saveUserPreferences: async (userId, preferences) => {
-        console.log('Saving user preferences to DB:', preferences);
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        return { success: true };
-      },
-      trackProductView: async (productId, userId) => {
-        console.log('Tracking product view in DB:', productId);
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 300));
-        return { success: true };
-      }
-    };
+  // Reset all state
+  const resetState = () => {
+    setSelectedImage(null);
+    setDetectedObjects([]);
+    setSelectedObjects([]);
+    setAnalyzeStage('initial');
+    setError(null);
   };
-
-  // Simulated database instance
-  const db = React.useMemo(() => connectToDatabase(), []);
-
-  // Update the search function to use our simulated database
-  const handleSearch = async () => {
-    if (!searchQuery.trim() && !selectedPersona && !selectedMoment && !selectedMood && !selectedBundle) {
-      setErrorMessage('Please enter a search query or select a persona/life moment/vibe.');
+  
+  // Handle file selection for visual search
+  const handleFileSelect = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    // Check if file is an image
+    if (!file.type.startsWith('image/')) {
+      setError('Please select an image file.');
       return;
     }
     
+    // Check file size (limit to 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image size should be less than 5MB.');
+      return;
+    }
+    
+    // Create a preview URL for the selected image
+    const imageUrl = URL.createObjectURL(file);
+    setSelectedImage(imageUrl);
+    setAnalyzeStage('analyzing');
+    setError(null);
+    
+    // In a real app, you would upload this to a server for object detection
+    // For demo, we'll simulate the process
+    analyzeImage(imageUrl);
+  };
+  
+  // Simulate image analysis for object detection
+  const analyzeImage = (imageUrl) => {
+    // In a real app, this would be an API call to an AI model
+    // that detects objects in the image
+    setTimeout(() => {
+      // Simulate detected objects
+      const mockObjects = [
+        { id: '1', label: 'Shirt', confidence: 0.92, boundingBox: { x: 120, y: 80, width: 200, height: 220 } },
+        { id: '2', label: 'Jeans', confidence: 0.88, boundingBox: { x: 130, y: 320, width: 180, height: 250 } },
+        { id: '3', label: 'Shoes', confidence: 0.85, boundingBox: { x: 150, y: 580, width: 140, height: 90 } },
+        { id: '4', label: 'Watch', confidence: 0.78, boundingBox: { x: 350, y: 180, width: 60, height: 60 } }
+      ];
+      setDetectedObjects(mockObjects);
+      setAnalyzeStage('detected');
+    }, 2000);
+  };
+  
+  // Handle object selection toggle
+  const toggleObjectSelection = (objectId) => {
+    if (selectedObjects.includes(objectId)) {
+      setSelectedObjects(selectedObjects.filter(id => id !== objectId));
+    } else {
+      setSelectedObjects([...selectedObjects, objectId]);
+    }
+  };
+  
+  // Trigger file input click
+  const selectImage = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+  
+  // Take a screenshot
+  const takeScreenshot = () => {
+    alert('In a real app, this would capture a screenshot of your current screen.');
+    // For demo, we'll just use a mock image
+    setSelectedImage('https://images.unsplash.com/photo-1479064555552-3ef4979f8908?w=600&auto=format');
+    setAnalyzeStage('analyzing');
+    analyzeImage('https://images.unsplash.com/photo-1479064555552-3ef4979f8908?w=600&auto=format');
+  };
+  
+  // Perform search with selected objects
+  const performSearch = () => {
+    if (selectedObjects.length === 0) {
+      alert('Please select at least one item to search for.');
+      return;
+    }
+    
+    setAnalyzeStage('searching');
+    
+    // Get selected object labels
+    const selectedLabels = detectedObjects
+      .filter(obj => selectedObjects.includes(obj.id))
+      .map(obj => obj.label);
+    
+    // In a real app, this would trigger a search with the selected objects
+    setTimeout(() => {
+      // Call the search callback with the selected objects
+      onSearch && onSearch(selectedLabels);
+      onClose();
+    }, 1000);
+  };
+  
+  if (!visible) return null;
+  
+  return (
+    <View style={styles.visualSearchOverlay}>
+      <View style={styles.visualSearchContent}>
+        <Text style={styles.visualSearchTitle}>
+          Visual Search
+        </Text>
+        
+        <View style={styles.visualSearchWorkspace}>
+          {analyzeStage === 'initial' ? (
+            // Image selection UI
+            <View style={styles.visualSearchUploadArea}>
+              <Text style={styles.visualSearchInstructions}>
+                Upload a photo or take a screenshot to search for similar items.
+              </Text>
+              
+              <View style={styles.visualSearchButtonsRow}>
+                <TouchableOpacity 
+                  style={styles.visualSearchButton}
+                  onPress={selectImage}
+                >
+                  <Text style={styles.visualSearchButtonText}>Upload Photo</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.visualSearchButton}
+                  onPress={takeScreenshot}
+                >
+                  <Text style={styles.visualSearchButtonText}>Take Screenshot</Text>
+                </TouchableOpacity>
+              </View>
+              
+              {error && (
+                <Text style={styles.visualSearchError}>{error}</Text>
+              )}
+              
+              <input
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={handleFileSelect}
+                ref={fileInputRef}
+              />
+            </View>
+          ) : analyzeStage === 'analyzing' ? (
+            // Analyzing state
+            <View style={styles.visualSearchAnalyzing}>
+              {selectedImage && (
+                <Image 
+                  source={{ uri: selectedImage }}
+                  style={styles.visualSearchImage}
+                  resizeMode="contain"
+                />
+              )}
+              <View style={styles.visualSearchAnalyzingOverlay}>
+                <Text style={styles.visualSearchAnalyzingText}>
+                  Analyzing image...
+                </Text>
+                <View style={styles.visualSearchLoader} />
+              </View>
+            </View>
+          ) : analyzeStage === 'detected' ? (
+            // Object selection state
+            <View style={styles.visualSearchDetected}>
+              <View style={styles.visualSearchImageContainer}>
+                {selectedImage && (
+                  <Image 
+                    source={{ uri: selectedImage }}
+                    style={styles.visualSearchImage}
+                    resizeMode="contain"
+                  />
+                )}
+                
+                {/* Object bounding boxes */}
+                {detectedObjects.map(obj => (
+                  <TouchableOpacity
+                    key={obj.id}
+                    style={[
+                      styles.visualSearchBoundingBox,
+                      {
+                        left: obj.boundingBox.x,
+                        top: obj.boundingBox.y,
+                        width: obj.boundingBox.width,
+                        height: obj.boundingBox.height,
+                        borderColor: selectedObjects.includes(obj.id) ? '#4CAF50' : '#FF9800',
+                        backgroundColor: selectedObjects.includes(obj.id) ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 152, 0, 0.2)'
+                      }
+                    ]}
+                    onPress={() => toggleObjectSelection(obj.id)}
+                  >
+                    <Text style={styles.visualSearchObjectLabel}>
+                      {obj.label} ({Math.round(obj.confidence * 100)}%)
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              
+              <View style={styles.visualSearchSelectionInstructions}>
+                <Text style={styles.visualSearchSelectionText}>
+                  Tap on the items you want to search for
+                </Text>
+                <Text style={styles.visualSearchSelectedCount}>
+                  {selectedObjects.length} item(s) selected
+                </Text>
+              </View>
+              
+              <TouchableOpacity 
+                style={[
+                  styles.visualSearchActionButton,
+                  selectedObjects.length === 0 && styles.visualSearchActionButtonDisabled
+                ]}
+                onPress={performSearch}
+                disabled={selectedObjects.length === 0}
+              >
+                <Text style={styles.visualSearchActionButtonText}>
+                  Search for Selected Items
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            // Searching state
+            <View style={styles.visualSearchSearching}>
+              <Text style={styles.visualSearchSearchingText}>
+                Searching for similar products...
+              </Text>
+              <View style={styles.visualSearchLoader} />
+            </View>
+          )}
+        </View>
+        
+        <View style={styles.visualSearchFooter}>
+          <TouchableOpacity 
+            style={styles.visualSearchCloseButton} 
+            onPress={onClose}
+          >
+            <Text style={styles.visualSearchCloseButtonText}>Cancel</Text>
+          </TouchableOpacity>
+          
+          {analyzeStage !== 'initial' && analyzeStage !== 'searching' && (
+            <TouchableOpacity 
+              style={styles.visualSearchResetButton}
+              onPress={resetState}
+            >
+              <Text style={styles.visualSearchResetButtonText}>Start Over</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+    </View>
+  );
+};
+
+// Update the main App component
+export default function App() {
+  // State for user selections
+  const [selectedPersona, setSelectedPersona] = useState(null);
+  const [selectedLifeMoment, setSelectedLifeMoment] = useState(null);
+  
+  // State for app functionality
+  const [darkMode, setDarkMode] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [isLoadingAnimation, setIsLoadingAnimation] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(null);
+  const [showPersonaPanel, setShowPersonaPanel] = useState(false);
+  const [showLifeMomentPanel, setShowLifeMomentPanel] = useState(false);
+  const [isDiscoveryMode, setIsDiscoveryMode] = useState(true);
+  const [products, setProducts] = useState([]);
+  const [showVisualSearch, setShowVisualSearch] = useState(false);
+  
+  // Animation values for header
+  const scrollY = useState(new Animated.Value(0))[0];
+  const headerHeight = 300;
+  const headerOpacity = scrollY.interpolate({
+    inputRange: [0, headerHeight],
+    outputRange: [1, 0.9],
+    extrapolate: 'clamp',
+  });
+  const headerTranslate = scrollY.interpolate({
+    inputRange: [0, headerHeight],
+    outputRange: [0, -headerHeight / 3],
+    extrapolate: 'clamp',
+  });
+  
+  // Initialize products on component mount
+  useEffect(() => {
+    // Start with all products for discovery
+    setProducts(sortProducts([...mockProducts]));
+  }, []);
+  
+  // Apply personalization when persona or life moment changes
+  useEffect(() => {
+    if (selectedPersona || selectedLifeMoment) {
+      // Apply personalization by sorting the products
+      setProducts(sortProducts([...mockProducts]));
+    }
+  }, [selectedPersona, selectedLifeMoment]);
+  
+  // Toggle dark mode
+  const toggleDarkMode = () => {
+    setDarkMode(!darkMode);
+  };
+  
+  // Handle search
+  const handleSearch = () => {
+    if (!searchQuery.trim()) return;
+    
     setIsLoadingAnimation(true);
-    setIsLoading(true);
+    setIsSearching(true);
     setErrorMessage(null);
     
-    try {
-      // Use our simulated database to fetch products
-      const filters = {
-        persona: selectedPersona?.id,
-        lifeMoment: selectedMoment?.id,
-        mood: selectedMood?.id,
-        bundle: selectedBundle?.id
-      };
+    // Simulate search delay
+    setTimeout(() => {
+      // Search through products (case insensitive)
+      const query = searchQuery.toLowerCase();
+      const searchResults = mockProducts.filter(product => {
+        // Check if the search query is in title, description, or tags
+        return (
+          product.title.toLowerCase().includes(query) ||
+          product.description.toLowerCase().includes(query) ||
+          product.tags.some(tag => tag.toLowerCase().includes(query))
+        );
+      });
       
-      const filteredProducts = await db.fetchProducts(searchQuery.trim(), filters);
-      
-      // Apply persona and life moment based ranking
-      if (selectedPersona || selectedMoment) {
-        const rankedProducts = filteredProducts.map(product => ({
-          ...product,
-          relevanceScore: getRelevanceScore(product)
-        }))
-        .sort((a, b) => b.relevanceScore - a.relevanceScore);
-        
-        setProducts(rankedProducts);
-      } else {
-        setProducts(filteredProducts);
+      if (searchResults.length === 0) {
+        setErrorMessage('No products found matching your search. Try another query.');
       }
       
+      // Apply persona preferences to search results
+      setProducts(sortProducts(searchResults));
       setIsDiscoveryMode(false);
-      
-      if (filteredProducts.length === 0) {
-        setErrorMessage('No products found matching your criteria.');
-      }
-    } catch (error) {
-      console.error('Search failed:', error);
-      setErrorMessage('Search failed. Please try again.');
-      setProducts([]);
-    } finally {
-      setIsLoading(false);
       setIsLoadingAnimation(false);
-    }
+      setIsSearching(false);
+    }, 1500);
   };
-
-  // Add this function to toggle the persona cycler
-  const togglePersonaCycler = () => {
-    setShowPersonaCycler(!showPersonaCycler);
-    setIsPanelOpen(false); // Close the panel if it's open
-    setShowMomentCycler(false); // Close moment cycler if it's open
-  };
-
-  // Add function to cycle to the next persona
-  const cycleToNextPersona = () => {
-    if (!selectedPersona) {
-      setSelectedPersona(personas[0]);
-    } else {
-      const currentIndex = personas.findIndex(p => p.id === selectedPersona.id);
-      const nextIndex = (currentIndex + 1) % personas.length;
-      setSelectedPersona(personas[nextIndex]);
-    }
-    // Trigger a search with the new persona
-    setTimeout(() => handleSearch(), 100);
-  };
-
-  // Add function to toggle the life moment cycler
-  const toggleMomentCycler = () => {
-    setShowMomentCycler(!showMomentCycler);
-    setIsPanelOpen(false); // Close the panel if it's open
-    setShowPersonaCycler(false); // Close persona cycler if it's open
-  };
-
-  // Add function to cycle to the next life moment
-  const cycleToNextMoment = () => {
-    if (!selectedMoment) {
-      setSelectedMoment(lifeMoments[0]);
-    } else {
-      const currentIndex = lifeMoments.findIndex(m => m.id === selectedMoment.id);
-      const nextIndex = (currentIndex + 1) % lifeMoments.length;
-      setSelectedMoment(lifeMoments[nextIndex]);
-    }
-    // Trigger a search with the new life moment
-    setTimeout(() => handleSearch(), 100);
-  };
-
-  // Add function to track product view when a user views details
-  const handleProductView = (product) => {
-    db.trackProductView(product.id, 'anonymous-user');
-  };
-
+  
   // Calculate product relevance score based on selected persona and life moment
   const getRelevanceScore = (product) => {
     let score = 1;
     
     // Apply persona-based scoring
     if (selectedPersona) {
-      product.tags.forEach(tag => {
-        Object.entries(selectedPersona.tagWeights).forEach(([weightTag, weight]) => {
-          if (tag.toLowerCase().includes(weightTag.toLowerCase())) {
-            score += weight;
-          }
+      // Student persona - Prioritize budget-friendly options with strong emphasis on price
+      if (selectedPersona.id === 'student') {
+        // Heavy penalty for expensive products
+        if (product.price > 1500) {
+          score -= 5; // Significant penalty for high-priced products
+        } else if (product.price < 1000) {
+          score += 4; // Big boost for affordable products
+        }
+        
+        // Additional boosts for student-friendly tags
+        if (product.tags.includes('student')) score += 3;
+        if (product.tags.includes('budget')) score += 2.5;
+        if (product.tags.includes('entry-level')) score += 2;
+        if (product.tags.includes('portable')) score += 1.5;
+        
+        // Value insight boost for student persona
+        const valueInsight = product.insights.find(i => i.label === 'Value');
+        if (valueInsight && valueInsight.value > 85) {
+          score += 2;
+        }
+      }
+      // Traveler persona - Focus on portability
+      else if (selectedPersona.id === 'traveler') {
+        // Prioritize lightweight and portable products
+        if (product.tags.includes('portable')) score += 3;
+        if (product.tags.includes('lightweight')) score += 2.5;
+        
+        // Battery life is important for travelers
+        const batteryInsight = product.insights.find(i => i.label === 'Battery Life');
+        if (batteryInsight && batteryInsight.value > 90) {
+          score += 2;
+        }
+      }
+      // Creative Pro persona - Focus on performance
+      else if (selectedPersona.id === 'creative') {
+        // Prioritize high-performance products
+        if (product.tags.includes('pro')) score += 2;
+        if (product.tags.includes('premium')) score += 1.5;
+        if (product.tags.includes('creative')) score += 3;
+        
+        // Performance insight boost
+        const performanceInsight = product.insights.find(i => i.label === 'Performance');
+        if (performanceInsight && performanceInsight.value > 90) {
+          score += 2.5;
+        }
+      }
+      // Business Pro persona - Balance of performance and reliability
+      else if (selectedPersona.id === 'business') {
+        // Prioritize reliable business-oriented products
+        if (product.tags.includes('pro')) score += 1.5;
+        if (product.tags.includes('balanced')) score += 2;
+        
+        // Look for good all-around performance
+        let allRoundScore = 0;
+        let insightCount = 0;
+        
+        product.insights.forEach(insight => {
+          allRoundScore += insight.value;
+          insightCount++;
         });
-      });
+        
+        // Reward well-balanced products
+        if (insightCount > 0 && (allRoundScore / insightCount) > 85) {
+          score += 2;
+        }
+      }
     }
     
-    // Apply life moment scoring
-    if (selectedMoment) {
-      // Boost products in the primary category for the selected life moment
-      if (selectedMoment.primaryCategory && product.category === selectedMoment.primaryCategory) {
-        score += 3;
+    // Apply life moment based scoring
+    if (selectedLifeMoment) {
+      // Strong boost for primary category match
+      if (selectedLifeMoment.primaryCategory && product.category === selectedLifeMoment.primaryCategory) {
+        score += 4;
       }
       
-      // Apply tag-based scoring
+      // Apply tag boosts based on life moment
       product.tags.forEach(tag => {
-        Object.entries(selectedMoment.tagWeights).forEach(([weightTag, weight]) => {
-          if (tag.toLowerCase().includes(weightTag.toLowerCase())) {
-            score += weight;
-          }
-        });
+        const momentTagWeights = selectedLifeMoment.tagWeights || {};
+        if (momentTagWeights[tag]) {
+          score += momentTagWeights[tag];
+        }
       });
     }
     
     return score;
   };
-
-  // Search immediately when persona or life moment changes
-  useEffect(() => {
-    if (selectedPersona || selectedMoment) {
-      handleSearch();
-    }
-  }, [selectedPersona, selectedMoment]);
-
-  const handleClearSelections = () => {
-    setSelectedPersona(null);
-    setSelectedMoment(null);
-  };
-
-  // Header opacity animation based on scroll
-  const headerOpacity = scrollY.interpolate({
-    inputRange: [0, 80],
-    outputRange: [1, 0.98],
-    extrapolate: 'clamp',
-  });
   
-  const headerTranslate = scrollY.interpolate({
-    inputRange: [0, 80],
-    outputRange: [0, -10],
-    extrapolate: 'clamp',
-  });
-
-  // Add this function to handle selecting a trending product
-  const handleTrendingProductSelect = (product) => {
-    // Add the product to the products list if it's not already there
-    if (!products.some(p => p.id === product.id)) {
-      setProducts(prevProducts => [product, ...prevProducts]);
-    }
+  // Sort products based on relevance score
+  const sortProducts = (products) => {
+    if (!products || !Array.isArray(products)) return [];
     
-    // Scroll to the product section
-    setTimeout(() => {
-      // This would ideally scroll to the product
-      window.scrollTo({ top: 300, behavior: 'smooth' });
-    }, 100);
-  };
-
-  // Function to handle category selection
-  const handleCategorySelect = (category) => {
-    setIsLoadingAnimation(true);
-    
-    // Simulate loading state for visual feedback
-    setTimeout(() => {
-      setSearchQuery(category.name.toLowerCase());
-      handleSearch();
-      setIsLoadingAnimation(false);
-    }, 800);
-  };
-
-  // Function to handle mood selection
-  const handleMoodSelect = (mood) => {
-    setIsLoadingAnimation(true);
-    setSelectedMood(mood);
-    
-    // Set products based on mood's aesthetic
-    setTimeout(() => {
-      // Match products to the mood aesthetic
-      let moodProducts = [];
+    // Create a copy to avoid mutating the original array
+    return [...products].sort((a, b) => {
+      const scoreA = getRelevanceScore(a);
+      const scoreB = getRelevanceScore(b);
       
-      if (mood.id === 'minimalist') {
-        moodProducts = [mockProducts[1], mockProducts[3]]; // MacBook Air models
-      } else if (mood.id === 'cottagecore') {
-        moodProducts = [mockProducts[4], mockProducts[5]]; // Baby products
-      } else if (mood.id === 'cyberpunk') {
-        moodProducts = [mockProducts[0], mockProducts[2]]; // MacBook Pro models
-      } else if (mood.id === 'clean-girl') {
-        moodProducts = [mockProducts[6], mockProducts[7]]; // Apple Watch and Headphones
-      } else {
-        moodProducts = mockProducts.slice(0, 4);
+      // Primary sort by relevance score
+      if (scoreB !== scoreA) {
+        return scoreB - scoreA;
       }
       
-      setProducts(moodProducts);
+      // Secondary sort by rating (higher is better)
+      if (b.rating !== a.rating) {
+        return b.rating - a.rating;
+      }
+      
+      // Tertiary sort by price (lower is better)
+      return a.price - b.price;
+    });
+  };
+  
+  // Handle persona selection
+  const handlePersonaSelect = (persona) => {
+    setSelectedPersona(persona);
+    setShowPersonaPanel(false);
+    
+    // Apply persona-based personalization
+    setIsLoadingAnimation(true);
+    
+    setTimeout(() => {
+      setProducts(sortProducts([...mockProducts]));
       setIsLoadingAnimation(false);
       setIsDiscoveryMode(false);
     }, 1000);
   };
-
-  // Function to handle bundle selection
-  const handleBundleSelect = (bundle) => {
-    setIsLoadingAnimation(true);
-    setSelectedBundle(bundle);
+  
+  // Handle life moment selection
+  const handleLifeMomentSelect = (moment) => {
+    setSelectedLifeMoment(moment);
+    setShowLifeMomentPanel(false);
     
-    // Add bundle products to the product list
-    setTimeout(() => {
-      setProducts(bundle.products);
-      setIsLoadingAnimation(false);
-      setIsDiscoveryMode(false);
-    }, 800);
-  };
-
-  // Function to handle trend item selection
-  const handleTrendSelect = (trendItem) => {
+    // Apply life moment-based personalization
     setIsLoadingAnimation(true);
     
-    // Match trending items to specific products
     setTimeout(() => {
-      let matchingProduct;
-      
-      if (trendItem.title.includes('Sony')) {
-        matchingProduct = mockProducts[7]; // Sony WH-1000XM5
-      } else if (trendItem.title.includes('Away')) {
-        matchingProduct = trendingByLifeMoment['travel-prep'][0]; // Away luggage
-      } else if (trendItem.title.includes('Dyson')) {
-        // Default to a product since we don't have Dyson in our data
-        matchingProduct = mockProducts[5]; // Nanit (technology product)
-      } else if (trendItem.title.includes('Kindle')) {
-        // Default to a tech product
-        matchingProduct = mockProducts[6]; // Apple Watch
+      // Get trending products for this life moment if available
+      if (moment && trendingByLifeMoment[moment.id]) {
+        const trendingForMoment = trendingByLifeMoment[moment.id];
+        
+        // Combine trending items with regular products and sort
+        const combinedProducts = [...trendingForMoment, ...mockProducts];
+        setProducts(sortProducts(combinedProducts));
       } else {
-        matchingProduct = mockProducts[0]; // Default to MacBook Pro
+        setProducts(sortProducts([...mockProducts]));
       }
       
-      setProducts([matchingProduct]);
       setIsLoadingAnimation(false);
       setIsDiscoveryMode(false);
-    }, 800);
+    }, 1000);
   };
-
-  // Toggle dark mode
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-  };
-
-  // Reset to discovery mode
-  const resetToDiscovery = () => {
-    setProducts([]);
+  
+  // Remove filters
+  const removePersonaFilter = () => {
     setSelectedPersona(null);
-    setSelectedMoment(null);
-    setSelectedMood(null);
-    setSelectedBundle(null);
-    setSearchQuery('');
-    setIsDiscoveryMode(true);
+    
+    // Reapply any remaining filters
+    setIsLoadingAnimation(true);
+    
+    setTimeout(() => {
+      setProducts(sortProducts([...mockProducts]));
+      setIsLoadingAnimation(false);
+    }, 500);
   };
-
-  // Add voice command handler
-  const handleVoiceCommand = (command) => {
-    if (command.type === 'category') {
-      const category = productCategories.find(c => c.id === command.value);
-      if (category) {
-        handleCategorySelect(category);
-      }
-    } else if (command.type === 'trending') {
-      // Handle trending command - maybe focus on trending section
-      if (trendRadarData.length > 0) {
-        handleTrendSelect(trendRadarData[0]);
-      }
-    }
+  
+  const removeLifeMomentFilter = () => {
+    setSelectedLifeMoment(null);
+    
+    // Reapply any remaining filters
+    setIsLoadingAnimation(true);
+    
+    setTimeout(() => {
+      setProducts(sortProducts([...mockProducts]));
+      setIsLoadingAnimation(false);
+    }, 500);
   };
-
+  
+  // Function to handle visual search results
+  const handleVisualSearch = (searchLabels) => {
+    setIsLoadingAnimation(true);
+    
+    // In a real app, this would query your product database with the detected objects
+    // For demo, we'll filter the mock products to simulate a search
+    
+    // Simple filter by matched categories or tags
+    const matchedProducts = mockProducts.filter(product => {
+      // Check if product category matches any of the search labels
+      if (searchLabels.some(label => product.category.toLowerCase().includes(label.toLowerCase()))) {
+        return true;
+      }
+      
+      // Check if any product tags match the search labels
+      if (product.tags.some(tag => 
+        searchLabels.some(label => tag.toLowerCase().includes(label.toLowerCase()))
+      )) {
+        return true;
+      }
+      
+      // Check title and description for matches
+      if (searchLabels.some(label => 
+        product.title.toLowerCase().includes(label.toLowerCase()) ||
+        product.description.toLowerCase().includes(label.toLowerCase())
+      )) {
+        return true;
+      }
+      
+      return false;
+    });
+    
+    // Update UI with search results
+    setTimeout(() => {
+      // Apply any persona/life moment personalization to the results
+      setProducts(sortProducts(matchedProducts));
+      setIsDiscoveryMode(false);
+      setIsLoadingAnimation(false);
+      
+      if (matchedProducts.length === 0) {
+        setErrorMessage('No products found matching your visual search. Try another image or select different items.');
+      }
+    }, 1000);
+  };
+  
   return (
     <View style={[
       styles.container,
@@ -1937,9 +1923,19 @@ export default function App() {
         <View style={styles.headerContent}>
           <View style={styles.headerTopRow}>
             <Text style={[styles.appTitle, darkMode && styles.appTitleDark]}>curator</Text>
-            <TouchableOpacity onPress={toggleDarkMode} style={styles.darkModeToggle}>
-              <Text style={styles.darkModeIcon}>{darkMode ? '☀️' : '🌙'}</Text>
-            </TouchableOpacity>
+            <View style={styles.headerActions}>
+              {/* Visual Search button */}
+              <TouchableOpacity 
+                onPress={() => setShowVisualSearch(true)} 
+                style={styles.visualSearchButton}
+              >
+                <Text style={styles.visualSearchButtonIcon}>🔍📷</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity onPress={toggleDarkMode} style={styles.darkModeToggle}>
+                <Text style={styles.darkModeIcon}>{darkMode ? '☀️' : '🌙'}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
           <Text style={[styles.appSubtitle, darkMode && styles.appSubtitleDark]}>
             AI-driven product discovery
@@ -1947,25 +1943,29 @@ export default function App() {
         </View>
         
         <View style={styles.searchContainer}>
-          <View style={[
-            styles.searchInputWrapper,
-            isLoadingAnimation && styles.searchInputLoading
-          ]}>
+          <View style={styles.searchInputWrapper}>
             <TextInput
-              style={[styles.searchBar, darkMode && styles.searchBarDark]}
-              placeholder="What are you looking for?"
+              style={[
+                styles.searchBar, 
+                darkMode && styles.searchBarDark,
+                isSearching && styles.searchInputLoading
+              ]}
+              placeholder="Search products..."
+              placeholderTextColor={darkMode ? '#999' : '#999'}
               value={searchQuery}
               onChangeText={setSearchQuery}
               onSubmitEditing={handleSearch}
-              returnKeyType="search"
-              placeholderTextColor={darkMode ? COLORS.accent3 : COLORS.accent3}
             />
             <TouchableOpacity 
-              style={[styles.searchButton, isLoadingAnimation && styles.searchButtonLoading]} 
+              style={[
+                styles.searchButton,
+                isSearching && styles.searchButtonLoading
+              ]} 
               onPress={handleSearch}
+              disabled={isSearching}
             >
               <Text style={styles.searchButtonText}>
-                {isLoadingAnimation ? '...' : 'Search'}
+                {isSearching ? '...' : 'Search'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -1973,224 +1973,53 @@ export default function App() {
         
         <View style={styles.selectionControls}>
           <TouchableOpacity 
-            style={styles.selectionButton}
-            onPress={togglePersonaCycler}
+            style={styles.selectionButton} 
+            onPress={() => setShowPersonaPanel(true)}
           >
             <Text style={styles.selectionButtonText}>
-              {selectedPersona ? selectedPersona.name : 'Choose Persona'}
+              {selectedPersona ? selectedPersona.name : 'Select Persona'}
             </Text>
-            {selectedPersona && (
-              <Text style={styles.selectionEmoji}>{selectedPersona.emoji}</Text>
-            )}
+            <Text style={styles.selectionEmoji}>
+              {selectedPersona ? selectedPersona.emoji : '👤'}
+            </Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
-            style={styles.lifeMomentButton}
-            onPress={toggleMomentCycler}
+            style={styles.lifeMomentButton} 
+            onPress={() => setShowLifeMomentPanel(true)}
           >
             <Text style={styles.lifeMomentButtonText}>
-              {selectedMoment ? selectedMoment.name : 'Life Moment'}
+              {selectedLifeMoment ? selectedLifeMoment.name : 'Life Moment'}
             </Text>
-            {selectedMoment && (
-              <Text style={styles.selectionEmoji}>{selectedMoment.emoji}</Text>
-            )}
+            <Text style={styles.selectionEmoji}>
+              {selectedLifeMoment ? selectedLifeMoment.emoji : '🔍'}
+            </Text>
           </TouchableOpacity>
-          
-          {!isDiscoveryMode && (
-            <TouchableOpacity 
-              style={styles.clearButton}
-              onPress={resetToDiscovery}
-            >
-              <Text style={styles.clearButtonText}>Discover</Text>
-            </TouchableOpacity>
-          )}
         </View>
         
-        <SelectionPanel
-          personas={personas}
-          lifeMoments={lifeMoments}
-          selectedPersona={selectedPersona}
-          selectedMoment={selectedMoment}
-          onSelectPersona={(persona) => {
-            setSelectedPersona(selectedPersona?.id === persona.id ? null : persona);
-          }}
-          onSelectMoment={(moment) => {
-            setSelectedMoment(selectedMoment?.id === moment.id ? null : moment);
-          }}
-          onClose={() => setIsPanelOpen(false)}
-          isOpen={isPanelOpen}
-        />
-      </Animated.View>
-
-      {/* Updated ticker */}
-      <TrendingTicker items={trendingTickerItems} />
-      
-      {/* Add Voice Navigation */}
-      <VoiceNavigation onCommand={handleVoiceCommand} />
-
-      {/* Persona cycler */}
-      {showPersonaCycler && (
-        <View style={styles.personaCyclerContainer}>
-          <View style={styles.cyclerHeader}>
-            <Text style={styles.cyclerTitle}>Who are you?</Text>
-            <TouchableOpacity onPress={togglePersonaCycler} style={styles.closeCyclerButton}>
-              <Text style={styles.closeCyclerText}>×</Text>
-            </TouchableOpacity>
-          </View>
-          
-          <ScrollView style={styles.cyclerList}>
-            {personas.map(persona => (
-              <TouchableOpacity
-                key={persona.id}
-                style={[
-                  styles.cyclerItem,
-                  selectedPersona?.id === persona.id && { 
-                    borderColor: COLORS.primary,
-                    borderWidth: 2,
-                    backgroundColor: `${COLORS.primary}08`,
-                  }
-                ]}
-                onPress={() => {
-                  setSelectedPersona(selectedPersona?.id === persona.id ? null : persona);
-                  setTimeout(() => handleSearch(), 100);
-                }}
-              >
-                <View style={[styles.cyclerEmoji, {backgroundColor: `${COLORS.primary}08`}]}>
-                  <Text style={styles.cyclerEmojiText}>{persona.emoji}</Text>
-                </View>
-                <View style={styles.cyclerInfo}>
-                  <Text style={styles.cyclerName}>{persona.name}</Text>
-                  <Text style={styles.cyclerDesc}>{persona.description}</Text>
-                </View>
-                {selectedPersona?.id === persona.id && (
-                  <View style={[styles.cyclerSelectedBadge, { backgroundColor: COLORS.primary }]}>
-                    <Text style={styles.cyclerSelectedText}>✓</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-          
-          <TouchableOpacity 
-            style={styles.cycleThroughButton}
-            onPress={cycleToNextPersona}
-          >
-            <Text style={styles.cycleThroughText}>Cycle Through</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-      
-      {/* Life moment cycler */}
-      {showMomentCycler && (
-        <View style={styles.momentCyclerContainer}>
-          <View style={styles.cyclerHeader}>
-            <Text style={styles.cyclerTitle}>Your Life Moment</Text>
-            <TouchableOpacity onPress={toggleMomentCycler} style={styles.closeCyclerButton}>
-              <Text style={styles.closeCyclerText}>×</Text>
-            </TouchableOpacity>
-          </View>
-          
-          <ScrollView style={styles.cyclerList}>
-            {lifeMoments.map(moment => (
-              <TouchableOpacity
-                key={moment.id}
-                style={[
-                  styles.cyclerItem,
-                  selectedMoment?.id === moment.id && { 
-                    borderColor: COLORS.primary,
-                    borderWidth: 2,
-                    backgroundColor: `${COLORS.primary}08`,
-                  }
-                ]}
-                onPress={() => {
-                  setSelectedMoment(selectedMoment?.id === moment.id ? null : moment);
-                  setTimeout(() => handleSearch(), 100);
-                }}
-              >
-                <View style={[styles.cyclerEmoji, {backgroundColor: `${COLORS.primary}08`}]}>
-                  <Text style={styles.cyclerEmojiText}>{moment.emoji}</Text>
-                </View>
-                <View style={styles.cyclerInfo}>
-                  <Text style={styles.cyclerName}>{moment.name}</Text>
-                  <Text style={styles.cyclerDesc}>{moment.description}</Text>
-                </View>
-                {selectedMoment?.id === moment.id && (
-                  <View style={[styles.cyclerSelectedBadge, { backgroundColor: COLORS.primary }]}>
-                    <Text style={styles.cyclerSelectedText}>✓</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-          
-          <TouchableOpacity 
-            style={styles.cycleThroughButton}
-            onPress={cycleToNextMoment}
-          >
-            <Text style={styles.cycleThroughText}>Cycle Through</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      <Animated.ScrollView 
-        style={[styles.content, darkMode && styles.contentDark]}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: false }
-        )}
-        scrollEventThrottle={16}
-      >
-        {/* Hero banner removed */}
-        
-        {/* Active filters display with modern design */}
-        {(selectedPersona || selectedMoment || selectedMood || selectedBundle) && !isLoading && (
+        {/* Active Filters */}
+        {(selectedPersona || selectedLifeMoment) && (
           <View style={styles.activeFiltersContainer}>
             {selectedPersona && (
               <View style={[styles.filterTag, { backgroundColor: selectedPersona.color }]}>
                 <Text style={styles.filterTagEmoji}>{selectedPersona.emoji}</Text>
                 <Text style={styles.filterTagText}>{selectedPersona.name}</Text>
                 <TouchableOpacity 
-                  style={styles.removeFilterButton}
-                  onPress={() => setSelectedPersona(null)}
+                  style={styles.removeFilterButton} 
+                  onPress={removePersonaFilter}
                 >
                   <Text style={styles.removeFilterText}>×</Text>
                 </TouchableOpacity>
               </View>
             )}
             
-            {selectedMoment && (
-              <View style={[styles.filterTag, { backgroundColor: selectedMoment.color }]}>
-                <Text style={styles.filterTagEmoji}>{selectedMoment.emoji}</Text>
-                <Text style={styles.filterTagText}>{selectedMoment.name}</Text>
+            {selectedLifeMoment && (
+              <View style={[styles.filterTag, { backgroundColor: selectedLifeMoment.color }]}>
+                <Text style={styles.filterTagEmoji}>{selectedLifeMoment.emoji}</Text>
+                <Text style={styles.filterTagText}>{selectedLifeMoment.name}</Text>
                 <TouchableOpacity 
-                  style={styles.removeFilterButton}
-                  onPress={() => setSelectedMoment(null)}
-                >
-                  <Text style={styles.removeFilterText}>×</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-            
-            {selectedMood && (
-              <View style={[styles.filterTag, { backgroundColor: selectedMood.color }]}>
-                <Text style={styles.filterTagEmoji}>{selectedMood.emoji}</Text>
-                <Text style={styles.filterTagText}>{selectedMood.name}</Text>
-                <TouchableOpacity 
-                  style={styles.removeFilterButton}
-                  onPress={() => setSelectedMood(null)}
-                >
-                  <Text style={styles.removeFilterText}>×</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-            
-            {selectedBundle && (
-              <View style={[styles.filterTag, { backgroundColor: COLORS.secondary }]}>
-                <Text style={styles.filterTagEmoji}>🛍️</Text>
-                <Text style={styles.filterTagText}>{selectedBundle.title}</Text>
-                <TouchableOpacity 
-                  style={styles.removeFilterButton}
-                  onPress={() => setSelectedBundle(null)}
+                  style={styles.removeFilterButton} 
+                  onPress={removeLifeMomentFilter}
                 >
                   <Text style={styles.removeFilterText}>×</Text>
                 </TouchableOpacity>
@@ -2198,74 +2027,199 @@ export default function App() {
             )}
           </View>
         )}
-        
-        {/* Life moment trending products section */}
-        {selectedMoment && !isLoading && (
-          <TrendingSection 
-            lifeMoment={selectedMoment}
-            onProductSelect={handleTrendingProductSelect}
-          />
-        )}
+      </Animated.View>
       
-        {isLoading ? (
+      {/* Floating Persona Selector for quick filtering */}
+      <FloatingPersonaSelector 
+        personas={personas}
+        selectedPersona={selectedPersona}
+        onSelectPersona={handlePersonaSelect}
+        visible={!isDiscoveryMode && products.length > 0 && !showPersonaPanel && !showLifeMomentPanel}
+      />
+      
+      {/* Content */}
+      <ScrollView 
+        style={[
+          styles.content, 
+          darkMode && styles.contentDark
+        ]}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true }
+        )}
+        scrollEventThrottle={16}
+      >
+        {isLoadingAnimation ? (
           <View style={styles.loadingContainer}>
-            <View style={styles.loadingPulse} />
-            <Text style={[styles.loadingText, darkMode && styles.loadingTextDark]}>Finding your perfect match...</Text>
+            <Animated.View 
+              style={styles.loadingPulse}
+            />
+            <Text style={[
+              styles.loadingText,
+              darkMode && styles.loadingTextDark
+            ]}>
+              Personalizing for you...
+            </Text>
           </View>
         ) : errorMessage ? (
           <View style={[styles.errorContainer, darkMode && styles.errorContainerDark]}>
             <Text style={styles.errorText}>{errorMessage}</Text>
           </View>
-        ) : products.length > 0 ? (
+        ) : isDiscoveryMode ? (
+          <View style={styles.discoveryContainer}>
+            <TrendRadar 
+              items={trendRadarData}
+              onItemPress={(item) => {
+                console.log('Trend item pressed:', item);
+              }}
+            />
+            
+            <View style={styles.socialBundlesContainer}>
+              <View style={styles.sectionHeaderRow}>
+                <View style={styles.sectionTitleContainer}>
+                  <Text style={styles.sectionIcon}>👥</Text>
+                  <Text style={styles.sectionTitle}>Social Bundles</Text>
+                </View>
+                <TouchableOpacity>
+                  <Text style={styles.sectionAction}>See All</Text>
+                </TouchableOpacity>
+              </View>
+              
+              <Text style={styles.sectionSubtitle}>
+                Curated collections from our community
+              </Text>
+              
+              <ScrollView 
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.bundlesScroll}
+              >
+                {socialBundles.map((bundle) => (
+                  <TouchableOpacity 
+                    key={bundle.id} 
+                    style={styles.bundleCard}
+                  >
+                    <Image 
+                      source={{ uri: bundle.coverImage }}
+                      style={styles.bundleCover}
+                      resizeMode="cover"
+                    />
+                    <View style={styles.bundleContent}>
+                      <Text style={styles.bundleTitle}>{bundle.title}</Text>
+                      
+                      <View style={styles.bundleCreatorRow}>
+                        <Image 
+                          source={{ uri: bundle.creator.avatar }}
+                          style={styles.creatorAvatar}
+                        />
+                        <Text style={styles.creatorName}>{bundle.creator.name}</Text>
+                        {bundle.creator.verified && (
+                          <Text style={styles.verifiedBadge}>✓</Text>
+                        )}
+                      </View>
+                      
+                      <View style={styles.bundleStats}>
+                        <Text style={styles.bundleStat}>♥ {bundle.likes}</Text>
+                        <Text style={styles.bundleStat}>🔖 {bundle.saves}</Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+            
+            <View style={styles.shopByVibeContainer}>
+              <View style={styles.sectionHeaderRow}>
+                <View style={styles.sectionTitleContainer}>
+                  <Text style={styles.sectionIcon}>✨</Text>
+                  <Text style={styles.sectionTitle}>Shop by Vibe</Text>
+                </View>
+                <TouchableOpacity>
+                  <Text style={styles.sectionAction}>See All</Text>
+                </TouchableOpacity>
+              </View>
+              
+              <Text style={styles.sectionSubtitle}>
+                Discover products that match your aesthetic
+              </Text>
+              
+              <View style={styles.moodsGrid}>
+                {moodBoards.map((mood) => (
+                  <TouchableOpacity 
+                    key={mood.id} 
+                    style={styles.moodCard}
+                  >
+                    <Image 
+                      source={{ uri: mood.coverImage }}
+                      style={styles.moodCover}
+                      resizeMode="cover"
+                    />
+                    <View style={[
+                      styles.moodOverlay,
+                      { backgroundColor: `${mood.color}80` }
+                    ]}>
+                      <Text style={styles.moodEmoji}>{mood.emoji}</Text>
+                      <Text style={styles.moodName}>{mood.name}</Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+            
+            {/* Visual Categories */}
+            <View style={styles.categoryEntryContainer}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.categoryScroll}
+              >
+                {productCategories.map((category) => (
+                  <TouchableOpacity
+                    key={category.id}
+                    style={styles.categoryItem}
+                  >
+                    <View 
+                      style={[
+                        styles.categoryIcon,
+                        { backgroundColor: `${category.color}15` }
+                      ]}
+                    >
+                      <Text style={styles.categoryEmoji}>{category.emoji}</Text>
+                    </View>
+                    <Text style={styles.categoryName}>{category.name}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          </View>
+        ) : products.length === 0 ? (
+          <View style={[styles.emptyContainer, darkMode && styles.emptyContainerDark]}>
+            <Text style={[styles.emptyPrimary, darkMode && styles.emptyPrimaryDark]}>
+              No products found
+            </Text>
+            <Text style={[styles.emptySecondary, darkMode && styles.emptySecondaryDark]}>
+              Try adjusting your filters or search query
+            </Text>
+          </View>
+        ) : (
           <View style={styles.productList}>
             {products.map((product) => (
               <ProductCard
                 key={product.id}
                 product={product}
-                onPress={() => handleProductView(product)}
+                onPress={() => {}}
               />
             ))}
           </View>
-        ) : isDiscoveryMode ? (
-          <View style={styles.discoveryContainer}>
-            {/* Visual Category Entry Points */}
-            <CategoryEntryPoints 
-              categories={productCategories}
-              onSelect={handleCategorySelect}
-            />
-            
-            {/* TrendRadar */}
-            <TrendRadar 
-              items={trendRadarData}
-              onItemPress={handleTrendSelect}
-            />
-            
-            {/* Shop by Vibe */}
-            <ShopByVibe 
-              moods={moodBoards}
-              onMoodSelect={handleMoodSelect}
-            />
-            
-            {/* Social Bundles */}
-            <SocialBundles 
-              bundles={socialBundles}
-              onBundlePress={handleBundleSelect}
-            />
-          </View>
-        ) : (
-          <View style={[styles.emptyContainer, darkMode && styles.emptyContainerDark]}>
-            <Text style={[styles.emptyPrimary, darkMode && styles.emptyPrimaryDark]}>
-              {searchQuery.trim() || selectedPersona || selectedMoment ? 
-                'No matching products found' : 'Ready to discover'}
-            </Text>
-            <Text style={[styles.emptySecondary, darkMode && styles.emptySecondaryDark]}>
-              {searchQuery.trim() || selectedPersona || selectedMoment
-                ? 'Try broadening your search or changing your persona/life moment' 
-                : 'Select a persona or life moment to see tailored recommendations'}
-            </Text>
-          </View>
         )}
-      </Animated.ScrollView>
+      </ScrollView>
+      
+      {/* Visual Search Modal */}
+      <VisualSearch 
+        visible={showVisualSearch}
+        onClose={() => setShowVisualSearch(false)}
+        onSearch={handleVisualSearch}
+      />
     </View>
   );
 }
@@ -3995,12 +3949,12 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   
-  // AR feature styles
+  // AR button style
   arButton: {
     position: 'absolute',
     top: 12,
-    right: 12,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    right: 70, // Position next to Preview button
+    backgroundColor: 'rgba(255,69,0,0.8)', // Orange-red for AR
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 4,
@@ -4010,6 +3964,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
+  
+  // WebXR AR Viewer styles
   arOverlay: {
     position: 'absolute',
     top: 0,
@@ -4022,44 +3978,121 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   arContent: {
-    width: '80%',
+    width: '90%',
+    maxWidth: 600,
     backgroundColor: COLORS.light,
     borderRadius: 12,
     padding: 20,
     alignItems: 'center',
   },
   arTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: '500',
     marginBottom: 20,
     color: COLORS.darkGray,
   },
-  arImageContainer: {
-    height: 200,
+  arViewport: {
     width: '100%',
-    backgroundColor: COLORS.lightGray,
+    height: 400,
+    backgroundColor: '#f0f0f0',
     borderRadius: 8,
+    marginBottom: 20,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  arLoading: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+  },
+  arLoadingText: {
+    color: COLORS.midGray,
+    marginBottom: 10,
+  },
+  arReadyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
   },
   arEmoji: {
     fontSize: 60,
-    marginBottom: 15,
+    marginBottom: 20,
   },
   arMessage: {
     textAlign: 'center',
-    color: COLORS.midGray,
-    paddingHorizontal: 20,
-    lineHeight: 20,
+    color: COLORS.darkGray,
+    marginBottom: 25,
+    lineHeight: 22,
+  },
+  arStartButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 25,
+  },
+  arStartButtonText: {
+    color: COLORS.light,
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  arActiveContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#000',
+  },
+  arActiveText: {
+    color: COLORS.light,
+    textAlign: 'center',
+    position: 'absolute',
+    top: 20,
+    left: 20,
+    right: 20,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    padding: 10,
+    borderRadius: 8,
+  },
+  arUnsupportedContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  arErrorEmoji: {
+    fontSize: 40,
+    marginBottom: 15,
+  },
+  arErrorText: {
+    textAlign: 'center',
+    color: '#D32F2F',
+    lineHeight: 22,
+  },
+  arActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
   },
   arCloseButton: {
-    backgroundColor: COLORS.accent1,
-    paddingHorizontal: 20,
+    flex: 1,
+    backgroundColor: COLORS.lightGray,
     paddingVertical: 12,
     borderRadius: 6,
+    alignItems: 'center',
+    marginRight: 10,
   },
   arCloseText: {
+    color: COLORS.darkGray,
+    fontWeight: '600',
+  },
+  arHelpButton: {
+    flex: 1,
+    backgroundColor: COLORS.accent1,
+    paddingVertical: 12,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  arHelpText: {
     color: COLORS.light,
     fontWeight: '600',
   },
@@ -4131,27 +4164,53 @@ const styles = StyleSheet.create({
   // Pagination styles
   pagination: {
     flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 15,
+    marginBottom: 10,
   },
   paginationDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: COLORS.border,
-    marginHorizontal: 3,
-  },
-  paginationDotActive: {
-    backgroundColor: COLORS.accent1,
     width: 8,
     height: 8,
     borderRadius: 4,
+    backgroundColor: COLORS.border,
+    marginHorizontal: 4,
+  },
+  paginationDotActive: {
+    backgroundColor: COLORS.accent1,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  swipeNavigation: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 5,
+    paddingHorizontal: 10,
+  },
+  swipeButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.accent1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  swipeButtonDisabled: {
+    backgroundColor: COLORS.border,
+    opacity: 0.5,
+  },
+  swipeButtonText: {
+    color: COLORS.light,
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   swipeIndicator: {
     alignItems: 'center',
-    paddingVertical: 10,
   },
   swipeIndicatorText: {
-    fontSize: 12,
+    fontSize: 13,
     color: COLORS.midGray,
     fontStyle: 'italic',
   },
@@ -4302,5 +4361,614 @@ const styles = StyleSheet.create({
   arHelpText: {
     color: COLORS.accent1,
     fontSize: 14,
+  },
+  
+  // Floating persona selector styles
+  floatingPersonaContainer: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    right: 20,
+    zIndex: 900,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  floatingPersonaContent: {
+    padding: 15,
+  },
+  floatingPersonaTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.darkGray,
+    marginBottom: 10,
+  },
+  floatingPersonaChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  floatingPersonaChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: COLORS.lightGray,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  floatingPersonaEmoji: {
+    fontSize: 16,
+    marginRight: 6,
+  },
+  floatingPersonaLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: COLORS.darkGray,
+  },
+  
+  // Updated styles for TrendRadar
+  exploreGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  exploreItem: {
+    width: '48%',
+    backgroundColor: COLORS.light,
+    borderRadius: 12,
+    marginBottom: 15,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  exploreImage: {
+    width: '100%',
+    height: 100,
+  },
+  swipeNavigation: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 10,
+    paddingHorizontal: 10,
+  },
+  swipeButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.accent1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  swipeButtonDisabled: {
+    backgroundColor: COLORS.border,
+    opacity: 0.5,
+  },
+  swipeButtonText: {
+    color: COLORS.light,
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  
+  // Replace AR button styles with Preview button styles
+  previewButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 4,
+  },
+  previewButtonText: {
+    color: COLORS.light,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  
+  // Replace AR overlay styles with Product Preview styles
+  previewOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  previewContent: {
+    width: '90%',
+    maxWidth: 500,
+    backgroundColor: COLORS.light,
+    borderRadius: 12,
+    padding: 20,
+    alignItems: 'center',
+  },
+  previewTitle: {
+    fontSize: 20,
+    fontWeight: '500',
+    marginBottom: 20,
+    color: COLORS.darkGray,
+  },
+  previewImageContainer: {
+    width: '100%',
+    height: 300,
+    backgroundColor: COLORS.lightGray,
+    borderRadius: 8,
+    marginBottom: 20,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  previewImage: {
+    width: '100%',
+    height: '100%',
+  },
+  previewProductInfo: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    padding: 12,
+  },
+  previewProductTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.light,
+    marginBottom: 4,
+  },
+  previewProductPrice: {
+    fontSize: 14,
+    color: COLORS.light,
+  },
+  previewLoading: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  previewLoadingText: {
+    color: COLORS.midGray,
+    marginBottom: 10,
+  },
+  previewError: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  previewErrorEmoji: {
+    fontSize: 40,
+    marginBottom: 15,
+  },
+  previewErrorText: {
+    textAlign: 'center',
+    color: '#D32F2F',
+    lineHeight: 20,
+  },
+  previewActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  previewCloseButton: {
+    flex: 1,
+    backgroundColor: COLORS.lightGray,
+    paddingVertical: 12,
+    borderRadius: 6,
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  previewCloseText: {
+    color: COLORS.darkGray,
+    fontWeight: '600',
+  },
+  previewBuyButton: {
+    flex: 2,
+    backgroundColor: COLORS.accent1,
+    paddingVertical: 12,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  previewBuyText: {
+    color: COLORS.light,
+    fontWeight: '600',
+  },
+  
+  // Virtual Try-On button styles
+  tryOnButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: 'rgba(159,43,104,0.8)', // Purple for Try-On
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 4,
+  },
+  tryOnButtonText: {
+    color: COLORS.light,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  
+  // Virtual Try-On overlay styles
+  tryOnOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  tryOnContent: {
+    width: '90%',
+    maxWidth: 600,
+    backgroundColor: COLORS.light,
+    borderRadius: 12,
+    padding: 20,
+    alignItems: 'center',
+  },
+  tryOnTitle: {
+    fontSize: 20,
+    fontWeight: '500',
+    marginBottom: 20,
+    color: COLORS.darkGray,
+  },
+  tryOnWorkspace: {
+    width: '100%',
+    height: 450,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
+    marginBottom: 20,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  tryOnUploadArea: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  tryOnInstructions: {
+    fontSize: 16,
+    color: COLORS.darkGray,
+    textAlign: 'center',
+    marginBottom: 30,
+    lineHeight: 24,
+  },
+  tryOnButtonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  tryOnButton: {
+    backgroundColor: COLORS.accent1,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    marginHorizontal: 10,
+  },
+  tryOnButtonText: {
+    color: COLORS.light,
+    fontWeight: '600',
+  },
+  tryOnError: {
+    color: '#D32F2F',
+    marginTop: 15,
+  },
+  tryOnProcessing: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  tryOnProcessingText: {
+    fontSize: 16,
+    color: COLORS.darkGray,
+    marginBottom: 20,
+  },
+  tryOnLoader: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: COLORS.accent1,
+    borderTopColor: 'transparent',
+    animationName: 'spin',
+    animationDuration: '1s',
+    animationTimingFunction: 'linear',
+    animationIterationCount: 'infinite',
+  },
+  tryOnResult: {
+    flex: 1,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 10,
+  },
+  tryOnResultImage: {
+    width: '100%',
+    height: '80%',
+    borderRadius: 8,
+  },
+  tryOnResultCaption: {
+    fontSize: 16,
+    color: COLORS.darkGray,
+    marginVertical: 10,
+  },
+  tryOnActionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  tryOnShareButton: {
+    backgroundColor: COLORS.accent2,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 20,
+    marginHorizontal: 5,
+    flex: 1,
+    alignItems: 'center',
+  },
+  tryOnShareButtonText: {
+    color: COLORS.light,
+    fontWeight: '600',
+  },
+  tryOnTryAgainButton: {
+    backgroundColor: COLORS.accent1,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 20,
+    marginHorizontal: 5,
+    flex: 1,
+    alignItems: 'center',
+  },
+  tryOnTryAgainButtonText: {
+    color: COLORS.light,
+    fontWeight: '600',
+  },
+  tryOnFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  tryOnCloseButton: {
+    flex: 1,
+    backgroundColor: COLORS.lightGray,
+    paddingVertical: 12,
+    borderRadius: 6,
+    alignItems: 'center',
+    marginRight: processedImage ? 10 : 0,
+  },
+  tryOnCloseButtonText: {
+    color: COLORS.darkGray,
+    fontWeight: '600',
+  },
+  tryOnBuyButton: {
+    flex: 2,
+    backgroundColor: COLORS.accent1,
+    paddingVertical: 12,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  tryOnBuyButtonText: {
+    color: COLORS.light,
+    fontWeight: '600',
+  },
+  
+  // Visual Search styles
+  visualSearchOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  visualSearchContent: {
+    width: '90%',
+    maxWidth: 650,
+    backgroundColor: COLORS.light,
+    borderRadius: 12,
+    padding: 20,
+    alignItems: 'center',
+  },
+  visualSearchTitle: {
+    fontSize: 24,
+    fontWeight: '600',
+    marginBottom: 20,
+    color: COLORS.darkGray,
+  },
+  visualSearchWorkspace: {
+    width: '100%',
+    height: 500,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
+    marginBottom: 20,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  visualSearchUploadArea: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  visualSearchInstructions: {
+    fontSize: 18,
+    color: COLORS.darkGray,
+    textAlign: 'center',
+    marginBottom: 30,
+    lineHeight: 24,
+    maxWidth: '80%',
+  },
+  visualSearchButtonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  visualSearchButton: {
+    backgroundColor: COLORS.accent1,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 25,
+    marginHorizontal: 10,
+  },
+  visualSearchButtonText: {
+    color: COLORS.light,
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  visualSearchError: {
+    color: '#D32F2F',
+    marginTop: 15,
+    fontSize: 16,
+  },
+  visualSearchAnalyzing: {
+    flex: 1,
+    position: 'relative',
+  },
+  visualSearchImage: {
+    width: '100%',
+    height: '100%',
+  },
+  visualSearchAnalyzingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  visualSearchAnalyzingText: {
+    color: COLORS.light,
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 20,
+  },
+  visualSearchLoader: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: COLORS.accent1,
+    borderTopColor: 'transparent',
+    animationName: 'spin',
+    animationDuration: '1s',
+    animationTimingFunction: 'linear',
+    animationIterationCount: 'infinite',
+  },
+  visualSearchDetected: {
+    flex: 1,
+    position: 'relative',
+    padding: 10,
+  },
+  visualSearchImageContainer: {
+    width: '100%',
+    height: '75%',
+    position: 'relative',
+    marginBottom: 10,
+  },
+  visualSearchBoundingBox: {
+    position: 'absolute',
+    borderWidth: 2,
+    borderStyle: 'solid',
+    justifyContent: 'flex-end',
+    alignItems: 'flex-start',
+  },
+  visualSearchObjectLabel: {
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    color: COLORS.light,
+    fontSize: 12,
+    padding: 4,
+    borderRadius: 4,
+    marginBottom: -25,
+  },
+  visualSearchSelectionInstructions: {
+    marginBottom: 15,
+    alignItems: 'center',
+  },
+  visualSearchSelectionText: {
+    fontSize: 16,
+    color: COLORS.darkGray,
+    marginBottom: 5,
+  },
+  visualSearchSelectedCount: {
+    fontSize: 14,
+    color: COLORS.accent1,
+    fontWeight: '600',
+  },
+  visualSearchActionButton: {
+    backgroundColor: COLORS.accent1,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 25,
+    alignSelf: 'center',
+  },
+  visualSearchActionButtonDisabled: {
+    backgroundColor: COLORS.midGray,
+    opacity: 0.7,
+  },
+  visualSearchActionButtonText: {
+    color: COLORS.light,
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  visualSearchSearching: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  visualSearchSearchingText: {
+    fontSize: 18,
+    color: COLORS.darkGray,
+    marginBottom: 20,
+  },
+  visualSearchFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  visualSearchCloseButton: {
+    flex: 1,
+    backgroundColor: COLORS.lightGray,
+    paddingVertical: 14,
+    borderRadius: 6,
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  visualSearchCloseButtonText: {
+    color: COLORS.darkGray,
+    fontWeight: '600',
+  },
+  visualSearchResetButton: {
+    flex: 1,
+    backgroundColor: COLORS.accent2,
+    paddingVertical: 14,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  visualSearchResetButtonText: {
+    color: COLORS.light,
+    fontWeight: '600',
   },
 }); 
