@@ -1911,6 +1911,11 @@ export default function App() {
       if (category) {
         handleCategorySelect(category);
       }
+    } else if (command.type === 'trending') {
+      // Handle trending command - maybe focus on trending section
+      if (trendRadarData.length > 0) {
+        handleTrendSelect(trendRadarData[0]);
+      }
     }
   };
 
