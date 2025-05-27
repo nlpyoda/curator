@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Animated, Image, PanResponder, Vibration } from 'react-native';
-import { useSpeechRecognition } from 'react-speech-recognition';
 
 // For trendy, minimalist color palette
 const COLORS = {
@@ -1480,33 +1479,75 @@ const TrendingTicker = ({ items }) => {
   );
 };
 
-// Add this function after other component declarations
-const VoiceNavigation = ({ onCommand }) => {
+// Add this right after the imports
+const useSimulatedSpeechRecognition = () => {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
-  const [error, setError] = useState('');
-
-  // Voice command handler (simulated)
-  const handleVoiceCommand = () => {
+  
+  const startListening = () => {
     setIsListening(true);
-    
-    // Simulate voice recognition (in a real app, use the Web Speech API)
+    // Simulate recognition with timeout
     setTimeout(() => {
       setIsListening(false);
-      const mockTranscript = "show me tech products";
-      setTranscript(mockTranscript);
-      
+      // Simulate random transcripts
+      const possibleTranscripts = [
+        "show me tech products",
+        "find audio devices",
+        "search for laptops",
+        "show trending items"
+      ];
+      const randomTranscript = possibleTranscripts[
+        Math.floor(Math.random() * possibleTranscripts.length)
+      ];
+      setTranscript(randomTranscript);
+    }, 2000);
+  };
+  
+  const stopListening = () => {
+    setIsListening(false);
+  };
+  
+  return {
+    transcript,
+    isListening,
+    startListening,
+    stopListening,
+    resetTranscript: () => setTranscript('')
+  };
+};
+
+// Now update the VoiceNavigation component to use the simulated hook
+const VoiceNavigation = ({ onCommand }) => {
+  const [error, setError] = useState('');
+  const { 
+    transcript, 
+    isListening, 
+    startListening, 
+    stopListening,
+    resetTranscript
+  } = useSimulatedSpeechRecognition();
+
+  // Watch for transcript changes and process commands
+  useEffect(() => {
+    if (transcript && !isListening) {
       // Process command
-      if (mockTranscript.includes("tech")) {
+      if (transcript.includes("tech")) {
         onCommand && onCommand({ type: 'category', value: 'tech' });
-      } else if (mockTranscript.includes("audio")) {
+      } else if (transcript.includes("audio")) {
         onCommand && onCommand({ type: 'category', value: 'audio' });
+      } else if (transcript.includes("laptop")) {
+        onCommand && onCommand({ type: 'category', value: 'tech' });
+      } else if (transcript.includes("trending")) {
+        onCommand && onCommand({ type: 'trending', value: true });
       } else {
         setError('Command not recognized. Try again.');
         setTimeout(() => setError(''), 3000);
       }
-    }, 2000);
-  };
+      
+      // Reset transcript after processing
+      setTimeout(() => resetTranscript(), 3000);
+    }
+  }, [transcript, isListening]);
 
   return (
     <View style={styles.voiceNavContainer}>
@@ -1515,7 +1556,7 @@ const VoiceNavigation = ({ onCommand }) => {
           styles.voiceButton, 
           isListening && styles.voiceButtonActive
         ]}
-        onPress={handleVoiceCommand}
+        onPress={isListening ? stopListening : startListening}
       >
         <Text style={styles.voiceButtonIcon}>🎤</Text>
       </TouchableOpacity>
@@ -1526,9 +1567,9 @@ const VoiceNavigation = ({ onCommand }) => {
         </View>
       )}
       
-      {transcript && !error && (
+      {transcript && !error && !isListening && (
         <View style={styles.transcriptContainer}>
-          <Text style={styles.transcriptText}>{transcript}</Text>
+          <Text style={styles.transcriptText}>"{transcript}"</Text>
         </View>
       )}
       
