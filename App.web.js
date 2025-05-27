@@ -3,19 +3,19 @@ import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Animat
 
 // For trendy, minimalist color palette
 const COLORS = {
-  primary: '#0A0A0A',       // Pure black
-  secondary: '#1A1A1A',     // Near black
-  accent1: '#333333',       // Dark gray
-  accent2: '#555555',       // Mid gray
-  accent3: '#777777',       // Light mid gray
-  accent4: '#999999',       // Very light gray
+  primary: '#000000',       // Pure black
+  secondary: '#1D1D1F',     // Apple's dark gray
+  accent1: '#86868B',       // Apple's mid gray
+  accent2: '#424245',       // Apple's darker mid gray
+  accent3: '#A1A1A6',       // Apple's light mid gray
+  accent4: '#F5F5F7',       // Apple's background gray
   light: '#FFFFFF',         // White
-  lightGray: '#F9F9F9',     // Ultra light gray
-  midGray: '#AAAAAA',       // Mid gray
-  darkGray: '#222222',      // Dark gray
-  glassBg: 'rgba(255,255,255,0.95)', // Glass effect background
-  highlight: '#EEEEEE',     // Subtle highlight
-  border: '#E0E0E0',        // Border color
+  lightGray: '#FBFBFD',     // Apple's ultra light gray
+  midGray: '#86868B',       // Apple's text gray
+  darkGray: '#1D1D1F',      // Apple's dark gray
+  glassBg: 'rgba(255,255,255,0.98)', // Glass effect background
+  highlight: '#F5F5F7',     // Subtle highlight
+  border: '#D2D2D7',        // Apple's border color
 };
 
 // Mock data for testing
@@ -570,6 +570,9 @@ const ProductCard = ({ product, onPress, isTrending = false }) => {
   
   const handleFlip = () => {
     setIsFlipped(!isFlipped);
+    if (!isFlipped) {
+      onPress && onPress(product);
+    }
   };
   
   return (
@@ -579,57 +582,33 @@ const ProductCard = ({ product, onPress, isTrending = false }) => {
         isTrending ? styles.trendingProductCard : null
       ]}
       onPress={handleFlip}
-      activeOpacity={0.9}
+      activeOpacity={0.95}
     >
       {!isFlipped ? (
-        // Front of card - more minimal, social-focused
+        // Front of card - more minimal, Apple-like
         <View style={styles.cardContent}>
-          <View style={styles.cardHeader}>
-            <View style={styles.cardHeaderTextContainer}>
-              <Text style={styles.productTitle} numberOfLines={2}>
-                {title}
-              </Text>
-              <View style={styles.priceRatingContainer}>
-                <Text style={styles.price}>${price.toLocaleString()}</Text>
-                <View style={styles.ratingContainer}>
-                  <Text style={styles.rating}>★ {rating}</Text>
-                </View>
-              </View>
-            </View>
+          <View style={styles.productImagePlaceholder}>
+            <Text style={styles.productImageEmoji}>
+              {product.category === 'laptop' ? '💻' : 
+               product.category === 'baby' ? '👶' : 
+               product.category === 'wearables' ? '⌚' :
+               product.category === 'audio' ? '🎧' : '📱'}
+            </Text>
           </View>
           
-          <View style={styles.cardDivider} />
+          <View style={styles.cardHeader}>
+            <Text style={styles.productTitle} numberOfLines={1}>
+              {title}
+            </Text>
+            <Text style={styles.productPrice}>${price.toLocaleString()}</Text>
+          </View>
           
-          <Text style={styles.description} numberOfLines={3}>
+          <Text style={styles.productRating}>★ {rating}</Text>
+          
+          <Text style={styles.productDescription} numberOfLines={2}>
             {description}
           </Text>
           
-          <View style={styles.socialProofSection}>
-            <View style={styles.whyBuyContainer}>
-              <Text style={styles.whyBuyLabel}>Why People Love It</Text>
-              <Text style={styles.whyBuyText} numberOfLines={2}>
-                {whyBuy}
-              </Text>
-            </View>
-            
-            <View style={styles.insightPreview}>
-              {insights.slice(0, 2).map((insight, index) => (
-                <View key={index} style={styles.insightPreviewItem}>
-                  <View 
-                    style={[
-                      styles.insightDot, 
-                      { backgroundColor: insight.color }
-                    ]} 
-                  />
-                  <Text style={styles.insightPreviewText}>
-                    {insight.label}: {insight.value}
-                  </Text>
-                </View>
-              ))}
-              <Text style={styles.insightPreviewMore}>+ more</Text>
-            </View>
-          </View>
-
           <View style={styles.cardFooter}>
             <TouchableOpacity
               style={styles.viewButton}
@@ -640,7 +619,7 @@ const ProductCard = ({ product, onPress, isTrending = false }) => {
           </View>
         </View>
       ) : (
-        // Back of card - more detailed view
+        // Back of card - detailed view
         <View style={styles.cardContentBack}>
           <TouchableOpacity
             style={styles.closeButton}
@@ -651,35 +630,45 @@ const ProductCard = ({ product, onPress, isTrending = false }) => {
           
           <Text style={styles.detailsTitle}>{title}</Text>
           
-          <View style={styles.insightCardsContainer}>
-            {insights.map((insight, index) => (
-              <View key={index} style={[styles.insightCard, { borderColor: insight.color }]}>
-                <Text style={[styles.insightCardValue, { color: insight.color }]}>{insight.value}</Text>
-                <Text style={styles.insightCardLabel}>{insight.label}</Text>
-              </View>
-            ))}
+          <View style={styles.detailsSection}>
+            <Text style={styles.detailsSubtitle}>Why You'll Love It</Text>
+            <Text style={styles.detailsText}>{whyBuy}</Text>
           </View>
           
-          <View style={styles.verdictSection}>
-            <Text style={styles.detailsSubtitle}>Expert Take</Text>
-            <Text style={styles.verdictText}>{whyBuy}</Text>
+          <View style={styles.insightsSection}>
+            <Text style={styles.detailsSubtitle}>Key Highlights</Text>
+            <View style={styles.insightsList}>
+              {insights.map((insight, index) => (
+                <View key={index} style={styles.insightItem}>
+                  <View style={styles.insightBarContainer}>
+                    <View 
+                      style={[
+                        styles.insightBar, 
+                        { width: `${insight.value}%`, backgroundColor: COLORS.primary }
+                      ]} 
+                    />
+                  </View>
+                  <View style={styles.insightLabelContainer}>
+                    <Text style={styles.insightLabel}>{insight.label}</Text>
+                    <Text style={styles.insightValue}>{insight.value}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
           </View>
           
-          <View style={styles.socialActions}>
-            <TouchableOpacity style={styles.socialActionButton}>
-              <Text style={styles.socialActionText}>♥ Save</Text>
+          <View style={styles.actionButtons}>
+            <TouchableOpacity
+              style={styles.buyButton}
+              onPress={() => window.open(product.link, '_blank')}
+            >
+              <Text style={styles.buyButtonText}>Buy</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.socialActionButton}>
-              <Text style={styles.socialActionText}>↗ Share</Text>
+            
+            <TouchableOpacity style={styles.learnMoreButton}>
+              <Text style={styles.learnMoreButtonText}>Learn more</Text>
             </TouchableOpacity>
           </View>
-          
-          <TouchableOpacity
-            style={styles.buyButton}
-            onPress={() => window.open(product.link, '_blank')}
-          >
-            <Text style={styles.buyButtonText}>Buy Now</Text>
-          </TouchableOpacity>
         </View>
       )}
     </TouchableOpacity>
@@ -880,55 +869,96 @@ const TrendingSection = ({ lifeMoment, onProductSelect }) => {
 
 // Visual Category Entry Points
 const CategoryEntryPoints = ({ categories, onSelect }) => {
+  const fadeAnim = useState(new Animated.Value(0))[0];
+  
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 800,
+      useNativeDriver: true
+    }).start();
+  }, []);
+  
   return (
     <View style={styles.categoryEntryContainer}>
+      <Text style={styles.categoryHeading}>Discover Products</Text>
+      <Text style={styles.categorySubheading}>Browse by category</Text>
+      
       <ScrollView 
         horizontal 
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.categoryScroll}
+        decelerationRate="fast"
+        snapToInterval={270}
+        snapToAlignment="start"
       >
         {categories.map(category => (
-          <TouchableOpacity
+          <Animated.View
             key={category.id}
-            style={[styles.categoryItem, { backgroundColor: `${category.color}15` }]}
-            onPress={() => onSelect(category)}
-            activeOpacity={0.7}
+            style={[
+              styles.categoryCard,
+              { opacity: fadeAnim }
+            ]}
           >
-            <View style={[styles.categoryIcon, { backgroundColor: category.color }]}>
+            <TouchableOpacity
+              style={styles.categoryCardInner}
+              onPress={() => onSelect(category)}
+              activeOpacity={0.9}
+            >
               <Text style={styles.categoryEmoji}>{category.emoji}</Text>
-            </View>
-            <Text style={styles.categoryName}>{category.name}</Text>
-          </TouchableOpacity>
+              <Text style={styles.categoryName}>{category.name}</Text>
+              <Text style={styles.categoryTagline}>
+                {getCategoryTagline(category.id)}
+              </Text>
+              <View style={styles.categoryButton}>
+                <Text style={styles.categoryButtonText}>Explore</Text>
+              </View>
+            </TouchableOpacity>
+          </Animated.View>
         ))}
       </ScrollView>
     </View>
   );
 };
 
+// Add a function to get taglines for categories
+const getCategoryTagline = (categoryId) => {
+  switch(categoryId) {
+    case 'tech':
+      return 'Powerful. Versatile. Essential.';
+    case 'audio':
+      return 'Hear what you\'ve been missing.';
+    case 'home':
+      return 'Smart solutions for everyday living.';
+    case 'travel':
+      return 'Go further with premium gear.';
+    case 'fitness':
+      return 'Elevate your performance.';
+    case 'beauty':
+      return 'Refined essentials for self-care.';
+    default:
+      return 'Discover the best products.';
+  }
+};
+
 // TrendRadar Component
 const TrendRadar = ({ items, onItemPress }) => {
   return (
     <View style={styles.trendRadarContainer}>
-      <View style={styles.sectionHeaderRow}>
-        <View style={styles.sectionTitleContainer}>
-          <Text style={styles.sectionIcon}>📊</Text>
-          <Text style={styles.sectionTitle}>TrendRadar</Text>
-        </View>
-        <TouchableOpacity>
-          <Text style={styles.sectionAction}>View all</Text>
-        </TouchableOpacity>
+      <View style={styles.sectionTitleContainer}>
+        <Text style={styles.sectionTitle}>Trending Now</Text>
+        <Text style={styles.sectionSubtitle}>
+          See what everyone's loving this week
+        </Text>
       </View>
       
-      <Text style={styles.sectionSubtitle}>
-        See what's trending right now in real-time
-      </Text>
-      
-      <View style={styles.trendRadarList}>
+      <View style={styles.trendRadarGrid}>
         {items.map(item => (
           <TouchableOpacity 
             key={item.id}
             style={styles.trendRadarItem}
             onPress={() => onItemPress(item)}
+            activeOpacity={0.9}
           >
             <View style={styles.trendRadarImageContainer}>
               <Image 
@@ -936,23 +966,14 @@ const TrendRadar = ({ items, onItemPress }) => {
                 style={styles.trendRadarImage} 
                 resizeMode="cover"
               />
-              {item.status === 'viral' && (
-                <View style={styles.viralBadge}>
-                  <Text style={styles.viralBadgeText}>🔥 VIRAL</Text>
-                </View>
-              )}
             </View>
             <View style={styles.trendRadarContent}>
-              <Text style={styles.trendRadarTitle} numberOfLines={1}>{item.title}</Text>
               <Text style={styles.trendRadarCategory}>{item.category}</Text>
+              <Text style={styles.trendRadarTitle}>{item.title}</Text>
               <View style={styles.trendRadarStats}>
-                <Text style={[
-                  styles.trendRadarChange,
-                  item.percentageChange > 20 ? styles.highChangeText : styles.normalChangeText
-                ]}>
-                  ↑ {item.percentageChange}%
+                <Text style={styles.trendRadarChange}>
+                  {item.status === 'viral' ? 'Trending' : `+${item.percentageChange}%`}
                 </Text>
-                <Text style={styles.trendRadarPeriod}>last 24h</Text>
               </View>
             </View>
           </TouchableOpacity>
@@ -2683,232 +2704,232 @@ const styles = StyleSheet.create({
   
   // Visual Category Entry Points
   categoryEntryContainer: {
+    marginBottom: 40,
+    paddingTop: 20,
+  },
+  categoryHeading: {
+    fontSize: 28,
+    fontWeight: '600',
+    color: COLORS.primary,
+    marginBottom: 8,
+    paddingHorizontal: 20,
+  },
+  categorySubheading: {
+    fontSize: 17,
+    fontWeight: '400',
+    color: COLORS.accent1,
     marginBottom: 20,
+    paddingHorizontal: 20,
   },
   categoryScroll: {
-    paddingHorizontal: 10,
+    paddingLeft: 20,
+    paddingRight: 10,
+    paddingBottom: 10,
   },
-  categoryItem: {
-    padding: 15,
-    borderRadius: 16,
-    marginRight: 10,
-    width: 100,
+  categoryCard: {
+    width: 260,
+    height: 300,
+    marginRight: 20,
+    borderRadius: 20,
+    overflow: 'hidden',
+    backgroundColor: COLORS.light,
     shadowColor: COLORS.primary,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    borderWidth: 1,
-    borderColor: '#eaeaea',
-    alignItems: 'center',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
   },
-  categoryIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 10,
+  categoryCardInner: {
+    flex: 1,
+    padding: 24,
+    justifyContent: 'space-between',
   },
   categoryEmoji: {
-    fontSize: 24,
+    fontSize: 40,
+    marginBottom: 16,
   },
   categoryName: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 24,
+    fontWeight: '600',
     color: COLORS.primary,
-    textAlign: 'center',
+    marginBottom: 8,
+  },
+  categoryTagline: {
+    fontSize: 15,
+    fontWeight: '400',
+    color: COLORS.accent1,
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  categoryButton: {
+    alignSelf: 'flex-start',
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 18,
+  },
+  categoryButtonText: {
+    color: COLORS.light,
+    fontSize: 14,
+    fontWeight: '500',
   },
   
   // TrendRadar
   trendRadarContainer: {
-    marginBottom: 25,
-    backgroundColor: COLORS.light,
-    borderRadius: 16,
-    padding: 15,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
+    marginBottom: 40,
+    paddingHorizontal: 20,
   },
   sectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 20,
   },
   sectionTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  sectionIcon: {
-    fontSize: 24,
-    marginRight: 10,
+    marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-  },
-  sectionAction: {
-    fontSize: 14,
-    color: COLORS.secondary,
+    fontSize: 28,
     fontWeight: '600',
+    color: COLORS.primary,
+    marginBottom: 8,
   },
   sectionSubtitle: {
-    fontSize: 15,
-    color: COLORS.midGray,
-    marginBottom: 15,
+    fontSize: 17,
+    fontWeight: '400',
+    color: COLORS.accent1,
   },
-  trendRadarList: {
-    paddingBottom: 5,
+  trendRadarGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
   trendRadarItem: {
-    backgroundColor: COLORS.light,
-    borderRadius: 16,
-    marginRight: 12,
-    shadowColor: COLORS.primary,
-    shadowOffset: {
-      width: 0,
-      height: 3,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
+    width: '48%',
+    marginBottom: 20,
+    borderRadius: 20,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#eaeaea',
-    width: 220,
+    backgroundColor: COLORS.light,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
   },
   trendRadarImageContainer: {
-    height: 120,
-    backgroundColor: COLORS.secondary,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
+    height: 160,
   },
   trendRadarImage: {
     width: '100%',
     height: '100%',
-    borderRadius: 12,
   },
   trendRadarContent: {
-    padding: 15,
-  },
-  trendRadarTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-    marginBottom: 8,
-    height: 40,
+    padding: 16,
   },
   trendRadarCategory: {
-    fontSize: 14,
-    color: COLORS.midGray,
+    fontSize: 13,
+    color: COLORS.accent1,
+    marginBottom: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
-  trendRadarStats: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
+  trendRadarTitle: {
+    fontSize: 17,
+    fontWeight: '500',
+    color: COLORS.primary,
+    marginBottom: 8,
   },
   trendRadarChange: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: COLORS.secondary,
-  },
-  normalChangeText: {
-    color: COLORS.midGray,
-  },
-  highChangeText: {
-    color: COLORS.accent2,
-  },
-  trendRadarPeriod: {
-    fontSize: 12,
-    color: COLORS.midGray,
+    color: COLORS.primary,
+    fontWeight: '500',
+    backgroundColor: COLORS.highlight,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
   },
   
   // Social Bundles
   socialBundlesContainer: {
-    marginBottom: 25,
+    marginBottom: 30,
     backgroundColor: COLORS.light,
-    borderRadius: 16,
-    padding: 15,
+    borderRadius: 20,
+    padding: 20,
     shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
   },
   bundlesScroll: {
-    paddingBottom: 5,
+    paddingVertical: 10,
   },
   bundleCard: {
+    width: 250,
     backgroundColor: COLORS.light,
     borderRadius: 16,
-    marginRight: 12,
-    shadowColor: COLORS.primary,
-    shadowOffset: {
-      width: 0,
-      height: 3,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
+    marginRight: 15,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#eaeaea',
-    width: 220,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
   },
   bundleCover: {
     width: '100%',
-    height: 120,
-    borderRadius: 12,
+    height: 140,
   },
   bundleContent: {
     padding: 15,
   },
   bundleTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     color: COLORS.primary,
-    marginBottom: 8,
+    marginBottom: 10,
   },
   bundleCreatorRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 15,
   },
   creatorAvatar: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    marginRight: 5,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    marginRight: 8,
   },
   creatorName: {
     fontSize: 14,
+    fontWeight: '500',
     color: COLORS.primary,
+    marginRight: 5,
   },
   verifiedBadge: {
     fontSize: 12,
-    color: COLORS.accent2,
-    fontWeight: 'bold',
+    color: COLORS.secondary,
+    backgroundColor: `${COLORS.secondary}20`,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    textAlign: 'center',
+    lineHeight: 16,
   },
   bundleStats: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
   },
   bundleStat: {
-    fontSize: 14,
+    fontSize: 12,
     color: COLORS.midGray,
   },
   
   // Shop by Vibe
   shopByVibeContainer: {
-    marginBottom: 25,
+    marginBottom: 30,
     backgroundColor: COLORS.light,
-    borderRadius: 16,
-    padding: 15,
+    borderRadius: 20,
+    padding: 20,
     shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.05,
@@ -2920,25 +2941,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   moodCard: {
+    width: '48%',
+    height: 150,
     backgroundColor: COLORS.light,
     borderRadius: 16,
-    marginRight: 12,
-    shadowColor: COLORS.primary,
-    shadowOffset: {
-      width: 0,
-      height: 3,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
+    marginBottom: 15,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#eaeaea',
-    width: 100,
+    position: 'relative',
   },
   moodCover: {
     width: '100%',
-    height: 120,
-    borderRadius: 12,
+    height: '100%',
   },
   moodOverlay: {
     position: 'absolute',
@@ -2946,17 +2959,19 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
   moodEmoji: {
-    fontSize: 24,
+    fontSize: 32,
+    marginBottom: 8,
+    textAlign: 'center',
   },
   moodName: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: COLORS.primary,
+    color: COLORS.light,
+    textAlign: 'center',
   },
   
   // Enhanced Hero
