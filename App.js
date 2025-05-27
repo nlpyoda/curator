@@ -13,7 +13,7 @@ import Animated, {
   interpolate,
   Extrapolate
 } from 'react-native-reanimated';
-import ProductCard from './app/components/ProductCard';
+import { ProductCard } from './app/components/ProductCard';
 
 const { width } = Dimensions.get('window');
 const cardWidth = width * 0.92;
