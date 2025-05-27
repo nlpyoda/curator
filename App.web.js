@@ -3,19 +3,19 @@ import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Animat
 
 // For trendy, minimalist color palette
 const COLORS = {
-  primary: '#000000',       // Pure black
-  secondary: '#1D1D1F',     // Apple's dark gray
-  accent1: '#86868B',       // Apple's mid gray
-  accent2: '#424245',       // Apple's darker mid gray
-  accent3: '#A1A1A6',       // Apple's light mid gray
-  accent4: '#F5F5F7',       // Apple's background gray
+  primary: '#121212',       // Instagram-like dark theme
+  secondary: '#262626',     // Secondary dark
+  accent1: '#0095F6',       // Instagram blue
+  accent2: '#833AB4',       // Instagram purple (from gradient)
+  accent3: '#FD1D1D',       // Instagram red/pink (from gradient)
+  accent4: '#FCAF45',       // Instagram yellow/orange (from gradient)
   light: '#FFFFFF',         // White
-  lightGray: '#FBFBFD',     // Apple's ultra light gray
-  midGray: '#86868B',       // Apple's text gray
-  darkGray: '#1D1D1F',      // Apple's dark gray
-  glassBg: 'rgba(255,255,255,0.98)', // Glass effect background
-  highlight: '#F5F5F7',     // Subtle highlight
-  border: '#D2D2D7',        // Apple's border color
+  lightGray: '#FAFAFA',     // Instagram background gray
+  midGray: '#8e8e8e',       // Instagram caption gray
+  darkGray: '#262626',      // Dark text
+  glassBg: 'rgba(255,255,255,0.8)',
+  highlight: '#EFEFEF',     // Instagram highlight
+  border: '#DBDBDB',        // Instagram border
 };
 
 // Mock data for testing
@@ -575,98 +575,151 @@ const ProductCard = ({ product, onPress, isTrending = false }) => {
     }
   };
   
+  // Calculate average color based on insights for card visual interest
+  const primaryColor = insights && insights.length > 0 
+    ? insights[0].color 
+    : COLORS.accent1;
+  
   return (
     <TouchableOpacity
       style={[
         styles.productCard,
-        isTrending ? styles.trendingProductCard : null
+        isTrending ? styles.trendingProductCard : null,
       ]}
       onPress={handleFlip}
-      activeOpacity={0.95}
+      activeOpacity={0.9}
     >
       {!isFlipped ? (
-        // Front of card - more minimal, Apple-like
+        // Front of card - Instagram feed style
         <View style={styles.cardContent}>
-          <View style={styles.productImagePlaceholder}>
-            <Text style={styles.productImageEmoji}>
-              {product.category === 'laptop' ? '💻' : 
-               product.category === 'baby' ? '👶' : 
-               product.category === 'wearables' ? '⌚' :
-               product.category === 'audio' ? '🎧' : '📱'}
-            </Text>
+          <View style={styles.cardImageContainer}>
+            <View style={[styles.cardImagePlaceholder, {backgroundColor: `${primaryColor}15`}]}>
+              <Text style={styles.cardImageEmoji}>
+                {product.category === 'laptop' ? '💻' : 
+                 product.category === 'baby' ? '👶' : 
+                 product.category === 'wearables' ? '⌚' :
+                 product.category === 'audio' ? '🎧' : '📱'}
+              </Text>
+            </View>
+            
+            <View style={styles.ratingPill}>
+              <Text style={styles.ratingText}>★ {rating}</Text>
+            </View>
           </View>
           
           <View style={styles.cardHeader}>
-            <Text style={styles.productTitle} numberOfLines={1}>
-              {title}
-            </Text>
-            <Text style={styles.productPrice}>${price.toLocaleString()}</Text>
-          </View>
-          
-          <Text style={styles.productRating}>★ {rating}</Text>
-          
-          <Text style={styles.productDescription} numberOfLines={2}>
-            {description}
-          </Text>
-          
-          <View style={styles.cardFooter}>
-            <TouchableOpacity
-              style={styles.viewButton}
-              onPress={handleFlip}
-            >
-              <Text style={styles.viewButtonText}>View Details</Text>
+            <View style={styles.userHeader}>
+              <View style={styles.avatarCircle}>
+                <Text style={styles.avatarText}>C</Text>
+              </View>
+              <View style={styles.userInfo}>
+                <Text style={styles.userName}>Curator</Text>
+                <Text style={styles.location}>{product.category}</Text>
+              </View>
+            </View>
+            <TouchableOpacity style={styles.moreButton}>
+              <Text style={styles.moreButtonText}>•••</Text>
             </TouchableOpacity>
           </View>
-        </View>
-      ) : (
-        // Back of card - detailed view
-        <View style={styles.cardContentBack}>
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={handleFlip}
-          >
-            <Text style={styles.closeButtonText}>×</Text>
-          </TouchableOpacity>
           
-          <Text style={styles.detailsTitle}>{title}</Text>
-          
-          <View style={styles.detailsSection}>
-            <Text style={styles.detailsSubtitle}>Why You'll Love It</Text>
-            <Text style={styles.detailsText}>{whyBuy}</Text>
-          </View>
-          
-          <View style={styles.insightsSection}>
-            <Text style={styles.detailsSubtitle}>Key Highlights</Text>
-            <View style={styles.insightsList}>
-              {insights.map((insight, index) => (
-                <View key={index} style={styles.insightItem}>
-                  <View style={styles.insightBarContainer}>
-                    <View 
-                      style={[
-                        styles.insightBar, 
-                        { width: `${insight.value}%`, backgroundColor: COLORS.primary }
-                      ]} 
-                    />
-                  </View>
-                  <View style={styles.insightLabelContainer}>
-                    <Text style={styles.insightLabel}>{insight.label}</Text>
-                    <Text style={styles.insightValue}>{insight.value}</Text>
-                  </View>
+          <View style={styles.cardBody}>
+            <Text style={styles.productTitle}>{title}</Text>
+            <Text style={styles.productPrice}>${price.toLocaleString()}</Text>
+            
+            <Text style={styles.productDescription} numberOfLines={2}>
+              {description}
+            </Text>
+            
+            <View style={styles.insightPreview}>
+              {insights.slice(0, 2).map((insight, index) => (
+                <View key={index} style={styles.insightPreviewItem}>
+                  <View 
+                    style={[
+                      styles.insightDot, 
+                      { backgroundColor: insight.color }
+                    ]} 
+                  />
+                  <Text style={styles.insightPreviewText}>
+                    {insight.label}: {insight.value}
+                  </Text>
                 </View>
               ))}
             </View>
           </View>
           
-          <View style={styles.actionButtons}>
+          <View style={styles.cardActions}>
+            <View style={styles.actionButtons}>
+              <TouchableOpacity style={styles.actionButton}>
+                <Text style={styles.actionButtonText}>♥</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.actionButton}>
+                <Text style={styles.actionButtonText}>💬</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.actionButton}>
+                <Text style={styles.actionButtonText}>✈</Text>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity style={styles.saveButton}>
+              <Text style={styles.saveButtonText}>🔖</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <View style={styles.likesRow}>
+            <Text style={styles.likesText}>Liked by <Text style={styles.boldText}>128 people</Text></Text>
+          </View>
+          
+          <TouchableOpacity onPress={handleFlip}>
+            <Text style={styles.viewCommentsText}>View product details</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        // Back of card - product details view
+        <View style={styles.cardContentBack}>
+          <View style={styles.backHeader}>
+            <View style={styles.backHeaderContent}>
+              <TouchableOpacity onPress={handleFlip}>
+                <Text style={styles.backButtonText}>←</Text>
+              </TouchableOpacity>
+              <Text style={styles.backHeaderTitle}>Product Details</Text>
+            </View>
+          </View>
+          
+          <ScrollView style={styles.backScrollContent}>
+            <Text style={styles.backProductTitle}>{title}</Text>
+            <Text style={styles.backProductPrice}>${price.toLocaleString()}</Text>
+            
+            <View style={styles.highlightsContainer}>
+              <Text style={styles.highlightsTitle}>Why People Love It</Text>
+              <Text style={styles.highlightsText}>{whyBuy}</Text>
+            </View>
+            
+            <View style={styles.insightsContainer}>
+              <Text style={styles.insightsTitle}>Key Insights</Text>
+              {insights.map((insight, index) => (
+                <View key={index} style={styles.insightBar}>
+                  <View style={styles.insightBarHeader}>
+                    <Text style={styles.insightBarLabel}>{insight.label}</Text>
+                    <Text style={styles.insightBarValue}>{insight.value}/100</Text>
+                  </View>
+                  <View style={styles.insightBarTrack}>
+                    <View 
+                      style={[
+                        styles.insightBarFill, 
+                        { width: `${insight.value}%`, backgroundColor: insight.color }
+                      ]} 
+                    />
+                  </View>
+                </View>
+              ))}
+            </View>
+          </ScrollView>
+          
+          <View style={styles.backFooter}>
             <TouchableOpacity
-              style={styles.buyButton}
+              style={styles.buyNowButton}
               onPress={() => window.open(product.link, '_blank')}
             >
-              <Text style={styles.buyButtonText}>Buy</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.learnMoreButton}>
-              <Text style={styles.learnMoreButtonText}>Learn more</Text>
+              <Text style={styles.buyNowButtonText}>Buy Now</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -869,52 +922,27 @@ const TrendingSection = ({ lifeMoment, onProductSelect }) => {
 
 // Visual Category Entry Points
 const CategoryEntryPoints = ({ categories, onSelect }) => {
-  const fadeAnim = useState(new Animated.Value(0))[0];
-  
-  useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 800,
-      useNativeDriver: true
-    }).start();
-  }, []);
-  
   return (
     <View style={styles.categoryEntryContainer}>
-      <Text style={styles.categoryHeading}>Discover Products</Text>
-      <Text style={styles.categorySubheading}>Browse by category</Text>
-      
       <ScrollView 
         horizontal 
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.categoryScroll}
-        decelerationRate="fast"
-        snapToInterval={270}
-        snapToAlignment="start"
       >
         {categories.map(category => (
-          <Animated.View
+          <TouchableOpacity
             key={category.id}
-            style={[
-              styles.categoryCard,
-              { opacity: fadeAnim }
-            ]}
+            style={styles.categoryStory}
+            onPress={() => onSelect(category)}
+            activeOpacity={0.8}
           >
-            <TouchableOpacity
-              style={styles.categoryCardInner}
-              onPress={() => onSelect(category)}
-              activeOpacity={0.9}
-            >
-              <Text style={styles.categoryEmoji}>{category.emoji}</Text>
-              <Text style={styles.categoryName}>{category.name}</Text>
-              <Text style={styles.categoryTagline}>
-                {getCategoryTagline(category.id)}
-              </Text>
-              <View style={styles.categoryButton}>
-                <Text style={styles.categoryButtonText}>Explore</Text>
+            <View style={styles.categoryStoryRing}>
+              <View style={styles.categoryStoryInner}>
+                <Text style={styles.categoryStoryEmoji}>{category.emoji}</Text>
               </View>
-            </TouchableOpacity>
-          </Animated.View>
+            </View>
+            <Text style={styles.categoryStoryName}>{category.name}</Text>
+          </TouchableOpacity>
         ))}
       </ScrollView>
     </View>
@@ -945,36 +973,38 @@ const getCategoryTagline = (categoryId) => {
 const TrendRadar = ({ items, onItemPress }) => {
   return (
     <View style={styles.trendRadarContainer}>
-      <View style={styles.sectionTitleContainer}>
-        <Text style={styles.sectionTitle}>Trending Now</Text>
-        <Text style={styles.sectionSubtitle}>
-          See what everyone's loving this week
-        </Text>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Explore</Text>
+        <TouchableOpacity>
+          <Text style={styles.seeAllButton}>See All</Text>
+        </TouchableOpacity>
       </View>
       
-      <View style={styles.trendRadarGrid}>
+      <View style={styles.exploreGrid}>
         {items.map(item => (
           <TouchableOpacity 
             key={item.id}
-            style={styles.trendRadarItem}
+            style={styles.exploreItem}
             onPress={() => onItemPress(item)}
             activeOpacity={0.9}
           >
-            <View style={styles.trendRadarImageContainer}>
-              <Image 
-                source={{ uri: item.image }} 
-                style={styles.trendRadarImage} 
-                resizeMode="cover"
-              />
-            </View>
-            <View style={styles.trendRadarContent}>
-              <Text style={styles.trendRadarCategory}>{item.category}</Text>
-              <Text style={styles.trendRadarTitle}>{item.title}</Text>
-              <View style={styles.trendRadarStats}>
-                <Text style={styles.trendRadarChange}>
-                  {item.status === 'viral' ? 'Trending' : `+${item.percentageChange}%`}
-                </Text>
+            <Image 
+              source={{ uri: item.image }} 
+              style={styles.exploreImage} 
+              resizeMode="cover"
+            />
+            {item.status === 'viral' && (
+              <View style={styles.trendingBadge}>
+                <Text style={styles.trendingBadgeText}>🔥 TRENDING</Text>
               </View>
+            )}
+            <View style={styles.exploreInfo}>
+              <Text style={styles.exploreTitle} numberOfLines={1}>
+                {item.title}
+              </Text>
+              <Text style={styles.exploreCategory}>
+                {item.category} · <Text style={styles.exploreChange}>↑ {item.percentageChange}%</Text>
+              </Text>
             </View>
           </TouchableOpacity>
         ))}
@@ -987,17 +1017,12 @@ const TrendRadar = ({ items, onItemPress }) => {
 const SocialBundles = ({ bundles, onBundlePress }) => {
   return (
     <View style={styles.socialBundlesContainer}>
-      <View style={styles.sectionHeaderRow}>
-        <View style={styles.sectionTitleContainer}>
-          <Text style={styles.sectionIcon}>🛍️</Text>
-          <Text style={styles.sectionTitle}>Curated Bundles</Text>
-        </View>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Collections</Text>
         <TouchableOpacity>
-          <Text style={styles.sectionAction}>View all</Text>
+          <Text style={styles.seeAllButton}>See All</Text>
         </TouchableOpacity>
       </View>
-      
-      <Text style={styles.sectionSubtitle}>Complete collections curated by our community</Text>
       
       <ScrollView 
         horizontal 
@@ -1016,22 +1041,16 @@ const SocialBundles = ({ bundles, onBundlePress }) => {
               style={styles.bundleCover}
               resizeMode="cover"
             />
-            <View style={styles.bundleContent}>
-              <Text style={styles.bundleTitle}>{bundle.title}</Text>
-              <View style={styles.bundleCreatorRow}>
-                <Image 
-                  source={{ uri: bundle.creator.avatar }}
-                  style={styles.creatorAvatar}
-                />
-                <Text style={styles.creatorName}>{bundle.creator.name}</Text>
-                {bundle.creator.verified && (
-                  <Text style={styles.verifiedBadge}>✓</Text>
-                )}
-              </View>
-              <View style={styles.bundleStats}>
-                <Text style={styles.bundleStat}>❤️ {bundle.likes.toLocaleString()}</Text>
-                <Text style={styles.bundleStat}>🔖 {bundle.saves.toLocaleString()}</Text>
-                <Text style={styles.bundleStat}>📦 {bundle.products.length} items</Text>
+            <View style={styles.bundleCreatorContainer}>
+              <Image 
+                source={{ uri: bundle.creator.avatar }}
+                style={styles.bundleCreatorAvatar}
+              />
+              <View style={styles.bundleTextContainer}>
+                <Text style={styles.bundleTitle}>{bundle.title}</Text>
+                <Text style={styles.bundleCreatorName}>
+                  {bundle.creator.name} {bundle.creator.verified && '✓'}
+                </Text>
               </View>
             </View>
           </TouchableOpacity>
@@ -2704,79 +2723,47 @@ const styles = StyleSheet.create({
   
   // Visual Category Entry Points
   categoryEntryContainer: {
-    marginBottom: 40,
-    paddingTop: 20,
-  },
-  categoryHeading: {
-    fontSize: 28,
-    fontWeight: '600',
-    color: COLORS.primary,
-    marginBottom: 8,
-    paddingHorizontal: 20,
-  },
-  categorySubheading: {
-    fontSize: 17,
-    fontWeight: '400',
-    color: COLORS.accent1,
-    marginBottom: 20,
-    paddingHorizontal: 20,
+    marginBottom: 15,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
   },
   categoryScroll: {
-    paddingLeft: 20,
-    paddingRight: 10,
-    paddingBottom: 10,
+    paddingHorizontal: 15,
   },
-  categoryCard: {
-    width: 260,
-    height: 300,
-    marginRight: 20,
-    borderRadius: 20,
-    overflow: 'hidden',
+  categoryStory: {
+    alignItems: 'center',
+    marginRight: 16,
+    width: 75,
+  },
+  categoryStoryRing: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    padding: 2,
     backgroundColor: COLORS.light,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
+    backgroundImage: 'linear-gradient(45deg, #833AB4, #FD1D1D, #FCAF45)',
   },
-  categoryCardInner: {
+  categoryStoryInner: {
     flex: 1,
-    padding: 24,
-    justifyContent: 'space-between',
+    backgroundColor: COLORS.light,
+    borderRadius: 33,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  categoryEmoji: {
-    fontSize: 40,
-    marginBottom: 16,
+  categoryStoryEmoji: {
+    fontSize: 30,
   },
-  categoryName: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: COLORS.primary,
-    marginBottom: 8,
-  },
-  categoryTagline: {
-    fontSize: 15,
-    fontWeight: '400',
-    color: COLORS.accent1,
-    marginBottom: 20,
-    lineHeight: 20,
-  },
-  categoryButton: {
-    alignSelf: 'flex-start',
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 18,
-  },
-  categoryButtonText: {
-    color: COLORS.light,
-    fontSize: 14,
-    fontWeight: '500',
+  categoryStoryName: {
+    fontSize: 12,
+    color: COLORS.darkGray,
+    marginTop: 4,
+    textAlign: 'center',
   },
   
   // TrendRadar
   trendRadarContainer: {
-    marginBottom: 40,
-    paddingHorizontal: 20,
+    marginBottom: 25,
   },
   sectionHeaderRow: {
     flexDirection: 'row',
@@ -2849,77 +2836,46 @@ const styles = StyleSheet.create({
   
   // Social Bundles
   socialBundlesContainer: {
-    marginBottom: 30,
-    backgroundColor: COLORS.light,
-    borderRadius: 20,
-    padding: 20,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
+    marginBottom: 25,
   },
   bundlesScroll: {
-    paddingVertical: 10,
+    paddingLeft: 15,
+    paddingRight: 5,
   },
   bundleCard: {
-    width: 250,
-    backgroundColor: COLORS.light,
-    borderRadius: 16,
-    marginRight: 15,
+    width: 220,
+    marginRight: 10,
+    borderRadius: 8,
     overflow: 'hidden',
+    backgroundColor: COLORS.light,
     borderWidth: 1,
-    borderColor: '#eaeaea',
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
+    borderColor: COLORS.border,
   },
   bundleCover: {
     width: '100%',
-    height: 140,
+    height: 220,
   },
-  bundleContent: {
-    padding: 15,
+  bundleCreatorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+  },
+  bundleCreatorAvatar: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+  },
+  bundleTextContainer: {
+    marginLeft: 10,
+    flex: 1,
   },
   bundleTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-    marginBottom: 10,
-  },
-  bundleCreatorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  creatorAvatar: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    marginRight: 8,
-  },
-  creatorName: {
     fontSize: 14,
-    fontWeight: '500',
-    color: COLORS.primary,
-    marginRight: 5,
+    fontWeight: '600',
+    color: COLORS.darkGray,
+    marginBottom: 2,
   },
-  verifiedBadge: {
-    fontSize: 12,
-    color: COLORS.secondary,
-    backgroundColor: `${COLORS.secondary}20`,
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    textAlign: 'center',
-    lineHeight: 16,
-  },
-  bundleStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  bundleStat: {
+  bundleCreatorName: {
     fontSize: 12,
     color: COLORS.midGray,
   },
