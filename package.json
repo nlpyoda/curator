@@ -43,7 +43,6 @@
   "devDependencies": {
     "@babel/core": "^7.20.0",
     "@babel/plugin-transform-export-namespace-from": "^7.25.9",
-    "@expo/webpack-config": "^18.0.0",
     "@testing-library/jest-native": "^5.4.3",
     "@testing-library/react-native": "^12.4.3",
     "gh-pages": "^6.1.1",
