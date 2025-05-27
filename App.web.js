@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Animated, Image } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Animated, Image, PanResponder, Vibration } from 'react-native';
+import { useSpeechRecognition } from 'react-speech-recognition';
 
 // For trendy, minimalist color palette
 const COLORS = {
@@ -563,10 +564,125 @@ const InsightBar = ({ label, value, color }) => {
   );
 };
 
-// Flippable product card component with front/back views
+// AR Preview simulation
+const ARPreviewOverlay = ({ product, visible, onClose }) => {
+  const [arStatus, setArStatus] = useState('initializing'); // 'initializing', 'ready', 'error'
+  
+  useEffect(() => {
+    if (visible) {
+      // Simulate AR initialization
+      setArStatus('initializing');
+      setTimeout(() => {
+        // Randomly succeed or fail to simulate real-world conditions
+        const success = Math.random() > 0.3;
+        setArStatus(success ? 'ready' : 'error');
+      }, 1500);
+    }
+  }, [visible]);
+  
+  if (!visible) return null;
+  
+  return (
+    <View style={styles.arOverlay}>
+      <View style={styles.arContent}>
+        <Text style={styles.arTitle}>
+          {arStatus === 'initializing' ? 'Initializing AR...' : 
+           arStatus === 'ready' ? 'AR Preview Ready' : 
+           'AR Preview Unavailable'}
+        </Text>
+        
+        <View style={styles.arImageContainer}>
+          {arStatus === 'initializing' ? (
+            <View style={styles.arLoading}>
+              <Text style={styles.arLoadingText}>Loading...</Text>
+            </View>
+          ) : arStatus === 'ready' ? (
+            <>
+              <Text style={styles.arEmoji}>
+                {product.category === 'laptop' ? '💻' : 
+                 product.category === 'baby' ? '👶' : 
+                 product.category === 'wearables' ? '⌚' :
+                 product.category === 'audio' ? '🎧' : '📱'}
+              </Text>
+              <Text style={styles.arMessage}>
+                Point your camera to see this product in your space
+              </Text>
+            </>
+          ) : (
+            <View style={styles.arError}>
+              <Text style={styles.arErrorEmoji}>⚠️</Text>
+              <Text style={styles.arErrorText}>
+                Unable to initialize AR. Please check if your device supports AR and try again.
+              </Text>
+            </View>
+          )}
+        </View>
+        
+        <TouchableOpacity 
+          style={[
+            styles.arCloseButton,
+            arStatus === 'error' && styles.arRetryButton
+          ]} 
+          onPress={arStatus === 'error' ? () => {
+            setArStatus('initializing');
+            setTimeout(() => setArStatus('ready'), 1500);
+          } : onClose}
+        >
+          <Text style={styles.arCloseText}>
+            {arStatus === 'error' ? 'Retry' : 'Close Preview'}
+          </Text>
+        </TouchableOpacity>
+        
+        {arStatus !== 'error' && (
+          <TouchableOpacity 
+            style={styles.arHelpButton}
+            onPress={() => alert('AR Help would be shown here')}
+          >
+            <Text style={styles.arHelpText}>Need help with AR?</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
+};
+
+// Enhanced ProductCard with gesture handling, dynamic theming and haptic feedback
 const ProductCard = ({ product, onPress, isTrending = false }) => {
   const [isFlipped, setIsFlipped] = useState(false);
+  const [showARPreview, setShowARPreview] = useState(false);
   const { title, price, rating, description, whyBuy, insights } = product;
+  
+  // Calculate dynamic theme color based on product
+  const themeColor = insights && insights.length > 0 
+    ? insights[0].color 
+    : COLORS.accent1;
+  
+  // Configure pan responder for swipe gestures
+  const panResponder = PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: () => true,
+    onPanResponderRelease: (evt, gestureState) => {
+      // Swipe left to flip
+      if (gestureState.dx < -50) {
+        handleFlip();
+        // Simulate haptic feedback
+        try {
+          Vibration.vibrate(10);
+        } catch (e) {
+          console.log('Vibration not supported');
+        }
+      }
+      // Swipe up to show AR preview
+      else if (gestureState.dy < -50) {
+        handleARPreview();
+        try {
+          Vibration.vibrate(15);
+        } catch (e) {
+          console.log('Vibration not supported');
+        }
+      }
+    },
+  });
   
   const handleFlip = () => {
     setIsFlipped(!isFlipped);
@@ -575,25 +691,31 @@ const ProductCard = ({ product, onPress, isTrending = false }) => {
     }
   };
   
-  // Calculate average color based on insights for card visual interest
-  const primaryColor = insights && insights.length > 0 
-    ? insights[0].color 
-    : COLORS.accent1;
+  const handleARPreview = () => {
+    setShowARPreview(true);
+    try {
+      Vibration.vibrate(10);
+    } catch (e) {
+      console.log('Vibration not supported');
+    }
+  };
   
   return (
     <TouchableOpacity
       style={[
         styles.productCard,
         isTrending ? styles.trendingProductCard : null,
+        { borderColor: `${themeColor}30` } // Dynamic color theme
       ]}
       onPress={handleFlip}
       activeOpacity={0.9}
+      {...panResponder.panHandlers}
     >
       {!isFlipped ? (
-        // Front of card - Instagram feed style
+        // Front of card with Uniqlo-inspired clean design elements
         <View style={styles.cardContent}>
           <View style={styles.cardImageContainer}>
-            <View style={[styles.cardImagePlaceholder, {backgroundColor: `${primaryColor}15`}]}>
+            <View style={[styles.cardImagePlaceholder, {backgroundColor: `${themeColor}10`}]}>
               <Text style={styles.cardImageEmoji}>
                 {product.category === 'laptop' ? '💻' : 
                  product.category === 'baby' ? '👶' : 
@@ -605,27 +727,27 @@ const ProductCard = ({ product, onPress, isTrending = false }) => {
             <View style={styles.ratingPill}>
               <Text style={styles.ratingText}>★ {rating}</Text>
             </View>
-          </View>
-          
-          <View style={styles.cardHeader}>
-            <View style={styles.userHeader}>
-              <View style={styles.avatarCircle}>
-                <Text style={styles.avatarText}>C</Text>
-              </View>
-              <View style={styles.userInfo}>
-                <Text style={styles.userName}>Curator</Text>
-                <Text style={styles.location}>{product.category}</Text>
-              </View>
+            
+            {/* Uniqlo-inspired clean price tag */}
+            <View style={[styles.priceTag, {backgroundColor: themeColor}]}>
+              <Text style={styles.priceTagText}>${price.toLocaleString()}</Text>
             </View>
-            <TouchableOpacity style={styles.moreButton}>
-              <Text style={styles.moreButtonText}>•••</Text>
+            
+            {/* AR Preview button */}
+            <TouchableOpacity 
+              style={styles.arButton}
+              onPress={handleARPreview}
+            >
+              <Text style={styles.arButtonText}>AR View</Text>
             </TouchableOpacity>
           </View>
           
-          <View style={styles.cardBody}>
+          <View style={styles.uniqloStyleHeader}>
+            <Text style={styles.uniqloStyleCategory}>{product.category.toUpperCase()}</Text>
             <Text style={styles.productTitle}>{title}</Text>
-            <Text style={styles.productPrice}>${price.toLocaleString()}</Text>
-            
+          </View>
+          
+          <View style={styles.cardBody}>
             <Text style={styles.productDescription} numberOfLines={2}>
               {description}
             </Text>
@@ -649,23 +771,50 @@ const ProductCard = ({ product, onPress, isTrending = false }) => {
           
           <View style={styles.cardActions}>
             <View style={styles.actionButtons}>
-              <TouchableOpacity style={styles.actionButton}>
+              <TouchableOpacity 
+                style={styles.actionButton}
+                onPress={() => {
+                  try { Vibration.vibrate(5); } catch (e) {}
+                }}
+              >
                 <Text style={styles.actionButtonText}>♥</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton}>
+              <TouchableOpacity 
+                style={styles.actionButton}
+                onPress={() => {
+                  try { Vibration.vibrate(5); } catch (e) {}
+                }}
+              >
                 <Text style={styles.actionButtonText}>💬</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton}>
+              <TouchableOpacity 
+                style={styles.actionButton}
+                onPress={() => {
+                  try { Vibration.vibrate(5); } catch (e) {}
+                }}
+              >
                 <Text style={styles.actionButtonText}>✈</Text>
               </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.saveButton}>
+            
+            <View style={styles.gestureHint}>
+              <Text style={styles.gestureHintText}>← Swipe for details</Text>
+            </View>
+            
+            <TouchableOpacity 
+              style={styles.saveButton}
+              onPress={() => {
+                try { Vibration.vibrate(5); } catch (e) {}
+              }}
+            >
               <Text style={styles.saveButtonText}>🔖</Text>
             </TouchableOpacity>
           </View>
           
           <View style={styles.likesRow}>
-            <Text style={styles.likesText}>Liked by <Text style={styles.boldText}>128 people</Text></Text>
+            <Text style={styles.likesText}>
+              Liked by <Text style={styles.boldText}>128 people</Text>
+            </Text>
           </View>
           
           <TouchableOpacity onPress={handleFlip}>
@@ -673,9 +822,9 @@ const ProductCard = ({ product, onPress, isTrending = false }) => {
           </TouchableOpacity>
         </View>
       ) : (
-        // Back of card - product details view
+        // Back of card - product details view with Uniqlo-inspired cleanliness
         <View style={styles.cardContentBack}>
-          <View style={styles.backHeader}>
+          <View style={[styles.backHeader, {backgroundColor: `${themeColor}15`}]}>
             <View style={styles.backHeaderContent}>
               <TouchableOpacity onPress={handleFlip}>
                 <Text style={styles.backButtonText}>←</Text>
@@ -686,7 +835,27 @@ const ProductCard = ({ product, onPress, isTrending = false }) => {
           
           <ScrollView style={styles.backScrollContent}>
             <Text style={styles.backProductTitle}>{title}</Text>
-            <Text style={styles.backProductPrice}>${price.toLocaleString()}</Text>
+            <Text style={[styles.backProductPrice, {color: themeColor}]}>
+              ${price.toLocaleString()}
+            </Text>
+            
+            <View style={styles.specsContainer}>
+              <Text style={styles.specsTitle}>Specifications</Text>
+              <View style={styles.specsList}>
+                <View style={styles.specItem}>
+                  <Text style={styles.specLabel}>Category</Text>
+                  <Text style={styles.specValue}>{product.category}</Text>
+                </View>
+                <View style={styles.specItem}>
+                  <Text style={styles.specLabel}>Rating</Text>
+                  <Text style={styles.specValue}>★ {rating}</Text>
+                </View>
+                <View style={styles.specItem}>
+                  <Text style={styles.specLabel}>Tags</Text>
+                  <Text style={styles.specValue}>{product.tags.join(', ')}</Text>
+                </View>
+              </View>
+            </View>
             
             <View style={styles.highlightsContainer}>
               <Text style={styles.highlightsTitle}>Why People Love It</Text>
@@ -712,18 +881,34 @@ const ProductCard = ({ product, onPress, isTrending = false }) => {
                 </View>
               ))}
             </View>
+            
+            <View style={styles.gestureHintContainer}>
+              <Text style={styles.gestureHintText}>
+                Swipe up for AR preview
+              </Text>
+            </View>
           </ScrollView>
           
-          <View style={styles.backFooter}>
+          <View style={[styles.backFooter, {borderTopColor: `${themeColor}30`}]}>
             <TouchableOpacity
-              style={styles.buyNowButton}
-              onPress={() => window.open(product.link, '_blank')}
+              style={[styles.buyNowButton, {backgroundColor: themeColor}]}
+              onPress={() => {
+                try { Vibration.vibrate(20); } catch (e) {}
+                window.open(product.link, '_blank');
+              }}
             >
               <Text style={styles.buyNowButtonText}>Buy Now</Text>
             </TouchableOpacity>
           </View>
         </View>
       )}
+      
+      {/* AR Preview Overlay */}
+      <ARPreviewOverlay 
+        product={product}
+        visible={showARPreview}
+        onClose={() => setShowARPreview(false)}
+      />
     </TouchableOpacity>
   );
 };
@@ -924,16 +1109,24 @@ const TrendingSection = ({ lifeMoment, onProductSelect }) => {
 const CategoryEntryPoints = ({ categories, onSelect }) => {
   return (
     <View style={styles.categoryEntryContainer}>
+      <View style={styles.uniqloHeader}>
+        <Text style={styles.uniqloHeaderText}>CATEGORIES</Text>
+      </View>
       <ScrollView 
         horizontal 
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.categoryScroll}
+        decelerationRate="fast"
+        snapToInterval={80}
       >
         {categories.map(category => (
           <TouchableOpacity
             key={category.id}
             style={styles.categoryStory}
-            onPress={() => onSelect(category)}
+            onPress={() => {
+              try { Vibration.vibrate(5); } catch (e) {}
+              onSelect(category);
+            }}
             activeOpacity={0.8}
           >
             <View style={styles.categoryStoryRing}>
@@ -971,21 +1164,59 @@ const getCategoryTagline = (categoryId) => {
 
 // TrendRadar Component
 const TrendRadar = ({ items, onItemPress }) => {
+  // Swipe gesture handling
+  const [currentPage, setCurrentPage] = useState(0);
+  const pageSize = 4;
+  const pageCount = Math.ceil(items.length / pageSize);
+  
+  const swipeResponder = PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: () => true,
+    onPanResponderRelease: (evt, gestureState) => {
+      if (gestureState.dx > 50 && currentPage > 0) {
+        setCurrentPage(currentPage - 1);
+        try { Vibration.vibrate(5); } catch (e) {}
+      } else if (gestureState.dx < -50 && currentPage < pageCount - 1) {
+        setCurrentPage(currentPage + 1);
+        try { Vibration.vibrate(5); } catch (e) {}
+      }
+    },
+  });
+  
+  const paginatedItems = items.slice(
+    currentPage * pageSize, 
+    (currentPage + 1) * pageSize
+  );
+  
   return (
-    <View style={styles.trendRadarContainer}>
+    <View 
+      style={styles.trendRadarContainer}
+      {...swipeResponder.panHandlers}
+    >
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Explore</Text>
-        <TouchableOpacity>
-          <Text style={styles.seeAllButton}>See All</Text>
-        </TouchableOpacity>
+        <View style={styles.pagination}>
+          {Array(pageCount).fill(0).map((_, idx) => (
+            <View 
+              key={idx} 
+              style={[
+                styles.paginationDot, 
+                idx === currentPage && styles.paginationDotActive
+              ]} 
+            />
+          ))}
+        </View>
       </View>
       
       <View style={styles.exploreGrid}>
-        {items.map(item => (
+        {paginatedItems.map(item => (
           <TouchableOpacity 
             key={item.id}
             style={styles.exploreItem}
-            onPress={() => onItemPress(item)}
+            onPress={() => {
+              try { Vibration.vibrate(10); } catch (e) {}
+              onItemPress(item);
+            }}
             activeOpacity={0.9}
           >
             <Image 
@@ -999,15 +1230,22 @@ const TrendRadar = ({ items, onItemPress }) => {
               </View>
             )}
             <View style={styles.exploreInfo}>
+              <Text style={styles.exploreCategory}>{item.category}</Text>
               <Text style={styles.exploreTitle} numberOfLines={1}>
                 {item.title}
               </Text>
-              <Text style={styles.exploreCategory}>
-                {item.category} · <Text style={styles.exploreChange}>↑ {item.percentageChange}%</Text>
+              <Text style={styles.exploreChange}>
+                ↑ {item.percentageChange}%
               </Text>
             </View>
           </TouchableOpacity>
         ))}
+      </View>
+      
+      <View style={styles.swipeIndicator}>
+        <Text style={styles.swipeIndicatorText}>
+          Swipe to see more trending items
+        </Text>
       </View>
     </View>
   );
@@ -1238,6 +1476,67 @@ const TrendingTicker = ({ items }) => {
           </Text>
         </Animated.View>
       </View>
+    </View>
+  );
+};
+
+// Add this function after other component declarations
+const VoiceNavigation = ({ onCommand }) => {
+  const [isListening, setIsListening] = useState(false);
+  const [transcript, setTranscript] = useState('');
+  const [error, setError] = useState('');
+
+  // Voice command handler (simulated)
+  const handleVoiceCommand = () => {
+    setIsListening(true);
+    
+    // Simulate voice recognition (in a real app, use the Web Speech API)
+    setTimeout(() => {
+      setIsListening(false);
+      const mockTranscript = "show me tech products";
+      setTranscript(mockTranscript);
+      
+      // Process command
+      if (mockTranscript.includes("tech")) {
+        onCommand && onCommand({ type: 'category', value: 'tech' });
+      } else if (mockTranscript.includes("audio")) {
+        onCommand && onCommand({ type: 'category', value: 'audio' });
+      } else {
+        setError('Command not recognized. Try again.');
+        setTimeout(() => setError(''), 3000);
+      }
+    }, 2000);
+  };
+
+  return (
+    <View style={styles.voiceNavContainer}>
+      <TouchableOpacity 
+        style={[
+          styles.voiceButton, 
+          isListening && styles.voiceButtonActive
+        ]}
+        onPress={handleVoiceCommand}
+      >
+        <Text style={styles.voiceButtonIcon}>🎤</Text>
+      </TouchableOpacity>
+      
+      {isListening && (
+        <View style={styles.listeningIndicator}>
+          <Text style={styles.listeningText}>Listening...</Text>
+        </View>
+      )}
+      
+      {transcript && !error && (
+        <View style={styles.transcriptContainer}>
+          <Text style={styles.transcriptText}>{transcript}</Text>
+        </View>
+      )}
+      
+      {error && (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      )}
     </View>
   );
 };
@@ -1564,6 +1863,16 @@ export default function App() {
     setIsDiscoveryMode(true);
   };
 
+  // Add voice command handler
+  const handleVoiceCommand = (command) => {
+    if (command.type === 'category') {
+      const category = productCategories.find(c => c.id === command.value);
+      if (category) {
+        handleCategorySelect(category);
+      }
+    }
+  };
+
   return (
     <View style={[
       styles.container,
@@ -1669,6 +1978,9 @@ export default function App() {
 
       {/* Updated ticker */}
       <TrendingTicker items={trendingTickerItems} />
+      
+      {/* Add Voice Navigation */}
+      <VoiceNavigation onCommand={handleVoiceCommand} />
 
       {/* Persona cycler */}
       {showPersonaCycler && (
@@ -3612,5 +3924,337 @@ const styles = StyleSheet.create({
     color: COLORS.light,
     fontSize: 12,
     fontWeight: 'bold',
+  },
+  
+  // Uniqlo-inspired styles
+  uniqloHeader: {
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    marginBottom: 10,
+  },
+  uniqloHeaderText: {
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 1,
+    color: COLORS.darkGray,
+  },
+  uniqloStyleHeader: {
+    padding: 12,
+    paddingBottom: 4,
+  },
+  uniqloStyleCategory: {
+    fontSize: 11,
+    color: COLORS.midGray,
+    marginBottom: 4,
+    letterSpacing: 1,
+  },
+  
+  // AR feature styles
+  arButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 4,
+  },
+  arButtonText: {
+    color: COLORS.light,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  arOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  arContent: {
+    width: '80%',
+    backgroundColor: COLORS.light,
+    borderRadius: 12,
+    padding: 20,
+    alignItems: 'center',
+  },
+  arTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 20,
+    color: COLORS.darkGray,
+  },
+  arImageContainer: {
+    height: 200,
+    width: '100%',
+    backgroundColor: COLORS.lightGray,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  arEmoji: {
+    fontSize: 60,
+    marginBottom: 15,
+  },
+  arMessage: {
+    textAlign: 'center',
+    color: COLORS.midGray,
+    paddingHorizontal: 20,
+    lineHeight: 20,
+  },
+  arCloseButton: {
+    backgroundColor: COLORS.accent1,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 6,
+  },
+  arCloseText: {
+    color: COLORS.light,
+    fontWeight: '600',
+  },
+  
+  // Clean price tag (Uniqlo style)
+  priceTag: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 4,
+  },
+  priceTagText: {
+    color: COLORS.light,
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  
+  // Gesture hint styles
+  gestureHint: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    flex: 1,
+  },
+  gestureHintText: {
+    fontSize: 12,
+    color: COLORS.midGray,
+    fontStyle: 'italic',
+  },
+  gestureHintContainer: {
+    alignItems: 'center',
+    paddingVertical: 15,
+  },
+  
+  // Specifications container styles
+  specsContainer: {
+    marginBottom: 24,
+    backgroundColor: COLORS.lightGray,
+    borderRadius: 8,
+    padding: 15,
+  },
+  specsTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.darkGray,
+    marginBottom: 12,
+  },
+  specsList: {
+    gap: 10,
+  },
+  specItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    paddingBottom: 8,
+  },
+  specLabel: {
+    fontSize: 14,
+    color: COLORS.midGray,
+  },
+  specValue: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: COLORS.darkGray,
+  },
+  
+  // Pagination styles
+  pagination: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  paginationDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: COLORS.border,
+    marginHorizontal: 3,
+  },
+  paginationDotActive: {
+    backgroundColor: COLORS.accent1,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  swipeIndicator: {
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  swipeIndicatorText: {
+    fontSize: 12,
+    color: COLORS.midGray,
+    fontStyle: 'italic',
+  },
+  
+  // Update TrendRadar container
+  trendRadarContainer: {
+    marginBottom: 25,
+    paddingVertical: 15,
+  },
+  
+  // Update SocialBundles container
+  socialBundlesContainer: {
+    marginBottom: 25,
+    paddingTop: 10,
+  },
+  
+  // Update exploreInfo for cleaner look
+  exploreInfo: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    padding: 8,
+  },
+  exploreCategory: {
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    color: COLORS.midGray,
+    marginBottom: 3,
+  },
+  exploreTitle: {
+    color: COLORS.darkGray,
+    fontSize: 13,
+    fontWeight: '500',
+    marginBottom: 3,
+  },
+  exploreChange: {
+    color: '#4CD964',
+    fontWeight: '500',
+    fontSize: 12,
+  },
+  
+  // Voice navigation styles
+  voiceNavContainer: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    zIndex: 1000,
+  },
+  voiceButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: COLORS.accent1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  voiceButtonActive: {
+    backgroundColor: COLORS.accent3,
+  },
+  voiceButtonIcon: {
+    fontSize: 24,
+    color: COLORS.light,
+  },
+  listeningIndicator: {
+    position: 'absolute',
+    bottom: 60,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    minWidth: 100,
+    alignItems: 'center',
+  },
+  listeningText: {
+    color: COLORS.light,
+    fontSize: 14,
+  },
+  transcriptContainer: {
+    position: 'absolute',
+    bottom: 60,
+    right: 0,
+    backgroundColor: COLORS.light,
+    padding: 10,
+    borderRadius: 8,
+    minWidth: 200,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+  },
+  transcriptText: {
+    color: COLORS.darkGray,
+    fontSize: 14,
+  },
+  errorContainer: {
+    position: 'absolute',
+    bottom: 60,
+    right: 0,
+    backgroundColor: '#FFE5E5',
+    padding: 10,
+    borderRadius: 8,
+    minWidth: 200,
+  },
+  errorText: {
+    color: '#D32F2F',
+    fontSize: 14,
+  },
+  
+  // Enhanced AR styles
+  arLoading: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    flex: 1,
+  },
+  arLoadingText: {
+    color: COLORS.midGray,
+    marginBottom: 8,
+  },
+  arError: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  arErrorEmoji: {
+    fontSize: 40,
+    marginBottom: 15,
+  },
+  arErrorText: {
+    textAlign: 'center',
+    color: '#D32F2F',
+    lineHeight: 20,
+  },
+  arRetryButton: {
+    backgroundColor: '#4CAF50',
+  },
+  arHelpButton: {
+    marginTop: 10,
+  },
+  arHelpText: {
+    color: COLORS.accent1,
+    fontSize: 14,
   },
 }); 
