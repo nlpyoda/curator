@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Animated, Image, PanResponder, Vibration, Easing, Platform } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Animated, Image, PanResponder, Vibration, Easing, Platform, useWindowDimensions } from 'react-native';
 
 // --- Debug: Log API Key at module level ---
 console.log('[DEBUG] REACT_APP_CLAUDE_API_KEY at module level:', process.env.REACT_APP_CLAUDE_API_KEY);
@@ -1972,6 +1972,8 @@ const VisualSearch = ({ visible, onClose, onSearch }) => {
 
 // Update the main App component
 export default function App() {
+  const { width: screenWidth } = useWindowDimensions(); // Get screen width here
+
   // State for user selections
   const [selectedPersona, setSelectedPersona] = useState(null);
   const [selectedLifeMoment, setSelectedLifeMoment] = useState(null);
@@ -2586,6 +2588,8 @@ export default function App() {
   }, []);
   // --- End Debug ---
 
+  const isSmallScreen = screenWidth < 768; // Define a breakpoint
+
   return (
     <View style={styles.container}>
       {/* --- Debug: Display API Key in UI --- */}
@@ -2753,23 +2757,23 @@ export default function App() {
             </View>
           </View>
         ) : isDiscoveryMode ? (
-          <View style={styles.discoveryContainer}>
+          <View style={[styles.discoveryContainer, isSmallScreen && styles.ultraModernDiscoveryContainerPaddingSmallScreen]}>
             {/* Ultra-Modern Main Header */}
-            <View style={styles.ultraModernMainHeader}>
+            <View style={[styles.ultraModernMainHeader, isSmallScreen && styles.ultraModernMainHeaderSmallScreen]}>
               <View style={styles.mainHeaderContent}>
                 <View style={styles.brandSection}>
                   <Text style={styles.ultraModernBrandLabel}>DISCOVERY</Text>
-                  <Text style={styles.ultraModernBrandTitle}>curator</Text>
-                  <Text style={styles.ultraModernBrandTagline}>
+                  <Text style={[styles.ultraModernBrandTitle, isSmallScreen && styles.ultraModernBrandTitleSmallScreen]}>curator</Text>
+                  <Text style={[styles.ultraModernBrandTagline, isSmallScreen && styles.ultraModernBrandTaglineSmallScreen]}>
                     where artificial intelligence meets intentional living
                   </Text>
                 </View>
                 
-                <View style={styles.ultraModernHeaderControls}>
-                  <View style={styles.ultraModernSearchContainer}>
-                    <View style={styles.searchInputWrapper}>
+                <View style={[styles.ultraModernHeaderControls, isSmallScreen && styles.ultraModernHeaderControlsSmallScreen]}>
+                  <View style={[styles.ultraModernSearchContainer, isSmallScreen && styles.ultraModernSearchContainerSmallScreen]}>
+                    <View style={[styles.searchInputWrapper, isSmallScreen && styles.searchInputWrapperSmallScreen]}>
                       <TextInput
-                        style={styles.ultraModernSearchInput}
+                        style={[styles.ultraModernSearchInput, isSmallScreen && styles.ultraModernSearchInputSmallScreen]}
                         placeholder="discover your perfect aesthetic..."
                         placeholderTextColor="#A0A0A0"
                         value={searchQuery}
@@ -2785,9 +2789,9 @@ export default function App() {
                     </View>
                   </View>
                   
-                  <View style={styles.ultraModernSelectorRow}>
+                  <View style={[styles.ultraModernSelectorRow, isSmallScreen && styles.ultraModernSelectorRowSmallScreen]}>
                     <TouchableOpacity 
-                      style={[styles.ultraModernSelector, selectedPersona && styles.ultraModernSelectorActive]}
+                      style={[styles.ultraModernSelector, selectedPersona && styles.ultraModernSelectorActive, isSmallScreen && styles.ultraModernSelectorSmallScreen]}
                       onPress={() => setShowPersonaPanel(true)}
                     >
                       <View style={styles.selectorContent}>
@@ -2803,7 +2807,7 @@ export default function App() {
                         )}
                         <View style={styles.selectorTextContainer}>
                           <Text style={styles.ultraModernSelectorLabel}>STYLE</Text>
-                          <Text style={styles.ultraModernSelectorValue}>
+                          <Text style={[styles.ultraModernSelectorValue, isSmallScreen && styles.ultraModernSelectorValueSmallScreen]}>
                             {selectedPersona ? selectedPersona.name : 'Choose Your Aesthetic'}
                           </Text>
                         </View>
@@ -2811,7 +2815,7 @@ export default function App() {
                     </TouchableOpacity>
                     
                     <TouchableOpacity 
-                      style={[styles.ultraModernSelector, selectedLifeMoment && styles.ultraModernSelectorActive]}
+                      style={[styles.ultraModernSelector, selectedLifeMoment && styles.ultraModernSelectorActive, isSmallScreen && styles.ultraModernSelectorSmallScreen]}
                       onPress={() => setShowLifeMomentPanel(true)}
                     >
                       <View style={styles.selectorContent}>
@@ -2827,7 +2831,7 @@ export default function App() {
                         )}
                         <View style={styles.selectorTextContainer}>
                           <Text style={styles.ultraModernSelectorLabel}>MOMENT</Text>
-                          <Text style={styles.ultraModernSelectorValue}>
+                          <Text style={[styles.ultraModernSelectorValue, isSmallScreen && styles.ultraModernSelectorValueSmallScreen]}>
                             {selectedLifeMoment ? selectedLifeMoment.name : 'Current Chapter'}
                           </Text>
                         </View>
@@ -2835,7 +2839,7 @@ export default function App() {
                     </TouchableOpacity>
                     
                     <TouchableOpacity 
-                      style={styles.ultraModernSelector}
+                      style={[styles.ultraModernSelector, isSmallScreen && styles.ultraModernSelectorSmallScreen]}
                       onPress={() => setShowVisualSearch(true)}
                     >
                       <View style={styles.selectorContent}>
@@ -2844,7 +2848,7 @@ export default function App() {
                         </View>
                         <View style={styles.selectorTextContainer}>
                           <Text style={styles.ultraModernSelectorLabel}>VISUAL</Text>
-                          <Text style={styles.ultraModernSelectorValue}>Search by Image</Text>
+                          <Text style={[styles.ultraModernSelectorValue, isSmallScreen && styles.ultraModernSelectorValueSmallScreen]}>Search by Image</Text>
                         </View>
                       </View>
                     </TouchableOpacity>
@@ -2873,7 +2877,7 @@ export default function App() {
               }}
             />
             
-            <View style={styles.ultraModernSocialBundlesContainer}>
+            <View style={[styles.ultraModernSocialBundlesContainer, isSmallScreen && styles.ultraModernSectionContainerMarginSmallScreen]}>
               <View style={styles.ultraModernSectionHeader}>
                 <View style={styles.sectionHeaderLeft}>
                   <Text style={styles.ultraModernSectionLabel}>CURATED</Text>
@@ -2896,7 +2900,11 @@ export default function App() {
                 {socialBundles.map((bundle) => (
                   <TouchableOpacity 
                     key={bundle.id} 
-                    style={styles.ultraModernBundleCard}
+                    style={[
+                        styles.ultraModernBundleCard, 
+                        isSmallScreen && styles.ultraModernBundleCardSmallScreen,
+                        isSmallScreen && { width: screenWidth * 0.75 } // Apply dynamic width here
+                    ]}
                     onPress={() => {
                       // When a bundle is clicked, show its products
                       setIsLoadingAnimation(true);
@@ -2950,7 +2958,7 @@ export default function App() {
               </ScrollView>
             </View>
             
-            <View style={styles.shopByVibeContainer}>
+            <View style={[styles.shopByVibeContainer, isSmallScreen && styles.ultraModernSectionContainerMarginSmallScreen]}>
               <View style={styles.ultraModernSectionHeader}>
                 <View style={styles.sectionHeaderLeft}>
                   <Text style={styles.ultraModernSectionLabel}>AESTHETIC</Text>
@@ -2965,11 +2973,11 @@ export default function App() {
                 </TouchableOpacity>
               </View>
               
-              <View style={styles.ultraModernMoodsGrid}>
+              <View style={[styles.ultraModernMoodsGrid, isSmallScreen && styles.ultraModernMoodsGridSmallScreen]}>
                 {moodBoards.map((mood) => (
                   <TouchableOpacity 
                     key={mood.id} 
-                    style={styles.ultraModernMoodCard}
+                    style={[styles.ultraModernMoodCard, isSmallScreen && styles.ultraModernMoodCardSmallScreen]}
                     onPress={() => {
                       // When a mood is clicked, filter products by aesthetic
                       setIsLoadingAnimation(true);
@@ -3020,14 +3028,14 @@ export default function App() {
                     <View style={styles.ultraModernMoodContent}>
                       <View style={styles.moodNameRow}>
                         <Text style={styles.moodEmoji}>{mood.emoji}</Text>
-                        <Text style={styles.ultraModernMoodName}>{mood.name}</Text>
+                        <Text style={[styles.ultraModernMoodName, isSmallScreen && styles.ultraModernMoodNameSmallScreen]}>{mood.name}</Text>
                       </View>
                       
-                      <Text style={styles.cursiveDescription}>
+                      <Text style={[styles.cursiveDescription, isSmallScreen && styles.cursiveDescriptionSmallScreen]}>
                         {mood.cursiveDescription}
                       </Text>
                       
-                      <Text style={styles.philosophyText}>
+                      <Text style={[styles.philosophyText, isSmallScreen && styles.philosophyTextSmallScreen]}>
                         {mood.philosophyText}
                       </Text>
                     </View>
@@ -3037,7 +3045,7 @@ export default function App() {
             </View>
             
             {/* Ultra-Modern Categories */}
-            <View style={styles.ultraModernCategoryContainer}>
+            <View style={[styles.ultraModernCategoryContainer, isSmallScreen && styles.ultraModernSectionContainerMarginSmallScreen]}>
               <View style={styles.ultraModernSectionHeader}>
                 <View style={styles.sectionHeaderLeft}>
                   <Text style={styles.ultraModernSectionLabel}>BROWSE</Text>
@@ -3048,11 +3056,11 @@ export default function App() {
                 </View>
               </View>
               
-              <View style={styles.ultraModernCategoryGrid}>
+              <View style={[styles.ultraModernCategoryGrid, isSmallScreen && styles.ultraModernCategoryGridSmallScreen]}>
                 {productCategories.map((category) => (
                   <TouchableOpacity
                     key={category.id}
-                    style={styles.ultraModernCategoryItem}
+                    style={[styles.ultraModernCategoryItem, isSmallScreen && styles.ultraModernCategoryItemSmallScreen]}
                     onPress={() => {
                       // When a category is clicked, filter products by category name
                       setIsLoadingAnimation(true);
@@ -3081,8 +3089,8 @@ export default function App() {
                         resizeMode="cover"
                       />
                     </View>
-                    <Text style={styles.ultraModernCategoryName}>{category.name}</Text>
-                    <Text style={styles.ultraModernCategoryDescription}>
+                    <Text style={[styles.ultraModernCategoryName, isSmallScreen && styles.ultraModernCategoryNameSmallScreen]}>{category.name}</Text>
+                    <Text style={[styles.ultraModernCategoryDescription, isSmallScreen && styles.ultraModernCategoryDescriptionSmallScreen]}>
                       {category.description}
                     </Text>
                   </TouchableOpacity>
@@ -3113,7 +3121,7 @@ export default function App() {
             </TouchableOpacity>
           </View>
         ) : (
-          <View style={styles.modernProductGrid}>
+          <View style={[styles.modernProductGrid, isSmallScreen && styles.modernProductGridSmallScreen]}>
             {/* Ultra-Modern Product Header - Consistent with Homepage */}
             <View style={styles.ultraModernMainHeader}>
               <View style={styles.mainHeaderContent}>
@@ -3171,7 +3179,13 @@ export default function App() {
                 </View>
               ) : (
                 products.map((product) => (
-                  <View key={product.id} style={selectedPersona?.id === 'student' ? styles.studentProductCard : styles.modernProductCard}>
+                  <View 
+                    key={product.id} 
+                    style={[
+                      selectedPersona?.id === 'student' ? styles.studentProductCard : styles.modernProductCard,
+                      isSmallScreen && (selectedPersona?.id === 'student' ? styles.studentProductCardSmallScreen : styles.modernProductCardSmallScreen)
+                    ]}
+                  >
                     {selectedPersona?.id === 'student' ? (
                       // REFINED Student Persona Card Layout
                       <>
@@ -3536,19 +3550,19 @@ export default function App() {
         </View>
       ) : showAiCurateView === 'results' ? (
         // AI Curation Results View (To be built next)
-        <View style={styles.modernProductGrid}> 
-          <View style={styles.ultraModernMainHeader}>
+        <View style={[styles.modernProductGrid, isSmallScreen && styles.modernProductGridSmallScreen]}> 
+          <View style={[styles.ultraModernMainHeader, isSmallScreen && styles.ultraModernMainHeaderSmallScreen]}>
             <View style={styles.mainHeaderContent}>
               <View style={styles.brandSection}>
                 <Text style={styles.ultraModernBrandLabel}>AI CURATED FOR YOU</Text>
-                <Text style={styles.ultraModernBrandTitle}>Your Personal Collection</Text>
-                <Text style={styles.ultraModernBrandTagline}>
-                  {aiGeneratedProducts.length} products • Based on your preferences: {aiSelectedBrands.join(', ')}, {aiPersonaStyle}, {aiPersonaBudget}
+                <Text style={[styles.ultraModernBrandTitle, isSmallScreen && styles.ultraModernBrandTitleSmallScreen]}>Your Personal Collection</Text>
+                <Text style={[styles.ultraModernBrandTagline, isSmallScreen && styles.ultraModernBrandTaglineSmallScreen]}>
+                  {aiGeneratedProducts.length > 0 ? `${aiGeneratedProducts.length} products` : aiErrorMessage ? 'Error' : 'No products'} • Based on your preferences: {aiSelectedBrands.join(', ')}, {aiPersonaStyle}, {aiPersonaBudget}
                 </Text>
               </View>
               <View style={styles.ultraModernProductHeaderControls}>
                 <TouchableOpacity 
-                  style={styles.ultraModernBackButton}
+                  style={[styles.ultraModernBackButton, isSmallScreen && styles.ultraModernBackButtonSmallScreen]}
                   onPress={() => {
                     setShowAiCurateView('form'); // Go back to the form
                      if (typeof window !== 'undefined' && window.history && window.history.pushState) {
@@ -3574,7 +3588,13 @@ export default function App() {
           ) : (
             <View style={styles.productGrid}>
               {aiGeneratedProducts.map((product) => (
-                <View key={product.id} style={styles.modernProductCard}>
+                <View 
+                  key={product.id} 
+                  style={[
+                    styles.modernProductCard, 
+                    isSmallScreen && styles.modernProductCardSmallScreen // <<< Apply conditional style here
+                  ]}
+                >
                   {/* Using existing product card structure */}
                   <View style={styles.productImageContainer}>
                     <Image
@@ -3755,6 +3775,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', // Smooth hover effect
     cursor: 'pointer',
+    marginRight: Platform.OS === 'web' ? 0 : 20, // Add margin for RN horizontal scroll, not for web grid
   },
   ultraModernBundleImageContainer: {
     height: '60%', // Image takes up 60% of card
@@ -4452,6 +4473,26 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E8E8E8',
   },
+  modernProductCardSmallScreen: { // New style for small screens
+    width: '98%', 
+  },
+  studentProductCard: {
+    width: '48%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8, // Consistent with modernProductCard
+    marginBottom: 24,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.07, // Softer shadow
+    shadowRadius: 10,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#EAEAEA', // Light, subtle border
+    overflow: 'hidden',
+  },
+  studentProductCardSmallScreen: { // New style for student cards on small screens
+    width: '98%',
+  },
   productImageContainer: {
     height: 200,
     position: 'relative',
@@ -5027,6 +5068,7 @@ const styles = StyleSheet.create({
       flexDirection: 'row',
       flexWrap: 'wrap',
       justifyContent: 'space-between',
+      // No gap property for React Native, margin on items will handle it
     } : {}),
   },
   ultraModernMoodCard: {
@@ -5044,6 +5086,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', // Smooth hover effect
     cursor: 'pointer',
+    marginBottom: Platform.OS === 'web' ? 0 : 20, // Add margin for RN flexbox grid
   },
   ultraModernMoodImageContainer: {
     height: '60%', // Image takes up 60% of card
@@ -5268,6 +5311,7 @@ const styles = StyleSheet.create({
       flexDirection: 'row',
       flexWrap: 'wrap',
       justifyContent: 'space-between',
+      // No gap property for React Native, margin on items will handle it
     } : {}),
   },
   ultraModernCategoryItem: {
@@ -5285,6 +5329,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', // Smooth hover effect
     cursor: 'pointer',
+    marginBottom: Platform.OS === 'web' ? 0 : 20, // Add margin for RN flexbox grid
   },
   ultraModernCategoryIcon: {
     height: '60%', // Image takes up 60% of card
@@ -5349,6 +5394,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', // Smooth hover effect
     cursor: 'pointer',
+    marginRight: Platform.OS === 'web' ? 0 : 20, // Add margin for RN horizontal scroll, not for web grid
   },
   ultraModernTrendRadarImageContainer: {
     height: '70%', // Image takes up 70% of card
@@ -5441,6 +5487,36 @@ const styles = StyleSheet.create({
     color: '#1A1A1A',
     fontWeight: '500',
     letterSpacing: 0.3,
+  },
+  ultraModernBackButtonTextSmallScreen: { // For adjusting back button text
+    fontSize: 13,
+  },
+  // Styles for Discovery Page Header Responsiveness
+  ultraModernHeaderControlsSmallScreen: {
+    flexDirection: 'column', // Stack controls vertically
+    gap: 16, // Reduced gap for stacked items
+  },
+  ultraModernSearchContainerSmallScreen: {
+    width: '100%', // Take full width
+  },
+  searchInputWrapperSmallScreen: {
+    paddingHorizontal: 16, // Slightly reduce padding
+  },
+  ultraModernSearchInputSmallScreen: {
+    fontSize: 16, // Reduce font size for smaller input
+    height: 52, // Adjust height
+  },
+  ultraModernSelectorRowSmallScreen: {
+    flexDirection: 'column', // Stack selectors vertically
+    width: '100%', // Take full width
+    gap: 12, // Gap between stacked selectors
+  },
+  ultraModernSelectorSmallScreen: {
+    minWidth: '100%', // Make selectors take full width when stacked
+    padding: 14, // Adjust padding
+  },
+  ultraModernSelectorValueSmallScreen: {
+    fontSize: 13,
   },
   trendingStatsContainer: {
     marginBottom: 10,
@@ -5609,6 +5685,223 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     fontWeight: '500',
   },
+  // Styles for Moodboard, Category, and Social Bundles Responsiveness
+  ultraModernMoodsGridSmallScreen: {
+    gridTemplateColumns: 'repeat(2, 1fr)', // 2 columns for small screens (web)
+    // For React Native, item width will handle this
+  },
+  ultraModernMoodCardSmallScreen: {
+    aspectRatio: '3/4', // Slightly taller aspect ratio if needed
+    // No specific width % here if using grid, otherwise set to ~48%
+    width: Platform.OS === 'web' ? 'auto' : '48%', // Ensure 2-column layout on RN small screens
+    marginBottom: 16, // Adjust margin for 2-column layout
+  },
+  ultraModernMoodNameSmallScreen: {
+    fontSize: 16,
+    paddingBottom: 4,
+  },
+  cursiveDescriptionSmallScreen: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  philosophyTextSmallScreen: {
+    fontSize: 10,
+  },
+  ultraModernCategoryGridSmallScreen: {
+    gridTemplateColumns: 'repeat(2, 1fr)', // 2 columns for small screens (web)
+  },
+  ultraModernCategoryItemSmallScreen: {
+    aspectRatio: '3/4',
+  },
+  ultraModernCategoryNameSmallScreen: {
+    fontSize: 16,
+    paddingBottom: 4,
+  },
+  ultraModernCategoryDescriptionSmallScreen: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  ultraModernBundleCardSmallScreen: {
+    // width: screenWidth * 0.75, // Dynamic width will be applied inline
+    marginRight: 16, // Keep margin for spacing
+    // Potentially other static adjustments like aspectRatio if needed for small screens
+    aspectRatio: 16/10, // Example: make them a bit wider on small screens if content allows
+  },
+  ultraModernTrendRadarGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, 1fr)', // 2 columns for trending items
+    gap: '32px',
+    marginTop: 0,
+    ...(Platform.OS !== 'web' ? {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+    } : {}),
+  },
+  ultraModernTrendRadarCard: {
+    width: Platform.OS === 'web' ? 'auto' : '48%', // Responsive width
+    aspectRatio: '3/2', // Wider aspect ratio for trending items
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20, // More sophisticated rounded corners
+    overflow: 'hidden',
+    borderWidth: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
+    elevation: 8,
+    position: 'relative',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', // Smooth hover effect
+    cursor: 'pointer',
+    marginRight: Platform.OS === 'web' ? 0 : 20, // Add margin for RN horizontal scroll, not for web grid
+  },
+  ultraModernTrendRadarImageContainer: {
+    height: '70%', // Image takes up 70% of card
+    position: 'relative',
+    backgroundColor: '#F8F8F8',
+  },
+  ultraModernTrendRadarImage: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+    filter: 'contrast(1.1) saturate(1.2)', // Enhanced image quality
+  },
+  ultraModernViralBadge: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    backgroundColor: '#FF4757',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  ultraModernViralBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  ultraModernTrendOverlay: {
+    position: 'absolute',
+    bottom: 16,
+    right: 16,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  ultraModernTrendChangeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+  },
+  ultraModernTrendRadarContent: {
+    height: '30%', // Content takes up 30% of card
+    padding: 20,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  ultraModernTrendRadarCategory: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#999999',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 6,
+  },
+  ultraModernTrendRadarTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#1A1A1A',
+    letterSpacing: -0.2,
+    lineHeight: 20,
+  },
+  ultraModernBackButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    backgroundColor: '#F8F8F8',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E8E8E8',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+  },
+  ultraModernBackButtonText: {
+    fontSize: 14,
+    color: '#1A1A1A',
+    fontWeight: '500',
+    letterSpacing: 0.3,
+  },
+  ultraModernBackButtonTextSmallScreen: { // For adjusting back button text
+    fontSize: 13,
+  },
+  // Styles for Moodboard, Category, and Social Bundles Responsiveness
+  ultraModernMoodsGridSmallScreen: {
+    gridTemplateColumns: 'repeat(2, 1fr)', // 2 columns for small screens (web)
+    // For React Native, item width will handle this
+  },
+  ultraModernMoodCardSmallScreen: {
+    aspectRatio: '3/4', // Slightly taller aspect ratio if needed
+    // No specific width % here if using grid, otherwise set to ~48%
+  },
+  ultraModernMoodNameSmallScreen: {
+    fontSize: 16,
+    paddingBottom: 4,
+  },
+  cursiveDescriptionSmallScreen: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  philosophyTextSmallScreen: {
+    fontSize: 10,
+  },
+  ultraModernCategoryGridSmallScreen: {
+    gridTemplateColumns: 'repeat(2, 1fr)', // 2 columns for small screens (web)
+  },
+  ultraModernCategoryItemSmallScreen: {
+    aspectRatio: '3/4',
+  },
+  ultraModernCategoryNameSmallScreen: {
+    fontSize: 16,
+    paddingBottom: 4,
+  },
+  ultraModernCategoryDescriptionSmallScreen: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  ultraModernBundleCardSmallScreen: {
+    // width: screenWidth * 0.75, // Dynamic width will be applied inline
+    marginRight: 16, // Keep margin for spacing
+    // Potentially other static adjustments like aspectRatio if needed for small screens
+    aspectRatio: 16/10, // Example: make them a bit wider on small screens if content allows
+  },
+  ultraModernTrendRadarCardSmallScreen: {
+    width: '98%', // Make TrendRadar cards full width on small screens
+    aspectRatio: '16/9', // Adjust aspect ratio for a wider card
+    marginBottom: 20,
+  },
+  // Responsive margins for main section containers
+  ultraModernSectionContainerMarginSmallScreen: {
+    marginBottom: 60, // Reduced margin for small screens
+  },
+  ultraModernDiscoveryContainerPaddingSmallScreen: { // For the main discovery container itself
+    paddingHorizontal: 20, // Reduced horizontal padding for the whole discovery page on small screens
+  }
 }); 
 
 // Placeholder components to fix missing component errors
@@ -5637,8 +5930,11 @@ const FloatingPersonaSelector = ({ personas, selectedPersona, onSelectPersona, v
 };
 
 const TrendRadar = ({ items, onItemPress, onSeeAll }) => {
+  const { width: screenWidth } = useWindowDimensions();
+  const isSmallScreen = screenWidth < 768;
+
   return (
-    <View style={styles.ultraModernTrendRadarContainer}>
+    <View style={[styles.ultraModernTrendRadarContainer, isSmallScreen && styles.ultraModernSectionContainerMarginSmallScreen]}>
       <View style={styles.ultraModernSectionHeader}>
         <View style={styles.sectionHeaderLeft}>
           <Text style={styles.ultraModernSectionLabel}>TRENDING</Text>
@@ -5660,7 +5956,7 @@ const TrendRadar = ({ items, onItemPress, onSeeAll }) => {
         {items.map((item) => (
           <TouchableOpacity 
             key={item.id} 
-            style={styles.ultraModernTrendRadarCard}
+            style={[styles.ultraModernTrendRadarCard, isSmallScreen && styles.ultraModernTrendRadarCardSmallScreen]}
             onPress={() => onItemPress && onItemPress(item)}
           >
             <View style={styles.ultraModernTrendRadarImageContainer}>
