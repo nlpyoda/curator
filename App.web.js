@@ -2974,11 +2974,18 @@ export default function App() {
                 </TouchableOpacity>
               </View>
               
-              <View style={[styles.ultraModernMoodsGrid, isSmallScreen && styles.ultraModernMoodsGridSmallScreen]}>
-                {moodBoards.map((mood) => (
+              {(() => {
+                const moodCardWidthSmallScreen = isSmallScreen ? screenWidth * 0.65 : undefined;
+                const moodCardMarginRightSmallScreen = isSmallScreen ? 12 : 0;
+
+                const moodItemsContent = moodBoards.map((mood) => (
                   <TouchableOpacity 
                     key={mood.id} 
-                    style={[styles.ultraModernMoodCard, isSmallScreen && styles.ultraModernMoodCardSmallScreen]}
+                    style={[
+                      styles.ultraModernMoodCard, 
+                      isSmallScreen && styles.ultraModernMoodCardSmallScreen, // Will apply base small screen card style (e.g. aspectRatio)
+                      isSmallScreen && { width: moodCardWidthSmallScreen, marginRight: moodCardMarginRightSmallScreen }
+                    ]}
                     onPress={() => {
                       // When a mood is clicked, filter products by aesthetic
                       setIsLoadingAnimation(true);
@@ -2997,52 +3004,56 @@ export default function App() {
                             return product.tags.includes('premium') || product.tags.includes('pro') || product.category === 'laptop';
                           } else if (mood.id === 'cyberpunk') {
                             return product.category === 'laptop' || product.category === 'wearables' || product.tags.includes('tech');
-                          } else if (mood.id === 'cottagecore') {
-                            return product.category === 'baby' || product.tags.includes('comfort') || product.tags.includes('home');
-                          } else if (mood.id === 'clean-girl') {
-                            return product.tags.includes('premium') || product.category === 'skincare' || product.tags.includes('beauty');
-                          } else if (mood.id === 'dark-academia') {
-                            return product.category === 'laptop' || product.tags.includes('premium') || product.tags.includes('book');
-                          } else if (mood.id === 'soft-luxury') {
-                            return product.tags.includes('premium') || product.tags.includes('luxury') || product.tags.includes('gift');
-                          } else {
-                            return product.tags.includes('premium') || product.tags.includes('gift');
+                          } else if (mood.id === 'nostalgic') {
+                            return product.category === 'gaming' || product.tags.includes('retro') || product.tags.includes('classic');
+                          } else if (mood.id === 'romantic') {
+                            return product.category === 'jewelry' || product.tags.includes('luxury') || product.category === 'beauty';
+                          } else if (mood.id === 'streetwear') {
+                            return product.category === 'fashion' || product.category === 'shoes' || product.tags.includes('urban');
+                          } else if (mood.id === 'academia') {
+                            return product.category === 'books' || product.category === 'stationery' || product.tags.includes('study');
                           }
+                          return false;
                         });
-                        setProducts(sortProducts(moodProducts.length > 0 ? moodProducts : mockProducts));
+                        setProducts(sortProducts(moodProducts));
                         setIsLoadingAnimation(false);
                       }, 800);
                     }}
                   >
                     <View style={styles.ultraModernMoodImageContainer}>
                       <Image 
-                        source={{ uri: mood.coverImage }}
-                        style={styles.ultraModernMoodCover}
+                        source={{ uri: mood.coverImage }} 
+                        style={styles.ultraModernMoodCover} 
                         resizeMode="cover"
                       />
-                      <View style={[
-                        styles.ultraModernMoodOverlay,
-                        { background: mood.gradient, backgroundColor: mood.color }
-                      ]} />
+                      <View style={[styles.ultraModernMoodOverlay, {backgroundColor: mood.overlayColor}]} />
                     </View>
-                    
                     <View style={[styles.ultraModernMoodContent, isSmallScreen && styles.ultraModernMoodContentSmallScreen]}>
-                      <View style={styles.moodNameRow}>
-                        <Text style={[styles.moodEmoji, isSmallScreen && styles.moodEmojiSmallScreen]}>{mood.emoji}</Text>
-                        <Text style={[styles.ultraModernMoodName, isSmallScreen && styles.ultraModernMoodNameSmallScreen]}>{mood.name}</Text>
+                      <View>
+                        <View style={styles.moodNameRow}>
+                          <Text style={[styles.moodEmoji, isSmallScreen && styles.moodEmojiSmallScreen]}>{mood.emoji}</Text>
+                          <Text style={[styles.ultraModernMoodName, isSmallScreen && styles.ultraModernMoodNameSmallScreen]} numberOfLines={1} ellipsizeMode="tail">{mood.name}</Text>
+                        </View>
+                        <Text style={[styles.cursiveDescription, isSmallScreen && styles.cursiveDescriptionSmallScreen]} numberOfLines={isSmallScreen ? 2 : 3} ellipsizeMode="tail">{mood.description}</Text>
                       </View>
-                      
-                      <Text style={[styles.cursiveDescription, isSmallScreen && styles.cursiveDescriptionSmallScreen]}>
-                        {mood.cursiveDescription}
-                      </Text>
-                      
-                      <Text style={[styles.philosophyText, isSmallScreen && styles.philosophyTextSmallScreen]}>
-                        {mood.philosophyText}
-                      </Text>
+                      <Text style={[styles.philosophyText, isSmallScreen && styles.philosophyTextSmallScreen]} numberOfLines={isSmallScreen ? 1 : 2} ellipsizeMode="tail">{mood.philosophy}</Text>
                     </View>
                   </TouchableOpacity>
-                ))}
-              </View>
+                ));
+
+                if (isSmallScreen) {
+                  return (
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.ultraModernMoodsGridSmallScreenScrollViewContent}>
+                      {moodItemsContent}
+                    </ScrollView>
+                  );
+                }
+                return (
+                  <View style={[styles.ultraModernMoodsGrid, isSmallScreen && styles.ultraModernMoodsGridSmallScreen]}>
+                    {moodItemsContent}
+                  </View>
+                );
+              })()}
             </View>
             
             {/* Ultra-Modern Categories */}
@@ -5370,15 +5381,35 @@ const styles = StyleSheet.create({
     shadowColor: 'transparent',
   },
   ultraModernTrendRadarGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(2, 1fr)', // 2 columns for trending items
-    gap: '32px',
-    marginTop: 0,
-    ...(Platform.OS !== 'web' ? {
+    // marginTop: 20, // Using ScrollView's own spacing if needed
+    // gap: 24, // Using marginRight on cards for horizontal scroll
+    // For React Native, horizontal scroll setup
+    ...(Platform.OS !== 'web' && {
+      // Default to vertical grid on RN unless overridden by small screen ScrollView
       flexDirection: 'row',
       flexWrap: 'wrap',
       justifyContent: 'space-between',
-    } : {}),
+    }),
+    // For Web, keep it as a grid or flex container that wraps
+    ...(Platform.OS === 'web' && {
+      display: 'flex',
+      flexDirection: 'row', 
+      flexWrap: 'wrap', // Default to wrap for larger screens
+      justifyContent: 'space-between',
+      gap: 24, 
+    }),
+  },
+  ultraModernTrendRadarGridSmallScreen: { // This style applies to the View when isSmallScreen is true BUT NOT using ScrollView
+    // If we ever have a non-ScrollView small screen version, this would apply.
+    // For now, it's not directly used by the ScrollView setup.
+    // We might use it for the ScrollView's contentContainerStyle if padding is needed.
+    flexDirection: 'row', // Ensures items are in a row for ScrollView logic to work if this style is repurposed
+    // No flexWrap: 'nowrap' here, ScrollView handles that
+    // justifyContent: 'flex-start', // ScrollView handles this
+  },
+  ultraModernTrendRadarGridSmallScreenScrollViewContent: { // Style for ScrollView contentContainerStyle
+    paddingHorizontal: 20, // Example: Add some padding to the start/end of the scrollable content
+    paddingVertical: 10,   // Example: Vertical padding if needed
   },
   ultraModernTrendRadarCard: {
     width: Platform.OS === 'web' ? 'auto' : '48%', // Responsive width
@@ -5519,9 +5550,10 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   ultraModernTrendRadarCardSmallScreen: {
-    width: '98%', // Make TrendRadar cards full width on small screens
-    aspectRatio: '16/9', // Adjust aspect ratio for a wider card
-    marginBottom: 20,
+    // width is handled dynamically inline for horizontal scroll, so remove fixed width here.
+    aspectRatio: '1.1', // Adjusted for horizontal scroll, makes it slightly wider than tall (was 16/9)
+    marginBottom: 0, // No bottom margin for horizontal scroll items (was 20)
+    // marginRight is handled dynamically inline for horizontal scroll items
   },
   // New Small Screen Styles for Trend Radar Content
   ultraModernTrendRadarTitleSmallScreen: {
@@ -5572,7 +5604,13 @@ const styles = StyleSheet.create({
     height: 'auto', // More flexible height
   },
   ultraModernCategoryGridSmallScreen: {
-    // ... existing code ...
+    gridTemplateColumns: 'repeat(2, 1fr)', // 2 columns for small screens
+    gap: '20px', // Slightly smaller gap for smaller screens
+    ...(Platform.OS !== 'web' && {
+      // On React Native, if using flexbox for this grid on small screens:
+      // No specific changes needed if the base ultraModernCategoryGrid already handles RN row wrapping well.
+      // If category cards have fixed widths, might adjust justifyContent or rely on margins.
+    }),
   },
   ultraModernCategoryNameSmallScreen: {
     fontSize: 18, // Increased from 16px
@@ -5585,10 +5623,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8, // Added horizontal padding adjustment
     paddingBottom: 12, // Reduced bottom padding
   },
-  ultraModernBundleCardSmallScreen: {
-    // ... existing code ...
+  ultraModernBundleCardSmallScreen: { // Around line 5626
+    // width is handled dynamically inline (screenWidth * 0.75)
+    aspectRatio: '4/5', // Good proportion for image + text content
+    marginBottom: 0,    // No bottom margin for items in a horizontal scroll
+    // marginRight is likely handled by the ScrollView's children or could be added dynamically if needed
   },
-}); 
+  ultraModernMoodsGridSmallScreen: { // This was recently added correctly
+    flexDirection: 'row', // Ensures items are in a row
+    // For a wrapped row on small screens (if not using ScrollView)
+    // flexWrap: 'wrap', 
+    // justifyContent: 'space-around',
+    // Remove grid properties for small screen if relying on flex for ScrollView or wrapped row
+    // gridTemplateColumns: undefined, 
+    // gap: 16, 
+  },
+  ultraModernMoodsGridSmallScreenScrollViewContent: { // Style for ScrollView contentContainerStyle
+    paddingHorizontal: 20, // Add some padding to the start/end of the scrollable content
+    paddingVertical: 10,   // Vertical padding if needed
+  },
+  ultraModernMoodCardSmallScreen: { // Specific style for mood cards on small screens (when in horizontal scroll)
+      // width is handled dynamically inline
+      aspectRatio: '4/5', // Keeping the original elegant proportion, adjust if text overflows
+      marginBottom: 0, // No bottom margin for horizontal scroll items
+      // marginRight is handled dynamically inline
+  },
+  });
 
 // Placeholder components to fix missing component errors
 const FloatingPersonaSelector = ({ personas, selectedPersona, onSelectPersona, visible }) => {
@@ -5619,11 +5679,51 @@ const TrendRadar = ({ items, onItemPress, onSeeAll }) => {
   const { width: screenWidth } = useWindowDimensions();
   const isSmallScreen = screenWidth < 768;
 
-  // TODO: Refactor these inline small-screen styles into StyleSheet
-  const trendRadarTitleSmallScreenStyle = isSmallScreen ? { fontSize: 22 } : {}; // Increased from 20 to 22
-  const trendPercentageSmallScreenStyle = isSmallScreen ? { fontSize: 15 } : {};
-  const trendLabelSmallScreenStyle = isSmallScreen ? { fontSize: 14 } : {};
-  const trendRadarContentSmallScreenStyle = isSmallScreen ? { paddingTop: 12, paddingBottom: 12, paddingHorizontal: 12, height: 'auto' } : {}; // Reduced padding, auto height
+  // Inline styles for small screens - TODO: Refactor to StyleSheet
+  const cardWidthSmallScreen = isSmallScreen ? screenWidth * 0.75 : undefined;
+  const cardMarginRightSmallScreen = isSmallScreen ? 16 : 0;
+
+  // Adjusted font sizes for card content on small screens
+  const cardTitleSmallScreenStyle = isSmallScreen ? { fontSize: 16, lineHeight: 20 } : {};
+  const cardSubtitleSmallScreenStyle = isSmallScreen ? { fontSize: 12, lineHeight: 16 } : {};
+  const cardPercentageSmallScreenStyle = isSmallScreen ? { fontSize: 14 } : {};
+  const cardLabelSmallScreenStyle = isSmallScreen ? { fontSize: 11 } : {};
+  const cardContentAreaSmallScreenStyle = isSmallScreen ? { paddingTop: 10, paddingBottom: 10, paddingHorizontal: 10 } : {};
+
+  const radarItemsContent = items.map((item, index) => (
+    <TouchableOpacity 
+      key={index} 
+      style={[
+        styles.ultraModernTrendRadarCard,
+        isSmallScreen && styles.ultraModernTrendRadarCardSmallScreen, // Applies small screen specific base styles like aspectRatio
+        isSmallScreen && { width: cardWidthSmallScreen, marginRight: cardMarginRightSmallScreen } // Dynamic width and margin
+      ]}
+      onPress={() => onItemPress(item)}
+    >
+      <Image source={{ uri: item.image }} style={styles.ultraModernTrendRadarImage} resizeMode="cover" />
+      <View style={styles.ultraModernTrendRadarOverlay} />
+      <View style={[styles.ultraModernTrendRadarContent, cardContentAreaSmallScreenStyle]}>
+        <Text style={[styles.ultraModernTrendRadarTitle, cardTitleSmallScreenStyle]} numberOfLines={2} ellipsizeMode="tail">
+          {item.title}
+        </Text>
+        {item.subtitle && (
+          <Text style={[styles.ultraModernTrendRadarSubtitle, cardSubtitleSmallScreenStyle]} numberOfLines={1} ellipsizeMode="tail">
+            {item.subtitle}
+          </Text>
+        )}
+      </View>
+      {item.trendingStats && (
+          <View style={styles.ultraModernTrendPercentageContainer}>
+            <Text style={[styles.ultraModernTrendPercentage, cardPercentageSmallScreenStyle]}>
+              {item.trendingStats.match(/↗\s*(\d+%)/)?.[1] || ''}
+            </Text>
+            <Text style={[styles.ultraModernTrendLabel, cardLabelSmallScreenStyle]}>
+              {item.hotTake ? 'DEEP DIVE' : (item.trendingStats.includes('searches') ? 'Surge' : 'Viral')}
+            </Text>
+          </View>
+      )}
+    </TouchableOpacity>
+  ));
 
   return (
     <View style={styles.ultraModernTrendRadarContainer}>
@@ -5636,38 +5736,15 @@ const TrendRadar = ({ items, onItemPress, onSeeAll }) => {
           <Text style={styles.seeAllButtonText}>View All Trends</Text>
         </TouchableOpacity> */}
       </View>
-      <View style={[
-        styles.ultraModernTrendRadarGrid,
-        isSmallScreen && styles.ultraModernTrendRadarGridSmallScreen
-      ]}>
-        {items.map((item, index) => (
-          <TouchableOpacity 
-            key={index} 
-            style={[
-              styles.ultraModernTrendRadarCard,
-              isSmallScreen && styles.ultraModernTrendRadarCardSmallScreen
-            ]}
-            onPress={() => onItemPress(item)}
-          >
-            <Image source={{ uri: item.image }} style={styles.ultraModernTrendRadarImage} resizeMode="cover" />
-            <View style={styles.ultraModernTrendRadarOverlay} />
-            <View style={[styles.ultraModernTrendRadarContent, trendRadarContentSmallScreenStyle]}>
-              <Text style={[styles.ultraModernTrendRadarTitle, trendRadarTitleSmallScreenStyle]}>{item.title}</Text>
-              {item.subtitle && <Text style={styles.ultraModernTrendRadarSubtitle}>{item.subtitle}</Text>}
-            </View>
-            {item.trendingStats && (
-               <View style={styles.ultraModernTrendPercentageContainer}>
-                 <Text style={[styles.ultraModernTrendPercentage, trendPercentageSmallScreenStyle]}>
-                   {item.trendingStats.match(/↗\s*(\d+%)/)?.[1] || ''}
-                 </Text>
-                 <Text style={[styles.ultraModernTrendLabel, trendLabelSmallScreenStyle]}>
-                   {item.hotTake ? 'DEEP DIVE' : (item.trendingStats.includes('searches') ? 'Surge' : 'Viral')}
-                 </Text>
-               </View>
-            )}
-          </TouchableOpacity>
-        ))}
-      </View>
+      {isSmallScreen ? (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.ultraModernTrendRadarGridSmallScreenScrollViewContent}>
+          {radarItemsContent}
+        </ScrollView>
+      ) : (
+        <View style={styles.ultraModernTrendRadarGrid}>
+          {radarItemsContent}
+        </View>
+      )}
     </View>
   );
 };
