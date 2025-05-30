@@ -2897,64 +2897,65 @@ export default function App() {
                 showsHorizontalScrollIndicator={false}
                 style={styles.ultraModernBundlesScroll}
               >
-                {socialBundles.map((bundle) => (
-                  <TouchableOpacity 
-                    key={bundle.id} 
-                    style={[
+                {socialBundles.map((bundle) => {
+                  // TODO: Refactor these inline small-screen styles into StyleSheet
+                  const bundleNameSmallScreenStyle = isSmallScreen ? { fontSize: 22 } : {};
+                  const bundleCuratorAvatarSmallScreenStyle = isSmallScreen ? { width: 30, height: 30, borderRadius: 15 } : {};
+                  const bundleCuratorNameSmallScreenStyle = isSmallScreen ? { fontSize: 15 } : {};
+
+                  return (
+                    <TouchableOpacity 
+                      key={bundle.id} 
+                      style={[
                         styles.ultraModernBundleCard, 
                         isSmallScreen && styles.ultraModernBundleCardSmallScreen,
                         isSmallScreen && { width: screenWidth * 0.75 } // Apply dynamic width here
-                    ]}
-                    onPress={() => {
-                      // When a bundle is clicked, show its products
-                      setIsLoadingAnimation(true);
-                      setIsDiscoveryMode(false);
-                      setShowTrendingSocial(false);
-                      setShowAiCurateView(null); // Reset AI view
-                      
-                      if (typeof window !== 'undefined' && window.history && window.history.pushState) {
-                        window.history.pushState({ page: 'products', socialBundle: bundle.id }, '', `?bundle=${bundle.id}`);
-                      }
-                      
-                      setTimeout(() => {
-                        setProducts(sortProducts(bundle.products));
-                        setIsLoadingAnimation(false);
-                      }, 800);
-                    }}
-                  >
-                    <View style={styles.ultraModernBundleImageContainer}>
-                      <Image 
-                        source={{ uri: bundle.coverImage }}
-                        style={styles.ultraModernBundleCover}
-                        resizeMode="cover"
-                      />
-                      <View style={styles.ultraModernBundleOverlay}>
-                        <View style={styles.ultraModernBundleStats}>
-                          <Text style={styles.ultraModernBundleStat}>♥ {bundle.likes.toLocaleString()}</Text>
-                          <Text style={styles.ultraModernBundleStat}>🔖 {bundle.saves}</Text>
-                        </View>
-                      </View>
-                    </View>
-                    <View style={styles.ultraModernBundleContent}>
-                      <Text style={styles.ultraModernBundleTitle}>{bundle.title}</Text>
-                      
-                      <View style={styles.ultraModernBundleCreatorRow}>
+                      ]}
+                      onPress={() => {
+                        // When a bundle is clicked, show its products
+                        setIsLoadingAnimation(true);
+                        setIsDiscoveryMode(false);
+                        setShowTrendingSocial(false);
+                        setShowAiCurateView(null); // Reset AI view
+                        
+                        if (typeof window !== 'undefined' && window.history && window.history.pushState) {
+                          window.history.pushState({ page: 'products', socialBundle: bundle.id }, '', `?bundle=${bundle.id}`);
+                        }
+                        
+                        setTimeout(() => {
+                          setProducts(sortProducts(bundle.products));
+                          setIsLoadingAnimation(false);
+                        }, 800);
+                      }}
+                    >
+                      <View style={styles.ultraModernBundleImageContainer}>
                         <Image 
-                          source={{ uri: bundle.creator.avatar }}
-                          style={styles.ultraModernCreatorAvatar}
+                          source={{ uri: bundle.coverImage }}
+                          style={styles.ultraModernBundleCover}
+                          resizeMode="cover"
                         />
-                        <Text style={styles.ultraModernCreatorName}>{bundle.creator.name}</Text>
-                        {bundle.creator.verified && (
-                          <Text style={styles.ultraModernVerifiedBadge}>✓</Text>
-                        )}
+                        <View style={styles.ultraModernBundleOverlay} />
                       </View>
-                      
-                      <Text style={styles.ultraModernBundleProductCount}>
-                        {bundle.products.length} carefully selected items
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                ))}
+                      <View style={styles.ultraModernBundleContent}>
+                        <Text style={[styles.ultraModernBundleName, bundleNameSmallScreenStyle]}>{bundle.title}</Text>
+                        <View style={styles.ultraModernBundleCreatorRow}>
+                          <Image 
+                            source={{ uri: bundle.creator.avatar }}
+                            style={styles.ultraModernCreatorAvatar}
+                          />
+                          <Text style={styles.ultraModernCreatorName}>{bundle.creator.name}</Text>
+                          {bundle.creator.verified && (
+                            <Text style={styles.ultraModernVerifiedBadge}>✓</Text>
+                          )}
+                        </View>
+                        
+                        <Text style={styles.ultraModernBundleProductCount}>
+                          {bundle.products.length} carefully selected items
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
               </ScrollView>
             </View>
             
@@ -5459,441 +5460,90 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   ultraModernTrendRadarTitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#1A1A1A',
-    letterSpacing: -0.2,
-    lineHeight: 20,
-  },
-  ultraModernBackButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    backgroundColor: '#F8F8F8',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E8E8E8',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-  },
-  ultraModernBackButtonText: {
-    fontSize: 14,
-    color: '#1A1A1A',
-    fontWeight: '500',
-    letterSpacing: 0.3,
-  },
-  ultraModernBackButtonTextSmallScreen: { // For adjusting back button text
-    fontSize: 13,
-  },
-  // Styles for Discovery Page Header Responsiveness
-  ultraModernHeaderControlsSmallScreen: {
-    flexDirection: 'column', // Stack controls vertically
-    gap: 16, // Reduced gap for stacked items
-  },
-  ultraModernSearchContainerSmallScreen: {
-    width: '100%', // Take full width
-  },
-  searchInputWrapperSmallScreen: {
-    paddingHorizontal: 16, // Slightly reduce padding
-  },
-  ultraModernSearchInputSmallScreen: {
-    fontSize: 16, // Reduce font size for smaller input
-    height: 52, // Adjust height
-  },
-  ultraModernSelectorRowSmallScreen: {
-    flexDirection: 'column', // Stack selectors vertically
-    width: '100%', // Take full width
-    gap: 12, // Gap between stacked selectors
-  },
-  ultraModernSelectorSmallScreen: {
-    minWidth: '100%', // Make selectors take full width when stacked
-    padding: 14, // Adjust padding
-  },
-  ultraModernSelectorValueSmallScreen: {
-    fontSize: 13,
-  },
-  trendingStatsContainer: {
-    marginBottom: 10,
-    backgroundColor: COLORS.lightGray,
-    padding: 10,
-    borderRadius: 6,
-  },
-  trendingStatsLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.darkGray,
-    marginBottom: 5,
-  },
-  trendingStatsText: {
-    fontSize: 12,
-    color: COLORS.midGray,
-    lineHeight: 16,
-  },
-  hotTakeContainer: {
-    marginBottom: 10,
-    backgroundColor: COLORS.lightGray,
-    padding: 10,
-    borderRadius: 6,
-  },
-  hotTakeLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.darkGray,
-    marginBottom: 5,
-  },
-  hotTakeText: {
-    fontSize: 12,
-    color: COLORS.midGray,
-    lineHeight: 16,
-  },
-  ultraModernAiCurationContainer: {
-    marginBottom: 120,
-    backgroundColor: 'transparent',
-    borderRadius: 0,
-    padding: 40,
-    paddingTop: 60,
-    shadowColor: 'transparent',
-  },
-  ultraModernPrimaryButton: {
-    backgroundColor: '#6366F1',
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 20,
-    shadowColor: '#6366F1',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
-    ...(Platform.OS === 'web' && {
-      boxShadow: `
-        0 0 15px ${hexToRgba(COLORS.primary, 0.4)},
-        0 0 30px ${hexToRgba(COLORS.primary, 0.2)}
-      `,
-      background: `linear-gradient(135deg, ${COLORS.primary} 0%, ${shadeColor(COLORS.primary, -20)} 100%)`,
-      transition: 'all 0.2s ease',
-      cursor: 'pointer',
-      '&:hover': {
-        transform: 'translateY(-1px)',
-        boxShadow: `
-          0 0 20px ${hexToRgba(COLORS.primary, 0.5)},
-          0 0 40px ${hexToRgba(COLORS.primary, 0.3)}
-        `,
-      },
-    }),
-  },
-  ultraModernPrimaryButtonText: {
-    color: COLORS.buttonPrimaryText,
-    fontSize: 14,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
-  aiCurateFormContainer: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  aiFormScrollView: {
-    paddingHorizontal: 40,
-    paddingVertical: 20,
-  },
-  aiFormSectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.text,
-    marginBottom: 15,
-    marginTop: 10,
-  },
-  aiBrandSelectionContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginBottom: 25,
-  },
-  aiBrandChip: {
-    backgroundColor: COLORS.card,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.8,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  aiBrandChipSelected: {
-    borderColor: COLORS.primary,
-    backgroundColor: hexToRgba(COLORS.primary, 0.1),
-  },
-  aiBrandChipText: {
-    fontSize: 14,
-    color: COLORS.text,
-    fontWeight: '500',
-  },
-  aiTextInput: {
-    backgroundColor: COLORS.textInputBackground,
-    color: COLORS.text,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    fontSize: 15,
-    marginBottom: 25,
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.5,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  aiBudgetSelectorContainer: {
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: 25,
-  },
-  aiBudgetChip: {
-    backgroundColor: COLORS.card,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: 60,
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.8,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  aiBudgetChipSelected: {
-    borderColor: COLORS.primary,
-    backgroundColor: hexToRgba(COLORS.primary, 0.1),
-  },
-  aiBudgetChipText: {
-    fontSize: 15,
-    color: COLORS.text,
-    fontWeight: '500',
-  },
-  // Styles for Moodboard, Category, and Social Bundles Responsiveness
-  ultraModernMoodsGridSmallScreen: {
-    gridTemplateColumns: 'repeat(2, 1fr)', // 2 columns for small screens (web)
-    // For React Native, item width will handle this
-  },
-  ultraModernMoodCardSmallScreen: {
-    aspectRatio: '3/4', // Slightly taller aspect ratio if needed
-    // No specific width % here if using grid, otherwise set to ~48%
-    width: Platform.OS === 'web' ? 'auto' : '48%', // Ensure 2-column layout on RN small screens
-    marginBottom: 16, // Adjust margin for 2-column layout
-  },
-  ultraModernMoodNameSmallScreen: {
-    fontSize: 16,
-    paddingBottom: 4,
-  },
-  cursiveDescriptionSmallScreen: {
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  philosophyTextSmallScreen: {
-    fontSize: 10,
-  },
-  ultraModernCategoryGridSmallScreen: {
-    gridTemplateColumns: 'repeat(2, 1fr)', // 2 columns for small screens (web)
-  },
-  ultraModernCategoryItemSmallScreen: {
-    aspectRatio: '3/4',
-  },
-  ultraModernCategoryNameSmallScreen: {
-    fontSize: 16,
-    paddingBottom: 4,
-  },
-  ultraModernCategoryDescriptionSmallScreen: {
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  ultraModernBundleCardSmallScreen: {
-    // width: screenWidth * 0.75, // Dynamic width will be applied inline
-    marginRight: 16, // Keep margin for spacing
-    // Potentially other static adjustments like aspectRatio if needed for small screens
-    aspectRatio: 16/10, // Example: make them a bit wider on small screens if content allows
-  },
-  ultraModernTrendRadarGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(2, 1fr)', // 2 columns for trending items
-    gap: '32px',
-    marginTop: 0,
-    ...(Platform.OS !== 'web' ? {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      justifyContent: 'space-between',
-    } : {}),
-  },
-  ultraModernTrendRadarCard: {
-    width: Platform.OS === 'web' ? 'auto' : '48%', // Responsive width
-    aspectRatio: '3/2', // Wider aspect ratio for trending items
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20, // More sophisticated rounded corners
-    overflow: 'hidden',
-    borderWidth: 0,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 24,
-    elevation: 8,
-    position: 'relative',
-    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', // Smooth hover effect
-    cursor: 'pointer',
-    marginRight: Platform.OS === 'web' ? 0 : 20, // Add margin for RN horizontal scroll, not for web grid
-  },
-  ultraModernTrendRadarImageContainer: {
-    height: '70%', // Image takes up 70% of card
-    position: 'relative',
-    backgroundColor: '#F8F8F8',
-  },
-  ultraModernTrendRadarImage: {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
-    filter: 'contrast(1.1) saturate(1.2)', // Enhanced image quality
-  },
-  ultraModernViralBadge: {
-    position: 'absolute',
-    top: 16,
-    left: 16,
-    backgroundColor: '#FF4757',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-  },
-  ultraModernViralBadgeText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-  },
-  ultraModernTrendOverlay: {
-    position: 'absolute',
-    bottom: 16,
-    right: 16,
-    backgroundColor: 'rgba(0,0,0,0.8)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  ultraModernTrendChangeText: {
-    fontSize: 12,
+    fontSize: 18, // Default size
     fontWeight: '600',
     color: '#FFFFFF',
-    letterSpacing: 0.5,
+    marginTop: 8,
+    textAlign: 'center',
   },
-  ultraModernTrendRadarContent: {
-    height: '30%', // Content takes up 30% of card
-    padding: 20,
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+  ultraModernTrendRadarSubtitle: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.8)',
+    textAlign: 'center',
+    marginTop: 4,
   },
-  ultraModernTrendRadarCategory: {
-    fontSize: 10,
+  ultraModernTrendPercentageContainer: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  ultraModernTrendPercentage: {
+    color: '#FFFFFF',
+    fontSize: 13, // Default size
+    fontWeight: 'bold',
+    marginRight: 4,
+  },
+  ultraModernTrendLabel: {
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 12, // Default size
+    fontWeight: '500',
+  },
+  ultraModernBundleName: {
+    fontSize: 20, // Default size
     fontWeight: '600',
-    color: '#999999',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+    color: COLORS.text,
     marginBottom: 6,
   },
-  ultraModernTrendRadarTitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#1A1A1A',
-    letterSpacing: -0.2,
-    lineHeight: 20,
-  },
-  ultraModernBackButton: {
+  ultraModernBundleCuratorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    backgroundColor: '#F8F8F8',
+    marginTop: 'auto', // Push to bottom
+    paddingTop: 8,
+  },
+  ultraModernBundleCuratorAvatar: {
+    width: 24, // Default size
+    height: 24, // Default size
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E8E8E8',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
+    marginRight: 8,
+    backgroundColor: COLORS.lightGray, // Placeholder
   },
-  ultraModernBackButtonText: {
-    fontSize: 14,
-    color: '#1A1A1A',
+  ultraModernBundleCuratorName: {
+    fontSize: 13, // Default size
+    color: COLORS.midGray,
     fontWeight: '500',
-    letterSpacing: 0.3,
-  },
-  ultraModernBackButtonTextSmallScreen: { // For adjusting back button text
-    fontSize: 13,
-  },
-  // Styles for Moodboard, Category, and Social Bundles Responsiveness
-  ultraModernMoodsGridSmallScreen: {
-    gridTemplateColumns: 'repeat(2, 1fr)', // 2 columns for small screens (web)
-    // For React Native, item width will handle this
-  },
-  ultraModernMoodCardSmallScreen: {
-    aspectRatio: '3/4', // Slightly taller aspect ratio if needed
-    // No specific width % here if using grid, otherwise set to ~48%
-  },
-  ultraModernMoodNameSmallScreen: {
-    fontSize: 16,
-    paddingBottom: 4,
-  },
-  cursiveDescriptionSmallScreen: {
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  philosophyTextSmallScreen: {
-    fontSize: 10,
-  },
-  ultraModernCategoryGridSmallScreen: {
-    gridTemplateColumns: 'repeat(2, 1fr)', // 2 columns for small screens (web)
-  },
-  ultraModernCategoryItemSmallScreen: {
-    aspectRatio: '3/4',
-  },
-  ultraModernCategoryNameSmallScreen: {
-    fontSize: 16,
-    paddingBottom: 4,
-  },
-  ultraModernCategoryDescriptionSmallScreen: {
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  ultraModernBundleCardSmallScreen: {
-    // width: screenWidth * 0.75, // Dynamic width will be applied inline
-    marginRight: 16, // Keep margin for spacing
-    // Potentially other static adjustments like aspectRatio if needed for small screens
-    aspectRatio: 16/10, // Example: make them a bit wider on small screens if content allows
   },
   ultraModernTrendRadarCardSmallScreen: {
     width: '98%', // Make TrendRadar cards full width on small screens
     aspectRatio: '16/9', // Adjust aspect ratio for a wider card
     marginBottom: 20,
+  },
+  // New Small Screen Styles for Trend Radar Content
+  ultraModernTrendRadarTitleSmallScreen: {
+    fontSize: 20, // Increased size
+  },
+  ultraModernTrendPercentageSmallScreen: {
+    fontSize: 15, // Increased size
+  },
+  ultraModernTrendLabelSmallScreen: {
+    fontSize: 14, // Increased size
+  },
+  // New Small Screen Styles for Social Bundle Content
+  ultraModernBundleNameSmallScreen: {
+    fontSize: 22, // Increased size
+  },
+  ultraModernBundleCuratorAvatarSmallScreen: {
+    width: 30, // Increased size
+    height: 30, // Increased size
+    borderRadius: 15,
+  },
+  ultraModernBundleCuratorNameSmallScreen: {
+    fontSize: 15, // Increased size
   },
   // Responsive margins for main section containers
   ultraModernSectionContainerMarginSmallScreen: {
@@ -5933,51 +5583,51 @@ const TrendRadar = ({ items, onItemPress, onSeeAll }) => {
   const { width: screenWidth } = useWindowDimensions();
   const isSmallScreen = screenWidth < 768;
 
+  // TODO: Refactor these inline small-screen styles into StyleSheet
+  const trendRadarTitleSmallScreenStyle = isSmallScreen ? { fontSize: 20 } : {};
+  const trendPercentageSmallScreenStyle = isSmallScreen ? { fontSize: 15 } : {};
+  const trendLabelSmallScreenStyle = isSmallScreen ? { fontSize: 14 } : {};
+
   return (
-    <View style={[styles.ultraModernTrendRadarContainer, isSmallScreen && styles.ultraModernSectionContainerMarginSmallScreen]}>
+    <View style={styles.ultraModernTrendRadarContainer}>
       <View style={styles.ultraModernSectionHeader}>
         <View style={styles.sectionHeaderLeft}>
           <Text style={styles.ultraModernSectionLabel}>TRENDING</Text>
-          <Text style={styles.ultraModernSectionTitle}>What's Hot Now</Text>
-          <Text style={styles.ultraModernSectionSubtitle}>
-            discover what's capturing attention in the community
-          </Text>
+          <Text style={styles.ultraModernSectionTitle}>What's Hot Now 🔥</Text>
         </View>
-        <TouchableOpacity 
-          style={styles.modernSeeAllButton}
-          onPress={() => onSeeAll && onSeeAll()}
-        >
-          <Text style={styles.modernSeeAllText}>See All</Text>
-          <Text style={styles.modernSeeAllArrow}>→</Text>
-        </TouchableOpacity>
+        {/* <TouchableOpacity onPress={onSeeAll} style={styles.seeAllButton}>
+          <Text style={styles.seeAllButtonText}>View All Trends</Text>
+        </TouchableOpacity> */}
       </View>
-      
-      <View style={styles.ultraModernTrendRadarGrid}>
-        {items.map((item) => (
+      <View style={[
+        styles.ultraModernTrendRadarGrid,
+        isSmallScreen && styles.ultraModernTrendRadarGridSmallScreen
+      ]}>
+        {items.map((item, index) => (
           <TouchableOpacity 
-            key={item.id} 
-            style={[styles.ultraModernTrendRadarCard, isSmallScreen && styles.ultraModernTrendRadarCardSmallScreen]}
-            onPress={() => onItemPress && onItemPress(item)}
+            key={index} 
+            style={[
+              styles.ultraModernTrendRadarCard,
+              isSmallScreen && styles.ultraModernTrendRadarCardSmallScreen
+            ]}
+            onPress={() => onItemPress(item)}
           >
-            <View style={styles.ultraModernTrendRadarImageContainer}>
-              <Image 
-                source={{ uri: item.image }}
-                style={styles.ultraModernTrendRadarImage}
-                resizeMode="cover"
-              />
-              {item.isViral && (
-                <View style={styles.ultraModernViralBadge}>
-                  <Text style={styles.ultraModernViralBadgeText}>VIRAL</Text>
-                </View>
-              )}
-              <View style={styles.ultraModernTrendOverlay}>
-                <Text style={styles.ultraModernTrendChangeText}>{item.trendChange}</Text>
-              </View>
-            </View>
+            <Image source={{ uri: item.image }} style={styles.ultraModernTrendRadarImage} resizeMode="cover" />
+            <View style={styles.ultraModernTrendRadarOverlay} />
             <View style={styles.ultraModernTrendRadarContent}>
-              <Text style={styles.ultraModernTrendRadarCategory}>{item.category}</Text>
-              <Text style={styles.ultraModernTrendRadarTitle}>{item.title}</Text>
+              <Text style={[styles.ultraModernTrendRadarTitle, trendRadarTitleSmallScreenStyle]}>{item.title}</Text>
+              {item.subtitle && <Text style={styles.ultraModernTrendRadarSubtitle}>{item.subtitle}</Text>}
             </View>
+            {item.trendingStats && (
+               <View style={styles.ultraModernTrendPercentageContainer}>
+                 <Text style={[styles.ultraModernTrendPercentage, trendPercentageSmallScreenStyle]}>
+                   {item.trendingStats.match(/↗\s*(\d+%)/)?.[1] || ''}
+                 </Text>
+                 <Text style={[styles.ultraModernTrendLabel, trendLabelSmallScreenStyle]}>
+                   {item.hotTake ? 'DEEP DIVE' : (item.trendingStats.includes('searches') ? 'Surge' : 'Viral')}
+                 </Text>
+               </View>
+            )}
           </TouchableOpacity>
         ))}
       </View>
