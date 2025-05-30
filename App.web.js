@@ -3026,9 +3026,9 @@ export default function App() {
                       ]} />
                     </View>
                     
-                    <View style={styles.ultraModernMoodContent}>
+                    <View style={[styles.ultraModernMoodContent, isSmallScreen && styles.ultraModernMoodContentSmallScreen]}>
                       <View style={styles.moodNameRow}>
-                        <Text style={styles.moodEmoji}>{mood.emoji}</Text>
+                        <Text style={[styles.moodEmoji, isSmallScreen && styles.moodEmojiSmallScreen]}>{mood.emoji}</Text>
                         <Text style={[styles.ultraModernMoodName, isSmallScreen && styles.ultraModernMoodNameSmallScreen]}>{mood.name}</Text>
                       </View>
                       
@@ -5525,7 +5525,7 @@ const styles = StyleSheet.create({
   },
   // New Small Screen Styles for Trend Radar Content
   ultraModernTrendRadarTitleSmallScreen: {
-    fontSize: 20, // Increased size
+    fontSize: 22, // Increased size
   },
   ultraModernTrendPercentageSmallScreen: {
     fontSize: 15, // Increased size
@@ -5551,7 +5551,43 @@ const styles = StyleSheet.create({
   },
   ultraModernDiscoveryContainerPaddingSmallScreen: { // For the main discovery container itself
     paddingHorizontal: 20, // Reduced horizontal padding for the whole discovery page on small screens
-  }
+  },
+  ultraModernMoodNameSmallScreen: {
+    fontSize: 20, // Increased from 16px
+    paddingBottom: 4,
+  },
+  cursiveDescriptionSmallScreen: {
+    fontSize: 15, // Increased from 13px
+    lineHeight: 20, // Adjusted line height
+  },
+  philosophyTextSmallScreen: {
+    fontSize: 12, // Increased from 10px
+    lineHeight: 16, // Adjusted line height
+  },
+  moodEmojiSmallScreen: { // New style for emoji on small screens
+    fontSize: 24, // Increased size
+  },
+  ultraModernMoodContentSmallScreen: { // New style for mood content area on small screens
+    padding: 16, // Reduced padding from 24px
+    height: 'auto', // More flexible height
+  },
+  ultraModernCategoryGridSmallScreen: {
+    // ... existing code ...
+  },
+  ultraModernCategoryNameSmallScreen: {
+    fontSize: 18, // Increased from 16px
+    paddingBottom: 2, // Reduced padding
+    paddingHorizontal: 8, // Added horizontal padding adjustment
+  },
+  ultraModernCategoryDescriptionSmallScreen: {
+    fontSize: 15, // Increased from 13px
+    lineHeight: 20, // Adjusted line height
+    paddingHorizontal: 8, // Added horizontal padding adjustment
+    paddingBottom: 12, // Reduced bottom padding
+  },
+  ultraModernBundleCardSmallScreen: {
+    // ... existing code ...
+  },
 }); 
 
 // Placeholder components to fix missing component errors
@@ -5584,9 +5620,10 @@ const TrendRadar = ({ items, onItemPress, onSeeAll }) => {
   const isSmallScreen = screenWidth < 768;
 
   // TODO: Refactor these inline small-screen styles into StyleSheet
-  const trendRadarTitleSmallScreenStyle = isSmallScreen ? { fontSize: 20 } : {};
+  const trendRadarTitleSmallScreenStyle = isSmallScreen ? { fontSize: 22 } : {}; // Increased from 20 to 22
   const trendPercentageSmallScreenStyle = isSmallScreen ? { fontSize: 15 } : {};
   const trendLabelSmallScreenStyle = isSmallScreen ? { fontSize: 14 } : {};
+  const trendRadarContentSmallScreenStyle = isSmallScreen ? { paddingTop: 12, paddingBottom: 12, paddingHorizontal: 12, height: 'auto' } : {}; // Reduced padding, auto height
 
   return (
     <View style={styles.ultraModernTrendRadarContainer}>
@@ -5614,7 +5651,7 @@ const TrendRadar = ({ items, onItemPress, onSeeAll }) => {
           >
             <Image source={{ uri: item.image }} style={styles.ultraModernTrendRadarImage} resizeMode="cover" />
             <View style={styles.ultraModernTrendRadarOverlay} />
-            <View style={styles.ultraModernTrendRadarContent}>
+            <View style={[styles.ultraModernTrendRadarContent, trendRadarContentSmallScreenStyle]}>
               <Text style={[styles.ultraModernTrendRadarTitle, trendRadarTitleSmallScreenStyle]}>{item.title}</Text>
               {item.subtitle && <Text style={styles.ultraModernTrendRadarSubtitle}>{item.subtitle}</Text>}
             </View>
