@@ -1,5 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Animated, Image, PanResponder, Vibration, Easing } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Animated, Image, PanResponder, Vibration, Easing, Platform } from 'react-native';
+
+// --- Debug: Log API Key at module level ---
+console.log('[DEBUG] REACT_APP_CLAUDE_API_KEY at module level:', process.env.REACT_APP_CLAUDE_API_KEY);
+// --- End Debug ---
 
 // For trendy, minimalist color palette
 const COLORS = {
@@ -16,232 +20,708 @@ const COLORS = {
   glassBg: 'rgba(255,255,255,0.8)',
   highlight: '#EFEFEF',     // Instagram highlight
   border: '#DBDBDB',        // Instagram border
+  // Added for AI Curation form consistency
+  background: '#FFFFFF', // Assuming a light theme for the form page itself
+  text: '#1A1A1A', // Primary text color
+  textInputBackground: '#F8F8F8',
+  card: '#FFFFFF',
+  shadow: '#000000',
+  buttonPrimaryText: '#FFFFFF', // Text color for primary buttons
+};
+
+// Helper function to convert hex to rgba
+const hexToRgba = (hex, alpha) => {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
+// Helper function to lighten or darken a color
+const shadeColor = (color, percent) => {
+  let R = parseInt(color.substring(1, 3), 16);
+  let G = parseInt(color.substring(3, 5), 16);
+  let B = parseInt(color.substring(5, 7), 16);
+
+  R = parseInt(R * (100 + percent) / 100, 10);
+  G = parseInt(G * (100 + percent) / 100, 10);
+  B = parseInt(B * (100 + percent) / 100, 10);
+
+  R = (R < 255) ? R : 255;
+  G = (G < 255) ? G : 255;
+  B = (B < 255) ? B : 255;
+
+  R = (R > 0) ? R : 0;
+  G = (G > 0) ? G : 0;
+  B = (B > 0) ? B : 0;
+
+  const RR = ((R.toString(16).length === 1) ? `0${R.toString(16)}` : R.toString(16));
+  const GG = ((G.toString(16).length === 1) ? `0${G.toString(16)}` : G.toString(16));
+  const BB = ((B.toString(16).length === 1) ? `0${B.toString(16)}` : B.toString(16));
+
+  return `#${RR}${GG}${BB}`;
 };
 
 // Mock data for testing
 const mockProducts = [
   {
-    id: '1',
-    title: 'MacBook Pro 16"',
-    price: 2499,
-    rating: 4.8,
-    description: 'Latest MacBook Pro with M3 Pro chip, 16GB RAM, and 512GB SSD.',
-    link: 'https://www.apple.com/macbook-pro',
-    tags: ['pro', 'premium', 'power-user', 'creative'],
-    category: 'laptop',
-    whyBuy: 'Industry-leading performance for demanding creative tasks with the M3 Pro chip.',
-    insights: [
-      { label: 'Performance', value: 98, color: '#FF5757' },
-      { label: 'Battery Life', value: 92, color: '#32D74B' },
-      { label: 'Portability', value: 75, color: '#4E7CFF' },
-      { label: 'Value', value: 70, color: '#BF5AF2' }
-    ]
-  },
-  {
-    id: '2',
-    title: 'MacBook Air M2',
-    price: 1199,
-    rating: 4.7,
-    description: 'Ultra-thin and lightweight MacBook Air with M2 chip.',
-    link: 'https://www.apple.com/macbook-air',
-    tags: ['lightweight', 'portable', 'student', 'casual'],
-    category: 'laptop',
-    whyBuy: 'Perfect balance of performance and portability for everyday tasks and light creative work.',
-    insights: [
-      { label: 'Performance', value: 82, color: '#FF5757' },
-      { label: 'Battery Life', value: 95, color: '#32D74B' },
-      { label: 'Portability', value: 96, color: '#4E7CFF' },
-      { label: 'Value', value: 85, color: '#BF5AF2' }
-    ]
-  },
-  {
-    id: '3',
-    title: 'MacBook Pro 14"',
-    price: 1999,
-    rating: 4.9,
-    description: 'Powerful yet portable MacBook Pro with M3 chip.',
-    link: 'https://www.apple.com/macbook-pro',
-    tags: ['pro', 'premium', 'power-user', 'balanced'],
-    category: 'laptop',
-    whyBuy: 'Ideal for professionals who need performance without sacrificing portability.',
-    insights: [
-      { label: 'Performance', value: 95, color: '#FF5757' },
-      { label: 'Battery Life', value: 90, color: '#32D74B' },
-      { label: 'Portability', value: 85, color: '#4E7CFF' },
-      { label: 'Value', value: 78, color: '#BF5AF2' }
-    ]
-  },
-  {
-    id: '4',
-    title: 'MacBook Air M1',
-    price: 999,
-    rating: 4.6,
-    description: 'Affordable MacBook Air with the efficient M1 chip.',
-    link: 'https://www.apple.com/macbook-air',
-    tags: ['budget', 'student', 'casual', 'entry-level'],
-    category: 'laptop',
-    whyBuy: 'Best value MacBook with exceptional battery life and solid performance for students.',
-    insights: [
-      { label: 'Performance', value: 75, color: '#FF5757' },
-      { label: 'Battery Life', value: 96, color: '#32D74B' },
-      { label: 'Portability', value: 93, color: '#4E7CFF' },
-      { label: 'Value', value: 95, color: '#BF5AF2' }
-    ]
-  },
-  // Baby Products
-  {
-    id: '5',
-    title: 'Ergobaby Omni 360 Carrier',
-    price: 179,
-    rating: 4.8,
-    description: 'All-in-one ergonomic baby carrier with 4 carrying positions for newborns to toddlers.',
-    link: 'https://ergobaby.com',
-    tags: ['newborn', 'baby', 'carrier', 'premium', 'ergonomic'],
-    category: 'baby',
-    whyBuy: 'Exceptionally comfortable with lumbar support for parents and ergonomic positioning for baby.',
-    insights: [
-      { label: 'Comfort', value: 95, color: '#FF5757' },
-      { label: 'Durability', value: 92, color: '#32D74B' },
-      { label: 'Versatility', value: 98, color: '#4E7CFF' },
-      { label: 'Value', value: 85, color: '#BF5AF2' }
-    ]
-  },
-  {
-    id: '6',
-    title: 'Nanit Pro Smart Baby Monitor',
-    price: 299,
-    rating: 4.7,
-    description: 'Smart baby monitor with breathing monitoring, sleep tracking and HD video.',
-    link: 'https://www.nanit.com',
-    tags: ['baby', 'monitor', 'smart-home', 'premium', 'tech'],
-    category: 'baby',
-    whyBuy: 'Best sleep insights with breathing monitoring for peace of mind and sleep coaching.',
-    insights: [
-      { label: 'Video Quality', value: 96, color: '#FF5757' },
-      { label: 'Smart Features', value: 98, color: '#32D74B' },
-      { label: 'Ease of Use', value: 92, color: '#4E7CFF' },
-      { label: 'Value', value: 78, color: '#BF5AF2' }
-    ]
-  },
-  // Graduation Gifts
-  {
-    id: '7',
-    title: 'Apple Watch Series 9',
-    price: 399,
-    rating: 4.9,
-    description: 'Advanced health monitoring and productivity in a sleek wearable.',
-    link: 'https://www.apple.com/apple-watch-series-9',
-    tags: ['smartwatch', 'fitness', 'tech', 'gift', 'premium'],
-    category: 'wearables',
-    whyBuy: 'Perfect graduation gift combining style, fitness tracking and productivity features.',
-    insights: [
-      { label: 'Features', value: 94, color: '#FF5757' },
-      { label: 'Battery Life', value: 85, color: '#32D74B' },
-      { label: 'Design', value: 96, color: '#4E7CFF' },
-      { label: 'Value', value: 82, color: '#BF5AF2' }
-    ]
-  },
-  {
-    id: '8',
-    title: 'Sony WH-1000XM5 Headphones',
-    price: 349,
-    rating: 4.8,
-    description: 'Industry-leading noise cancellation with exceptional audio quality.',
-    link: 'https://www.sony.com/headphones',
-    tags: ['audio', 'noise-cancelling', 'premium', 'gift', 'travel'],
+    id: 1,
+    title: 'Sony WH-1000XM5 Wireless Headphones',
+    price: '$399.99',
+    rating: '4.8',
+    description: 'Industry-leading noise canceling, perfect for focus and immersive audio.',
     category: 'audio',
-    whyBuy: 'Best-in-class noise cancellation with premium comfort for study, work or travel.',
-    insights: [
-      { label: 'Sound Quality', value: 96, color: '#FF5757' },
-      { label: 'Noise Cancelling', value: 98, color: '#32D74B' },
-      { label: 'Comfort', value: 95, color: '#4E7CFF' },
-      { label: 'Battery Life', value: 93, color: '#BF5AF2' }
-    ]
-  }
+    tags: ['premium', 'wireless', 'noise-canceling', 'audio-excellence', 'travel-essential', 'optimizer-pick', 'trendsetter-pick', 'career-launch-essential', 'gamer-setup-essential', 'wellness-retreat-essential'],
+    image: 'https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=600&h=600&fit=crop&crop=center', // Premium headphones product shot
+    affiliateUrl: 'https://electronics.sony.com/audio/headphones/headband/p/wh1000xm5-l?mg=shopping&gad_source=1&gad_campaignid=22224130485&gbraid=0AAAAABiDjZjIa5DKjAugccBx3T6KuLFCb&gclid=CjwKCAjwi-DBBhA5EiwAXOHsGWew3GWTaHne6281N8_BDpE5qZdrbJcIgxWOT5Uz-yy9oisBKpJKBRoCdkgQAvD_BwE&gclsrc=aw.ds', // Sony official website link
+    brand: 'Sony',
+    insights: [],
+    optimizerInsight: 'Exceptional noise cancellation for deep focus sessions.',
+    trendsetterTip: 'A must-have for travel in style and ultimate audio immersion.',
+    whyBuyThis: '✨ SILENCE IS GOLDEN → Industry-leading ANC blocks out the world • 30hr battery keeps you untethered • Premium comfort for marathon sessions • The gold standard pros swear by'
+  },
+  {
+    id: 2,
+    title: 'MacBook Pro 14-inch M3',
+    price: '$1,999.00',
+    rating: '4.9',
+    description: 'Supercharged by M3 Pro chip for demanding creative and professional workflows.',
+    category: 'laptop',
+    tags: ['premium', 'pro', 'creative-powerhouse', 'performance', 'optimizer-pick', 'trendsetter-pick', 'career-launch-essential', 'gamer-setup-essential'],
+    image: 'https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=600&h=600&fit=crop&crop=center', // Clean MacBook product shot
+    affiliateUrl: 'https://www.amazon.com/dp/B0CM5JV268', // Amazon MacBook Pro 14" M3 link
+    brand: 'Apple',
+    insights: [],
+    optimizerInsight: 'M3 Pro chip offers blazing fast performance for heavy workloads.',
+    trendsetterTip: 'The creative professional\'s standard for power and aesthetics.',
+    whyBuyThis: '🚀 POWER REDEFINED → M3 chip crushes any workflow • 22hr battery outlasts your ambition • Liquid Retina XDR makes pixels disappear • Your ideas deserve this canvas'
+  },
+  {
+    id: 3,
+    title: 'Dyson Supersonic Hair Dryer',
+    price: '$429.99',
+    rating: '4.7',
+    description: 'Engineered for different hair types with intelligent heat control for shine.',
+    category: 'beauty',
+    tags: ['premium', 'beauty-tech', 'innovative', 'trendsetter-pick', 'wellness-retreat-essential', 'sanctuary-essential'],
+    image: 'https://images.unsplash.com/photo-1620756236496-65f87a036c52?w=600&h=600&fit=crop&crop=center', // Luxury beauty device
+    affiliateUrl: 'https://www.dyson.com/hair-care/hair-dryers/supersonic/black-nickel', // Official Dyson website link
+    brand: 'Dyson',
+    insights: [],
+    trendsetterTip: 'Revolutionary hair tech that makes a statement.',
+    whyBuyThis: '💫 SALON MEETS SCIENCE → Intelligent heat prevents damage • 3x faster than conventional dryers • Magnetic attachments snap on like magic • Your hair routine, revolutionized'
+  },
+  {
+    id: 4,
+    title: 'Away Carry-On Suitcase',
+    price: '$275.00',
+    rating: '4.6',
+    description: 'Durable, lightweight polycarbonate shell with 360° spinner wheels and signature interior compression system.',
+    category: 'travel',
+    tags: ['travel-essential', 'durable', 'stylish-travel', 'conscious-pick', 'trendsetter-pick', 'career-launch-essential'],
+    image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&h=600&fit=crop&crop=center', // Premium luggage shot
+    affiliateUrl: 'https://www.awaytravel.com/products/carry-on-navy-blue', // Official Away navy blue carry-on
+    brand: 'Away',
+    insights: [],
+    consciousChoiceDetail: 'Durable materials and a lifetime warranty reduce waste.',
+    trendsetterTip: 'The iconic suitcase that started a travel revolution.',
+    whyBuyThis: '✈️ TRAVEL GAME CHANGER → Award-winning design loved by millions • Interior compression fits 45% more • TSA-approved lock built-in • Lifetime warranty covers everything • The suitcase that made travel stylish again',
+    trendingStats: '↗ 45% surge in searches • Featured in 200+ travel blogs this month • #1 carry-on on TikTok travel reviews • Sold 2M+ units worldwide',
+    hotTake: 'This isn\'t just luggage—it\'s the travel accessory that transformed an entire industry. From Instagram feeds to airport terminals, the Away Carry-On became the unofficial uniform of modern travelers. The navy blue colorway is having a major moment as travelers embrace sophisticated, timeless aesthetics over flashy designs.'
+  },
+  {
+    id: 5,
+    title: 'Technivorm Moccamaster KBGV Select',
+    price: '$359.00',
+    rating: '4.8',
+    description: 'Handmade in the Netherlands, brews a perfect pot of coffee, SCA certified.',
+    category: 'kitchen',
+    tags: ['premium-coffee', 'quality-brew', 'home-comfort', 'optimizer-pick', 'conscious-pick', 'sanctuary-essential', 'perfect-hosting-essential'],
+    image: 'https://images.unsplash.com/photo-1559528895-4145a049718a?w=600&h=600&fit=crop&crop=center', // Premium coffee maker
+    affiliateUrl: 'https://www.amazon.com/dp/B077JBQZPX', // Amazon Moccamaster link
+    brand: 'Technivorm',
+    insights: [],
+    optimizerInsight: 'Consistently brews SCA Gold Cup standard coffee for peak morning productivity.',
+    consciousChoiceDetail: 'Handmade, repairable, and built to last for years.',
+    whyBuyThis: '☕ COFFEE PERFECTION → SCA-certified brewing hits ideal temperature every time • Handcrafted in Netherlands with 5-year warranty • 10-cup capacity fuels your entire day • Barista-quality without the barista price'
+  },
+  {
+    id: 6,
+    title: 'iPhone 15 Pro',
+    price: '$999.00',
+    rating: '4.9',
+    description: 'Titanium design, A17 Pro chip, and a dramatically more powerful camera system.',
+    category: 'phone',
+    tags: ['premium', 'flagship', 'camera-excellence', 'performance', 'trendsetter-pick', 'optimizer-pick', 'career-launch-essential'],
+    image: 'https://images.unsplash.com/photo-1695026545927-d9a838c3267f?w=600&h=600&fit=crop&crop=center', // iPhone 15 Pro
+    affiliateUrl: 'https://www.amazon.com/dp/B0CHWV2Z1C', // Amazon iPhone 15 Pro link
+    brand: 'Apple',
+    insights: [],
+    whyBuyThis: '📱 TITANIUM EVOLUTION → A17 Pro chip leaves competition behind • Pro camera system captures life in stunning detail • Action Button customizes to your workflow • Built to last, designed to impress'
+  },
+  {
+    id: 7,
+    title: 'Herman Miller Aeron Chair Remastered',
+    price: '$1,395.00',
+    rating: '4.8',
+    description: 'The benchmark for ergonomic seating, fully adjustable for ultimate comfort and support.',
+    category: 'furniture',
+    tags: ['ergonomic', 'office-essential', 'premium-comfort', 'optimizer-pick', 'conscious-pick', 'career-launch-essential', 'sanctuary-essential', 'gamer-setup-essential'],
+    image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=600&h=600&fit=crop&crop=center', // Modern office chair
+    affiliateUrl: 'https://www.amazon.com/dp/B071G42VQD', // Amazon Herman Miller Aeron
+    brand: 'Herman Miller',
+    insights: [],
+    whyBuyThis: '🪑 ERGONOMIC LEGEND → 8-zone PostureFit technology supports your every move • 12-year warranty backs legendary durability • Breathable mesh keeps you cool under pressure • The chair that built Silicon Valley'
+  },
+  {
+    id: 8,
+    title: 'Nespresso Vertuo Next Deluxe',
+    price: '$229.00',
+    rating: '4.5',
+    description: 'Compact coffee and espresso machine with Centrifusion technology and sleek design.',
+    category: 'kitchen',
+    tags: ['coffee', 'convenience', 'home-cafe', 'student-pick', 'optimizer-pick', 'sanctuary-essential', 'perfect-hosting-essential'],
+    image: 'https://images.unsplash.com/photo-1610801524961-a8f09715958d?w=600&h=600&fit=crop&crop=center', // Elegant coffee machine
+    affiliateUrl: 'https://www.amazon.com/dp/B08HLYVJQL', // Amazon Nespresso Vertuo
+    brand: 'Nespresso',
+    insights: [],
+    whyBuyThis: '☕ ONE-TOUCH LUXURY → Centrifusion tech extracts perfect crema every time • 40-second brewing beats morning rush • Compact design fits any counter • Café-quality without leaving home'
+  },
+  {
+    id: 9,
+    title: 'Allbirds Wool Runners',
+    price: '$110.00',
+    rating: '4.6',
+    description: 'Soft, cozy, and sustainable sneakers made from ZQ Merino wool.',
+    category: 'shoes',
+    tags: ['sustainable', 'comfort-wear', 'casual-style', 'conscious-pick', 'student-pick', 'sustainable-living-essential', 'wellness-retreat-essential'],
+    image: 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d34?w=600&h=600&fit=crop&crop=center', // Clean sneaker shot
+    affiliateUrl: 'https://www.amazon.com/dp/B071K7W8T1', // Amazon Allbirds link
+    brand: 'Allbirds',
+    insights: [],
+    whyBuyThis: '👟 CLOUDS FOR YOUR FEET → Merino wool naturally regulates temperature • Machine washable keeps them fresh • Carbon-negative materials protect the planet • Comfort that converts non-believers'
+  },
+  {
+    id: 10,
+    title: 'Patagonia Nano Puff Jacket',
+    price: '$239.00',
+    rating: '4.7',
+    description: 'Lightweight, windproof, and water-resistant jacket with recycled insulation.',
+    category: 'clothing',
+    tags: ['sustainable-outdoor', 'lightweight-warmth', 'travel-packable', 'conscious-pick', 'sustainable-living-essential'],
+    image: 'https://images.unsplash.com/photo-1520903700003-46dcf53ea994?w=600&h=600&fit=crop&crop=center', // Updated Image
+    affiliateUrl: 'https://www.amazon.com/dp/B0887QPPX3', // Amazon Patagonia Nano Puff link
+    brand: 'Patagonia',
+    insights: [],
+    whyBuyThis: '🏔️ ADVENTURE ARMOR → Packable insulation weighs just 12oz • Weather-resistant DWR coating sheds light rain • 60g PrimaLoft recycled insulation keeps you warm • Your go-to layer for life outdoors'
+  },
+  // Student-focused products (Existing 5 + 1 new = 6)
+  {
+    id: 11,
+    title: 'MacBook Air M2',
+    price: '$999.00', // Adjusted price
+    rating: '4.8',
+    description: 'Perfect for students - lightweight, long battery life, great for notes and projects.',
+    category: 'laptop',
+    tags: ['student-pick', 'budget-friendly', 'portable', 'study-essential', 'performance', 'career-launch-essential'],
+    image: 'https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=600&h=600&fit=crop&crop=center',
+    affiliateUrl: 'https://www.amazon.com/dp/B0B3C4CLBJ', // Amazon MacBook Air M2 link (corrected)
+    brand: 'Apple',
+    studentReview: 'Perfect for coding, note-taking, and Netflix. Battery lasts all day!',
+    whyStudentsLove: 'Lightweight for campus carry, powerful enough for any major.',
+    insights: [],
+    whyBuyThis: '💻 STUDENT SUPERPOWER → M2 chip handles everything from coding to video editing • 18hr battery outlasts your longest study session • 2.7lb weight won\'t break your back • The laptop that gets you hired'
+  },
+  {
+    id: 12,
+    title: 'Anker PowerCore III Elite Portable Charger', // More specific model
+    price: '$49.99', // Adjusted price
+    rating: '4.7',
+    description: 'High-capacity portable charger to keep all your devices powered on the go.',
+    category: 'accessories',
+    tags: ['student-pick', 'budget-friendly', 'essential-tech', 'portable-power', 'travel', 'career-launch-essential', 'gamer-setup-essential'],
+    image: 'https://images.unsplash.com/photo-1609592806596-b43bada2e3c9?w=600&h=600&fit=crop&crop=center',
+    affiliateUrl: 'https://www.amazon.com/dp/B08LGM24ZP', // Amazon Anker PowerCore link
+    brand: 'Anker',
+    studentReview: 'Saved me countless times during finals week and long commutes!',
+    whyStudentsLove: 'Reliable, fast charging, and fits in any backpack.',
+    insights: [],
+    whyBuyThis: '🔋 POWER ANXIETY = GONE → 25,600mAh charges your phone 5+ times • 60W USB-C powers laptops too • MultiProtect safety system prevents overheating • Your digital lifeline for $50'
+  },
+  {
+    id: 13,
+    title: 'Spotify Premium Student + Hulu & Showtime', // Bundled offer
+    price: '$5.99/month',
+    rating: '4.9',
+    description: 'Music, movies, and shows for studying, relaxing, and entertainment.',
+    category: 'subscription',
+    tags: ['student-pick', 'budget-friendly', 'entertainment-bundle', 'study-break', 'value-deal', 'wellness-retreat-essential', 'gamer-setup-essential'],
+    image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600&h=600&fit=crop&crop=center',
+    affiliateUrl: 'https://www.amazon.com/dp/B08C7KG5LP', // Amazon Spotify gift card alternative
+    brand: 'Spotify',
+    studentReview: 'The best deal for endless entertainment and study playlists.',
+    whyStudentsLove: 'Three services for the price of one, essential for student life.',
+    insights: [],
+    whyBuyThis: '🎵 TRIPLE THREAT DEAL → Premium music + ad-free Hulu + Showtime for $6/month • 100M+ songs fuel your study sessions • Binge-worthy content for study breaks • Usually costs $35/month separately'
+  },
+  {
+    id: 14,
+    title: 'Hydro Flask Standard Mouth Bottle',
+    price: '$39.95',
+    rating: '4.7',
+    description: 'Reusable water bottle to stay hydrated, keeps drinks cold for 24 hours or hot for 12.',
+    category: 'accessories',
+    tags: ['student-pick', 'sustainable', 'health-conscious', 'campus-essential', 'conscious-pick', 'sustainable-living-essential', 'wellness-retreat-essential'],
+    image: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=600&h=600&fit=crop&crop=center', // New image
+    affiliateUrl: 'https://www.amazon.com/dp/B077SQDQWS', // Amazon Hydro Flask link
+    brand: 'Hydro Flask',
+    studentReview: 'Keeps my water cold all day, even in a stuffy lecture hall!',
+    whyStudentsLove: 'Eco-friendly, durable, and comes in cool colors.',
+    insights: [],
+    whyBuyThis: '🌊 HYDRATION HERO → TempShield insulation keeps drinks perfect for 24hrs • Dishwasher safe saves time • Lifetime warranty shows confidence • Campus essential that pays for itself'
+  },
+  {
+    id: 15,
+    title: 'Kanken Classic Backpack',
+    price: '$80.00',
+    rating: '4.6',
+    description: 'Iconic and durable backpack, perfect for carrying books, laptop, and essentials.',
+    category: 'accessories',
+    tags: ['student-pick', 'fashionable-function', 'durable-design', 'campus-style', 'trendsetter-pick', 'career-launch-essential', 'sustainable-living-essential'],
+    image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&h=600&fit=crop&crop=center', // New image
+    affiliateUrl: 'https://www.amazon.com/dp/B00005GUXL', // Amazon Kanken backpack link
+    brand: 'Fjallraven',
+    studentReview: 'Super comfy, fits everything, and I get so many compliments!',
+    whyStudentsLove: 'Stylish, practical, and built to last through all your college years.',
+    insights: [],
+    whyBuyThis: '🎒 CAMPUS ICON → Vinylon F fabric resists water and stains • Ergonomic straps prevent back pain • 16L capacity holds laptop + books + lunch • Swedish design that started a movement'
+  },
+  {
+    id: 16, // New product
+    title: 'Logitech MX Master 3S Mouse',
+    price: '$99.99',
+    rating: '4.9',
+    description: 'Advanced wireless mouse with ultra-fast scrolling and ergonomic design for productivity.',
+    category: 'accessories',
+    tags: ['optimizer-pick', 'ergonomic', 'productivity-tool', 'tech-essential', 'performance', 'career-launch-essential', 'gamer-setup-essential'],
+    image: 'https://images.unsplash.com/photo-1606416132922-7214bab15a56?w=600&h=600&fit=crop&crop=center', // New image
+    affiliateUrl: 'https://www.logitech.com/en-us/products/mice/mx-master-3s.910-006556.html',
+    brand: 'Logitech',
+    insights: []
+  },
+  {
+    id: 17, // New product
+    title: 'Kindle Paperwhite Signature Edition',
+    price: '$189.99',
+    rating: '4.8',
+    description: 'Glare-free display, waterproof, wireless charging, and adjustable warm light for reading.',
+    category: 'electronics',
+    tags: ['optimizer-pick', 'reading-gadget', 'travel-friendly', 'conscious-pick', 'student-pick', 'golden-years-essential', 'wellness-retreat-essential'],
+    image: 'https://images.unsplash.com/photo-1544947950-fa07a98ba8ec?w=600&h=600&fit=crop&crop=center', // New image
+    affiliateUrl: 'https://www.amazon.com/Kindle-Paperwhite-Signature-Edition-32/dp/B08N5J7S3L',
+    brand: 'Amazon',
+    insights: []
+  },
+  {
+    id: 18, // New product
+    title: 'Wacom Intuos Pro Medium',
+    price: '$379.95',
+    rating: '4.7',
+    description: 'Professional pen tablet for digital drawing, painting, and photo editing.',
+    category: 'electronics',
+    tags: ['trendsetter-pick', 'creative-tool', 'digital-art', 'pro-gear', 'optimizer-pick', 'career-launch-essential'],
+    image: 'https://images.unsplash.com/photo-1585288940045-07517f8371c7?w=600&h=600&fit=crop&crop=center', // New image
+    affiliateUrl: 'https://www.wacom.com/en-us/products/pen-tablets/wacom-intuos-pro',
+    brand: 'Wacom',
+    insights: []
+  },
+  {
+    id: 19, // New product
+    title: 'Rimowa Essential Lite Cabin Suitcase',
+    price: '$700.00',
+    rating: '4.8',
+    description: 'Exceptionally lightweight and durable polycarbonate suitcase, engineered for travelers.',
+    category: 'travel',
+    tags: ['trendsetter-pick', 'luxury-travel', 'lightweight', 'durable-design', 'premium', 'career-launch-essential'],
+    image: 'https://images.unsplash.com/photo-1561580119-a4004e4cef59?w=600&h=600&fit=crop&crop=center', // New image
+    affiliateUrl: 'https://www.rimowa.com/us/en/luggage/colour/black/cabin/82353624.html',
+    brand: 'Rimowa',
+    insights: []
+  },
+  {
+    id: 20, // New product
+    title: 'Moleskine Classic Notebook Large, Ruled',
+    price: '$22.95',
+    rating: '4.7',
+    description: 'Iconic notebook for writing, journaling, and sketching. Durable cover and quality paper.',
+    category: 'accessories',
+    tags: ['optimizer-pick', 'student-pick', 'writing-essential', 'classic-design', 'conscious-pick', 'career-launch-essential', 'sanctuary-essential'],
+    image: 'https://images.unsplash.com/photo-1516414447565-b14be0adf13e?w=600&h=600&fit=crop&crop=center', // New image
+    affiliateUrl: 'https://www.moleskine.com/en-us/shop/notebooks/classic-notebooks/classic-notebook-black-hard-cover-large-ruled-8058647629578.html',
+    brand: 'Moleskine',
+    insights: []
+  },
+  {
+    id: 21, // New product
+    title: 'Bose QuietComfort Ultra Earbuds',
+    price: '$299.00',
+    rating: '4.6',
+    description: 'World-class noise cancellation and high-fidelity audio in a compact earbud.',
+    category: 'audio',
+    tags: ['optimizer-pick', 'trendsetter-pick', 'premium-audio', 'noise-canceling', 'travel-essential', 'career-launch-essential', 'wellness-retreat-essential'],
+    image: 'https://images.unsplash.com/photo-1600003014704-538a195a697c?w=600&h=600&fit=crop&crop=center', // New image
+    affiliateUrl: 'https://www.bose.com/en_us/products/headphones/earbuds/bose-quietcomfort-ultra-earbuds.html',
+    brand: 'Bose',
+    insights: []
+  },
+  {
+    id: 22, // New Product
+    title: 'Oura Ring Gen3 Horizon',
+    price: '$349.00',
+    rating: '4.5',
+    description: 'Smart ring that tracks sleep, activity, readiness, and temperature with a sleek design.',
+    category: 'wearables',
+    tags: ['trendsetter-pick', 'health-tech', 'wearable-tech', 'sleep-tracking', 'premium', 'wellness-retreat-essential'],
+    image: 'https://images.unsplash.com/photo-1690994628236-9a3f780edc00?w=600&h=600&fit=crop&crop=center', // Replace with actual Oura ring image if possible
+    affiliateUrl: 'https://ouraring.com/',
+    brand: 'Oura',
+    insights: []
+  },
+  {
+    id: 23, // New Product
+    title: 'Everlane The Organic Cotton Crew Tee',
+    price: '$30.00',
+    rating: '4.6',
+    description: 'A classic, comfortable crew neck tee made from certified organic cotton.',
+    category: 'clothing',
+    tags: ['conscious-pick', 'sustainable-fashion', 'wardrobe-staple', 'organic', 'minimalist', 'sustainable-living-essential', 'sanctuary-essential'],
+    image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&h=600&fit=crop&crop=center',
+    affiliateUrl: 'https://www.everlane.com/products/mens-organic-cotton-crew-uniform-white',
+    brand: 'Everlane',
+    insights: []
+  },
+  {
+    id: 24, // New Product
+    title: 'Fellow Stagg EKG Electric Kettle',
+    price: '$195.00',
+    rating: '4.8',
+    description: 'Beautifully designed electric pour-over kettle with variable temperature control.',
+    category: 'kitchen',
+    tags: ['trendsetter-pick', 'optimizer-pick', 'premium-kitchen', 'coffee-lover', 'design-focused', 'sanctuary-essential', 'perfect-hosting-essential'],
+    image: 'https://images.unsplash.com/photo-1620674156628-918f7994a9dd?w=600&h=600&fit=crop&crop=center',
+    affiliateUrl: 'https://fellowproducts.com/products/stagg-ekg-electric-pour-over-kettle',
+    brand: 'Fellow',
+    insights: []
+  },
+  {
+    id: 25, // New Product
+    title: 'Veja V-10 Sneakers',
+    price: '$175.00',
+    rating: '4.5',
+    description: 'Sustainably made sneakers with a classic look, using ecological and recycled materials.',
+    category: 'shoes',
+    tags: ['conscious-pick', 'sustainable-fashion', 'ethical-brand', 'stylish-sneaker', 'trendsetter-pick', 'sustainable-living-essential'],
+    image: 'https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=600&h=600&fit=crop&crop=center',
+    affiliateUrl: 'https://www.veja-store.com/en_us/v-10-leather-white-natural-VXM021267.html',
+    brand: 'Veja',
+    insights: []
+  },
+  {
+    id: 26, // New product
+    title: 'ThinkPad X1 Carbon Gen 11',
+    price: '$1,749.00',
+    rating: '4.8',
+    description: 'Ultra-light and durable business laptop with robust security and performance features.',
+    category: 'laptop',
+    tags: ['optimizer-pick', 'business-laptop', 'premium', 'portable', 'security-focused', 'career-launch-essential'],
+    image: 'https://images.unsplash.com/photo-1515343480029-43cdfe6b6aae?w=600&h=600&fit=crop&crop=center', // Generic laptop image
+    affiliateUrl: 'https://www.lenovo.com/us/en/p/laptops/thinkpad/thinkpadx1/thinkpad-x1-carbon-gen-11/len101t0049',
+    brand: 'Lenovo',
+    insights: []
+  },
+  {
+    id: 27, // New product
+    title: 'Roost V3 Laptop Stand',
+    price: '$89.95',
+    rating: '4.9',
+    description: 'Ultra-portable and adjustable laptop stand for improved ergonomics.',
+    category: 'accessories',
+    tags: ['optimizer-pick', 'conscious-pick', 'ergonomic', 'portable', 'travel-essential', 'career-launch-essential'],
+    image: 'https://images.unsplash.com/photo-1593642702821-c8da67585055?w=600&h=600&fit=crop&crop=center', // Generic workspace image
+    affiliateUrl: 'https://www.therooststand.com/',
+    brand: 'Roost',
+    insights: []
+  },
+  {
+    id: 28, // New product
+    title: 'Premium Leather Briefcase by Satchel & Page',
+    price: '$475.00',
+    rating: '4.7',
+    description: 'Handcrafted full-grain leather briefcase for the discerning professional.',
+    category: 'accessories',
+    tags: ['optimizer-pick', 'premium', 'leather-goods', 'professional-style', 'durable', 'career-launch-essential'],
+    image: 'https://images.unsplash.com/photo-1584917865430-de3351a91a9f?w=600&h=600&fit=crop&crop=center', // Generic briefcase image
+    affiliateUrl: 'https://www.satchel-page.com/products/founder-briefcase',
+    brand: 'Satchel & Page',
+    insights: []
+  },
+  {
+    id: 29, // New student product
+    title: 'TI-84 Plus CE Graphing Calculator',
+    price: '$129.99',
+    rating: '4.8',
+    description: 'Essential graphing calculator for math and science students.',
+    category: 'electronics',
+    tags: ['student-pick', 'study-essential', 'math-tool', 'stem'],
+    image: 'https://images.unsplash.com/photo-1595993900939-8088865091ce?w=600&h=600&fit=crop&crop=center',
+    affiliateUrl: 'https://education.ti.com/en/products/calculators/graphing-calculators/ti-84-plus-ce',
+    brand: 'Texas Instruments',
+    studentReview: 'A must-have for any STEM major. Makes complex calculations easy.',
+    whyStudentsLove: 'Approved for most exams and lasts for years.',
+    insights: []
+  },
+  {
+    id: 30, // New Product - Instant Ramen
+    title: 'Instant Ramen Variety Pack (Bulk)',
+    price: '$24.99',
+    rating: '4.3',
+    description: 'Dorm room essential - quick, tasty, and budget-friendly meals for late-night study sessions.',
+    category: 'food',
+    tags: ['student-pick', 'budget-friendly', 'dorm-essential', 'quick-meal', 'comfort-food'],
+    image: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=600&h=600&fit=crop&crop=center',
+    affiliateUrl: 'https://www.amazon.com/dp/B07FQRPQSB', // Nongshim Shin Ramyun variety pack
+    brand: 'Nongshim & Others',
+    studentReview: 'Lifesaver during finals week when I have no time to cook.',
+    whyStudentsLove: 'Cheap, filling, and surprisingly delicious.',
+    insights: []
+  },
+  {
+    id: 31, // New Product - Blue Light Glasses
+    title: 'Blue Light Blocking Glasses (2-Pack)',
+    price: '$19.99',
+    rating: '4.4',
+    description: 'Protect your eyes during long screen time sessions, reduce eye strain and improve sleep.',
+    category: 'accessories',
+    tags: ['student-pick', 'health-gadget', 'study-aid', 'budget-friendly', 'eye-care'],
+    image: 'https://images.unsplash.com/photo-1574258495973-f010dfbb5371?w=600&h=600&fit=crop&crop=center',
+    affiliateUrl: 'https://www.amazon.com/dp/B08XQJK9XY', // Blue light blocking glasses 2-pack
+    brand: 'Various Brands',
+    studentReview: 'No more headaches after hours of coding and online lectures!',
+    whyStudentsLove: 'Affordable way to protect your eyes and look smart.',
+    insights: []
+  },
+  {
+    id: 32, // New product for new arrival
+    title: 'UPPAbaby Vista V2 Stroller System',
+    price: '$969.99',
+    rating: '4.8',
+    description: 'Premium stroller system that grows with your child from infant to toddler.',
+    category: 'baby',
+    tags: ['new-arrival-essential', 'premium-parenting', 'stroller-system', 'infant-care'],
+    image: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600&h=600&fit=crop&crop=center',
+    affiliateUrl: 'https://uppababy.com/vista/',
+    brand: 'UPPAbaby',
+    insights: []
+  },
+  {
+    id: 33, // New product for new arrival
+    title: 'SNOO Smart Sleeper Bassinet',
+    price: '$1,695.00',
+    rating: '4.9',
+    description: 'Revolutionary smart bassinet that helps babies sleep better and longer.',
+    category: 'baby',
+    tags: ['new-arrival-essential', 'smart-parenting', 'sleep-solution', 'premium-baby'],
+    image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=600&h=600&fit=crop&crop=center',
+    affiliateUrl: 'https://www.happiestbaby.com/products/snoo-smart-bassinet',
+    brand: 'Happiest Baby',
+    insights: []
+  },
+  {
+    id: 34, // New product for golden years
+    title: 'Bose SoundLink Revolve+ II',
+    price: '$329.00',
+    rating: '4.7',
+    description: 'Portable Bluetooth speaker with 360-degree sound, perfect for any activity.',
+    category: 'audio',
+    tags: ['golden-years-essential', 'portable-audio', 'senior-friendly', 'easy-to-use'],
+    image: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=600&h=600&fit=crop&crop=center',
+    affiliateUrl: 'https://www.bose.com/en_us/products/speakers/portable_speakers/soundlink_revolve_plus_ii.html',
+    brand: 'Bose',
+    insights: []
+  },
+  {
+    id: 35, // New product for golden years
+    title: 'Kindle Oasis (10th Gen)',
+    price: '$269.99',
+    rating: '4.6',
+    description: 'Premium e-reader with adjustable warm light, waterproof design, and page-turn buttons.',
+    category: 'electronics',
+    tags: ['golden-years-essential', 'reading-comfort', 'large-screen', 'senior-friendly'],
+    image: 'https://images.unsplash.com/photo-1544947950-fa07a98ba8ec?w=600&h=600&fit=crop&crop=center',
+    affiliateUrl: 'https://www.amazon.com/kindle-oasis/dp/B07L5GH2YP',
+    brand: 'Amazon',
+    insights: []
+  },
+  {
+    id: 36, // New product for gamer setup
+    title: 'ASUS ROG Swift PG279QM Gaming Monitor',
+    price: '$699.00',
+    rating: '4.8',
+    description: '27" 1440p 240Hz IPS gaming monitor with G-SYNC and HDR for competitive gaming.',
+    category: 'electronics',
+    tags: ['gamer-setup-essential', 'high-refresh', 'competitive-gaming', 'premium-display'],
+    image: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=600&h=600&fit=crop&crop=center',
+    affiliateUrl: 'https://rog.asus.com/monitors/27-to-31-5-inches/rog-swift-pg279qm/',
+    brand: 'ASUS',
+    insights: []
+  },
+  {
+    id: 37, // New product for gamer setup
+    title: 'SteelSeries Arctis Pro Wireless',
+    price: '$329.99',
+    rating: '4.6',
+    description: 'Premium wireless gaming headset with lossless 2.4GHz audio and Bluetooth.',
+    category: 'audio',
+    tags: ['gamer-setup-essential', 'wireless-gaming', 'premium-audio', 'competitive-edge'],
+    image: 'https://images.unsplash.com/photo-1484704849700-f032a568e944?w=600&h=600&fit=crop&crop=center',
+    affiliateUrl: 'https://steelseries.com/gaming-headsets/arctis-pro-wireless',
+    brand: 'SteelSeries',
+    insights: []
+  },
+  {
+    id: 38, // New product for hosting
+    title: 'Vitamix A3500 Ascent Series Blender',
+    price: '$549.95',
+    rating: '4.9',
+    description: 'Professional-grade blender perfect for entertaining - smoothies, soups, and cocktails.',
+    category: 'kitchen',
+    tags: ['perfect-hosting-essential', 'premium-kitchen', 'entertaining-tool', 'versatile-appliance'],
+    image: 'https://images.unsplash.com/photo-1570197788417-0e82375c9371?w=600&h=600&fit=crop&crop=center',
+    affiliateUrl: 'https://www.vitamix.com/us/en_us/shop/ascent-a3500',
+    brand: 'Vitamix',
+    insights: []
+  },
+  {
+    id: 39, // New product for hosting
+    title: 'Le Creuset Signature Cast Iron Dutch Oven',
+    price: '$449.95',
+    rating: '4.8',
+    description: 'Iconic French cookware perfect for hosting - from bread to braised dishes.',
+    category: 'kitchen',
+    tags: ['perfect-hosting-essential', 'premium-cookware', 'entertaining-staple', 'heirloom-quality'],
+    image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&h=600&fit=crop&crop=center',
+    affiliateUrl: 'https://www.lecreuset.com/signature-round-dutch-oven',
+    brand: 'Le Creuset',
+    insights: []
+  },
+  {
+    id: 40,
+    title: 'Dyson Purifier Hot+Cool HP07',
+    price: '$749.99',
+    rating: '4.1',
+    description: 'Purifies and heats the whole room evenly. Cools you with powerful airflow. App compatible.',
+    category: 'home',
+    tags: ['premium', 'air-purifier', 'heater', 'smart-home', 'health-tech', 'trendsetter-pick', 'optimizer-pick', 'sanctuary-essential', 'wellness-retreat-essential'],
+    image: 'https://images.unsplash.com/photo-1607460342465-134e77a0f5f4?w=600&h=600&fit=crop&crop=center', // Replaced potentially restricted Dyson image URL
+    affiliateUrl: 'https://www.dyson.com/air-treatment/air-purifier-heaters/purifier-hot-cool-hp07/black-nickel',
+    brand: 'Dyson',
+    insights: [],
+    optimizerInsight: 'Automatically senses and captures pollutants for healthier indoor air.',
+    trendsetterTip: 'The intelligent air purifier that doubles as premium home decor.',
+    whyBuyThis: '🌪️ CLEAN AIR REVOLUTION → HEPA H13 captures 99.97% of particles • Heats and cools year-round • App control from anywhere • Your sanctuary deserves pure air'
+  },
 ];
 
 // Persona definitions
 const personas = [
   {
-    id: 'creative',
-    name: 'Creative Pro',
-    emoji: '🎨',
-    description: 'For designers, video editors & creators',
-    tagWeights: { premium: 2, pro: 2, creative: 3, power: 1.5 },
-    color: '#FF5757',
-    insights: ['Performance', 'Display Quality']
+    id: 'trendsetter',
+    name: 'The Trendsetter',
+    icon: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&h=100&fit=crop&crop=faces', // New stylish person
+    description: 'Always ahead of the curve, seeks stylish, innovative, and often premium products. Values aesthetics and being an early adopter.',
+    color: '#EF4444', // Red
   },
   {
-    id: 'student',
-    name: 'Student',
-    emoji: '🎓',
-    description: 'Budget-friendly options + portability',
-    tagWeights: { student: 2, budget: 1.5, portable: 1.5, entry: 1.2 },
-    color: '#4E7CFF',
-    insights: ['Battery Life', 'Value']
+    id: 'optimizer',
+    name: 'The Productivity Optimizer',
+    icon: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop&crop=faces', // New focused person
+    description: 'Focuses on efficiency, performance, and tools that enhance workflow. Values quality, reliability, and time-saving features.',
+    color: '#06B6D4', // Cyan
   },
   {
-    id: 'business',
-    name: 'Business Pro',
-    emoji: '💼',
-    description: 'Reliable performance, balance oriented',
-    tagWeights: { premium: 1.5, balanced: 1.8, pro: 1.3 },
-    color: '#32D74B',
-    insights: ['Reliability', 'Performance']
+    id: 'conscious',
+    name: 'The Conscious Consumer',
+    icon: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=faces', // New thoughtful person
+    description: 'Prioritizes sustainability, ethical sourcing, and minimalist design. Values durability, natural materials, and brands with a positive impact.',
+    color: '#10B981', // Emerald
   },
   {
-    id: 'traveler',
-    name: 'Digital Nomad',
-    emoji: '✈️',
-    description: 'Ultra-portable for on-the-go productivity',
-    tagWeights: { portable: 2, lightweight: 2, balanced: 1.5 },
-    color: '#BF5AF2',
-    insights: ['Portability', 'Battery Life']
-  }
+    id: 'student', // Kept 'student' id for consistency with student-pick tags
+    name: 'The Budget Savvy Student',
+    icon: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=100&h=100&fit=crop&crop=faces', // Existing student group image
+    description: 'Looks for the best value, practical items for study and campus life, and enjoys student discounts and deals.',
+    color: '#8B5CF6', // Purple
+  },
 ];
 
 // Life Moments definitions
 const lifeMoments = [
   {
-    id: 'new-parent',
-    name: 'New Parent',
-    emoji: '👶',
-    description: 'Essential products for baby & parents',
-    primaryCategory: 'baby',
-    tagWeights: { baby: 3, newborn: 2.5, ergonomic: 1.8, monitor: 2, safety: 2.5 },
-    color: '#FF9500',
-    insights: ['Safety', 'Ease of Use']
+    id: 'new-arrival',
+    name: 'Welcoming a New Arrival',
+    icon: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=100&h=100&fit=crop',
+    description: 'Essential items for new parents and creating a nurturing environment for your little one.',
+    color: '#F8BBD0', // Soft pink
   },
   {
-    id: 'graduation',
-    name: 'Recent Graduate',
-    emoji: '🎓',
-    description: 'Gifts & tools for the next chapter',
-    primaryCategory: null,
-    tagWeights: { gift: 2, premium: 1.5, tech: 2, portable: 1.5, productivity: 2 },
-    color: '#5856D6',
-    insights: ['Value', 'Features']
+    id: 'career-launch',
+    name: 'Embarking on a Career',
+    icon: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
+    description: 'Professional gear and essentials for starting a new job or advancing your career.',
+    color: '#1E88E5', // Professional blue
   },
   {
-    id: 'home-setup',
-    name: 'Home Office Setup',
-    emoji: '🏠',
-    description: 'Create an ideal WFH environment',
-    primaryCategory: null,
-    tagWeights: { ergonomic: 2, productivity: 2.5, comfort: 2, premium: 1.5 },
-    color: '#2CB9B0',
-    insights: ['Comfort', 'Productivity']
+    id: 'sanctuary',
+    name: 'Creating a Sanctuary',
+    icon: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=100&h=100&fit=crop',
+    description: 'Transform your space into a comfortable, stylish haven that reflects your personality.',
+    color: '#7E57C2', // Elegant purple
   },
   {
-    id: 'travel-prep',
-    name: 'Travel Preparation',
-    emoji: '🧳',
-    description: 'Must-haves for your next adventure',
-    primaryCategory: null,
-    tagWeights: { portable: 3, travel: 2.5, lightweight: 2, noise: 1.8, battery: 2 },
-    color: '#FF2D55',
-    insights: ['Portability', 'Durability']
-  }
+    id: 'golden-years',
+    name: 'Embracing Golden Years',
+    icon: 'https://images.unsplash.com/photo-1559137200-670cc1ec5ba9?w=100&h=100&fit=crop',
+    description: 'Products for comfort, new hobbies, and embracing life\'s next adventure with grace.',
+    color: '#FF7043', // Warm orange
+  },
+  {
+    id: 'gamer-setup',
+    name: 'The Ultimate Gamer Setup',
+    icon: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=100&h=100&fit=crop',
+    description: 'Build the ultimate gaming station with premium gear for peak performance and immersion.',
+    color: '#00E676', // Electric green
+  },
+  {
+    id: 'sustainable-living',
+    name: 'Sustainable Living Refresh',
+    icon: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=100&h=100&fit=crop',
+    description: 'Eco-friendly choices that reduce your footprint while enhancing your lifestyle.',
+    color: '#4CAF50', // Earth green
+  },
+  {
+    id: 'wellness-retreat',
+    name: 'Weekend Wellness Retreat',
+    icon: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=100&h=100&fit=crop',
+    description: 'Self-care essentials for relaxation, mindfulness, and personal rejuvenation.',
+    color: '#9C27B0', // Wellness purple
+  },
+  {
+    id: 'perfect-hosting',
+    name: 'Hosting the Perfect Gathering',
+    icon: 'https://images.unsplash.com/photo-1529543638269-d38c4d5a0d35?w=100&h=100&fit=crop',
+    description: 'Everything you need to create memorable experiences for friends and family.',
+    color: '#FF5722', // Festive orange-red
+  },
 ];
 
 // Add trending products for life moments
@@ -415,33 +895,61 @@ const moodBoards = [
     id: 'minimalist',
     name: 'Minimalist',
     emoji: '◻️',
-    color: '#1D1D1F',
-    description: 'Clean lines, neutral colors, clutter-free design',
-    coverImage: 'https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?q=80&w=500&auto=format'
+    color: '#000000',
+    cursiveDescription: 'where less becomes more, and silence speaks volumes',
+    philosophyText: 'The art of intentional living through curated simplicity',
+    coverImage: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?q=80&w=600&auto=format&fit=crop',
+    gradient: 'linear-gradient(135deg, rgba(0,0,0,0.7), rgba(40,40,40,0.8))'
   },
   {
     id: 'cottagecore',
     name: 'Cottagecore',
     emoji: '🌿',
-    color: '#8A9A5B',
-    description: 'Cozy, rustic aesthetic inspired by romanticized rural life',
-    coverImage: 'https://images.unsplash.com/photo-1550254478-ead40cc54513?q=80&w=500&auto=format'
+    color: '#6B8E23',
+    cursiveDescription: 'embracing the gentle rhythm of nature\'s timeless embrace',
+    philosophyText: 'Romantic nostalgia meets sustainable living in perfect harmony',
+    coverImage: 'https://images.unsplash.com/photo-1516192518150-0d8fee5425e3?q=80&w=600&auto=format&fit=crop',
+    gradient: 'linear-gradient(135deg, rgba(107,142,35,0.7), rgba(85,107,47,0.8))'
   },
   {
     id: 'cyberpunk',
     name: 'Cyberpunk',
     emoji: '⚡',
-    color: '#FF00FF',
-    description: 'Futuristic, neon-lit tech aesthetic with dystopian flair',
-    coverImage: 'https://images.unsplash.com/photo-1563089145-599997674d42?q=80&w=500&auto=format'
+    color: '#FF0080',
+    cursiveDescription: 'future noir aesthetics dancing with neon dreams',
+    philosophyText: 'High-tech rebellion meets dark urban sophistication',
+    coverImage: 'https://images.unsplash.com/photo-1518709414923-fcf25c3432c1?q=80&w=600&auto=format&fit=crop',
+    gradient: 'linear-gradient(135deg, rgba(255,0,128,0.8), rgba(128,0,255,0.7))'
   },
   {
     id: 'clean-girl',
     name: 'Clean Girl',
     emoji: '✨',
-    color: '#E8C4C4',
-    description: 'Effortless, minimal, polished aesthetic with neutral tones',
-    coverImage: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?q=80&w=500&auto=format'
+    color: '#F5F5DC',
+    cursiveDescription: 'effortless beauty in its most authentic, radiant form',
+    philosophyText: 'Understated elegance that celebrates natural confidence',
+    coverImage: 'https://images.unsplash.com/photo-1594736797933-d0e501ba2fe6?q=80&w=600&auto=format&fit=crop',
+    gradient: 'linear-gradient(135deg, rgba(245,245,220,0.9), rgba(250,240,230,0.8))'
+  },
+  {
+    id: 'dark-academia',
+    name: 'Dark Academia',
+    emoji: '📚',
+    color: '#8B4513',
+    cursiveDescription: 'intellectual romance wrapped in ivy-covered mystery',
+    philosophyText: 'Scholarly elegance meets gothic sophistication',
+    coverImage: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?q=80&w=600&auto=format&fit=crop',
+    gradient: 'linear-gradient(135deg, rgba(139,69,19,0.8), rgba(85,60,42,0.9))'
+  },
+  {
+    id: 'soft-luxury',
+    name: 'Soft Luxury',
+    emoji: '🤍',
+    color: '#F8F6F0',
+    cursiveDescription: 'whispered opulence in textures that embrace the soul',
+    philosophyText: 'Refined indulgence through tactile elegance and muted grandeur',
+    coverImage: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?q=80&w=600&auto=format&fit=crop',
+    gradient: 'linear-gradient(135deg, rgba(248,246,240,0.95), rgba(240,235,225,0.9))'
   }
 ];
 
@@ -499,50 +1007,97 @@ const socialBundles = [
   }
 ];
 
+// Add missing openExternalLink function
+const openExternalLink = (url) => {
+  if (typeof window !== 'undefined') {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+};
+
 // Add trending data for TrendRadar
 const trendRadarData = [
   {
-    id: 'tr-1',
+    id: 1,
     title: 'Sony WH-1000XM5',
-    category: 'Electronics',
-    percentageChange: 28,
-    status: 'rising',
-    image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=200&auto=format'
+    category: 'ELECTRONICS',
+    image: 'https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=800&h=600&fit=crop&crop=center', // Actual Sony headphones image
+    trendChange: '↗ 28%',
+    isViral: true,
+    brandUrl: 'https://electronics.sony.com/audio/headphones/headband/p/wh1000xm5-l?mg=shopping&gad_source=1&gad_campaignid=22224130485&gbraid=0AAAAABiDjZjIa5DKjAugccBx3T6KuLFCb&gclid=CjwKCAjwi-DBBhA5EiwAXOHsGWew3GWTaHne6281N8_BDpE5qZdrbJcIgxWOT5Uz-yy9oisBKpJKBRoCdkgQAvD_BwE&gclsrc=aw.ds'
   },
   {
-    id: 'tr-2',
+    id: 2,
     title: 'Dyson Air Purifier',
-    category: 'Home',
-    percentageChange: 16,
-    status: 'rising',
-    image: 'https://images.unsplash.com/photo-1585155770447-2f66e2a397b5?q=80&w=200&auto=format'
+    category: 'HOME',
+    image: 'https://dyson-h.assetsadobe2.com/is/image/content/dam/dyson/products/air-treatment/purifiers/hp07/dyson-purifier-hot-cool-hp07-black-nickel-hero-01.png?wid=600&hei=600&fmt=png-alpha', // Official Dyson product image
+    trendChange: '↗ 16%',
+    isViral: false,
+    brandUrl: 'https://www.dyson.com/air-treatment/air-purifier-heaters/purifier-hot-cool-hp07/black-nickel'
   },
   {
-    id: 'tr-3',
+    id: 3,
     title: 'Away Luggage',
-    category: 'Travel',
-    percentageChange: 45,
-    status: 'viral',
-    image: 'https://images.unsplash.com/photo-1565026057447-bc90a3dceb87?q=80&w=200&auto=format'
+    category: 'TRAVEL',
+    image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800&h=600&fit=crop&crop=center',
+    trendChange: '↗ 45%',
+    isViral: true
+    // No brandUrl - will search for product instead of direct link
   },
   {
-    id: 'tr-4',
+    id: 4,
     title: 'Kindle Paperwhite',
-    category: 'Reading',
-    percentageChange: 12,
-    status: 'rising',
-    image: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?q=80&w=200&auto=format'
+    category: 'READING',
+    image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&h=600&fit=crop&crop=center',
+    trendChange: '↗ 12%',
+    isViral: false,
+    brandUrl: 'https://www.amazon.com/kindle-paperwhite/dp/B08KTZ8249'
   }
 ];
 
 // Product categories for visual entry points
 const productCategories = [
-  { id: 'tech', name: 'Tech', emoji: '📱', color: '#007AFF' },
-  { id: 'audio', name: 'Audio', emoji: '🎧', color: '#FF2D55' },
-  { id: 'home', name: 'Home', emoji: '🏠', color: '#5856D6' },
-  { id: 'travel', name: 'Travel', emoji: '✈️', color: '#FF9500' },
-  { id: 'fitness', name: 'Fitness', emoji: '💪', color: '#32D74B' },
-  { id: 'beauty', name: 'Beauty', emoji: '✨', color: '#AF52DE' }
+  {
+    id: 'tech',
+    name: 'Technology',
+    image: 'https://images.unsplash.com/photo-1518717758536-85ae29035b6d?w=600&h=600&fit=crop',
+    color: '#6366F1',
+    description: 'innovation meets intentional design'
+  },
+  {
+    id: 'audio',
+    name: 'Audio',
+    image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&h=600&fit=crop',
+    color: '#8B5CF6',
+    description: 'sound engineered for the discerning ear'
+  },
+  {
+    id: 'home',
+    name: 'Home & Living',
+    image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=600&h=600&fit=crop',
+    color: '#06B6D4',
+    description: 'spaces that nurture the soul'
+  },
+  {
+    id: 'travel',
+    name: 'Travel',
+    image: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600&h=600&fit=crop',
+    color: '#10B981',
+    description: 'wanderlust essentials for the mindful explorer'
+  },
+  {
+    id: 'fitness',
+    name: 'Fitness',
+    image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&h=600&fit=crop',
+    color: '#F59E0B',
+    description: 'wellness tools for the devoted practitioner'
+  },
+  {
+    id: 'beauty',
+    name: 'Beauty',
+    image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=600&h=600&fit=crop',
+    color: '#EF4444',
+    description: 'ritual essentials for authentic self-care'
+  },
 ];
 
 // InsightBar component for visualizing product metrics
@@ -1014,313 +1569,134 @@ const VirtualTryOn = ({ product, visible, onClose }) => {
 // Update the ProductCard component to use WebXRARViewer
 const ProductCard = ({ product, onPress, isTrending = false }) => {
   const [isFlipped, setIsFlipped] = useState(false);
-  const [showARView, setShowARView] = useState(false);
+  const [showARViewer, setShowARViewer] = useState(false);
   const [showProductPreview, setShowProductPreview] = useState(false);
   const [showVirtualTryOn, setShowVirtualTryOn] = useState(false);
-  const { title, price, rating, description, whyBuy, insights } = product;
-  
-  // Check if product is apparel and can be tried on
-  const isApparel = product.category === 'clothing' || 
-                   product.category === 'shoes' || 
-                   product.category === 'accessories';
-  
-  // Calculate dynamic theme color based on product
-  const themeColor = insights && insights.length > 0 
-    ? insights[0].color 
-    : COLORS.accent1;
-  
-  // Configure pan responder for swipe gestures
-  const panResponder = PanResponder.create({
-    onStartShouldSetPanResponder: () => true,
-    onMoveShouldSetPanResponder: () => true,
-    onPanResponderRelease: (evt, gestureState) => {
-      // Swipe left to flip
-      if (gestureState.dx < -50) {
-        handleFlip();
-        try { Vibration.vibrate(10); } catch (e) {}
-      }
-      // Swipe up to show AR view
-      else if (gestureState.dy < -50) {
-        if (isApparel) {
-          handleVirtualTryOn();
-        } else {
-          handleARView();
-        }
-        try { Vibration.vibrate(15); } catch (e) {}
-      }
-    },
-  });
-  
+
   const handleFlip = () => {
     setIsFlipped(!isFlipped);
-    if (!isFlipped) {
-      onPress && onPress(product);
-    }
   };
-  
+
   const handleARView = () => {
-    setShowARView(true);
-    try { Vibration.vibrate(10); } catch (e) {}
+    setShowARViewer(true);
   };
-  
+
   const handleProductPreview = () => {
     setShowProductPreview(true);
-    try { Vibration.vibrate(10); } catch (e) {}
   };
-  
+
   const handleVirtualTryOn = () => {
     setShowVirtualTryOn(true);
-    try { Vibration.vibrate(10); } catch (e) {}
   };
-  
+
+  const handleShopOnBrand = () => {
+    if (product.affiliateUrl) {
+      openExternalLink(product.affiliateUrl);
+    }
+  };
+
+  const handleShopWithAgent = () => {
+    // Placeholder for "Shop with Curator Agent" functionality
+    alert('The Curator Agent will assist you with this purchase soon!');
+  };
+
   return (
-    <TouchableOpacity
-      style={[
-        styles.productCard,
-        isTrending ? styles.trendingProductCard : null,
-        { borderColor: `${themeColor}30` } 
-      ]}
-      onPress={handleFlip}
-      activeOpacity={0.9}
-      {...panResponder.panHandlers}
-    >
+    <View style={[styles.productCard, isTrending && styles.trendingProductCard]}>
       {!isFlipped ? (
-        // Front of card
         <View style={styles.cardContent}>
           <View style={styles.cardImageContainer}>
-            <View style={[styles.cardImagePlaceholder, {backgroundColor: `${themeColor}10`}]}>
-              <Text style={styles.cardImageEmoji}>
-                {product.category === 'laptop' ? '💻' : 
-                 product.category === 'baby' ? '👶' : 
-                 product.category === 'wearables' ? '⌚' :
-                 product.category === 'audio' ? '🎧' :
-                 product.category === 'clothing' ? '👕' :
-                 product.category === 'shoes' ? '👟' :
-                 product.category === 'accessories' ? '👜' : '📱'}
-              </Text>
-            </View>
-            
+            <Image 
+              source={{ uri: product.image }}
+              style={styles.productImage}
+              resizeMode="cover"
+            />
             <View style={styles.ratingPill}>
-              <Text style={styles.ratingText}>★ {rating}</Text>
+              <Text style={styles.ratingText}>★ {product.rating}</Text>
             </View>
-            
-            <View style={[styles.priceTag, {backgroundColor: themeColor}]}>
-              <Text style={styles.priceTagText}>${price.toLocaleString()}</Text>
-            </View>
-            
-            {/* Show either AR or Try-On button based on product type */}
-            {isApparel ? (
-              <TouchableOpacity 
-                style={styles.tryOnButton}
-                onPress={handleVirtualTryOn}
-              >
-                <Text style={styles.tryOnButtonText}>Try On</Text>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity 
-                style={styles.arButton}
-                onPress={handleARView}
-              >
-                <Text style={styles.arButtonText}>AR View</Text>
-              </TouchableOpacity>
-            )}
-            
-            {/* Preview button */}
-            <TouchableOpacity 
-              style={[
-                styles.previewButton,
-                isApparel && { right: 70 } // Adjust position if Try On button is present
-              ]}
-              onPress={handleProductPreview}
-            >
+            <TouchableOpacity style={styles.previewButton} onPress={handleProductPreview}>
               <Text style={styles.previewButtonText}>Preview</Text>
             </TouchableOpacity>
           </View>
-          
-          {/* Rest of the front card content remains the same */}
-          <View style={styles.uniqloStyleHeader}>
-            <Text style={styles.uniqloStyleCategory}>{product.category.toUpperCase()}</Text>
-            <Text style={styles.productTitle}>{title}</Text>
-          </View>
-          
+
           <View style={styles.cardBody}>
-            <Text style={styles.productDescription} numberOfLines={2}>
-              {description}
-            </Text>
-            
-            <View style={styles.insightPreview}>
-              {insights.slice(0, 2).map((insight, index) => (
-                <View key={index} style={styles.insightPreviewItem}>
-                  <View 
-                    style={[
-                      styles.insightDot, 
-                      { backgroundColor: insight.color }
-                    ]} 
-                  />
-                  <Text style={styles.insightPreviewText}>
-                    {insight.label}: {insight.value}
-                  </Text>
-                </View>
-              ))}
-            </View>
+            <Text style={styles.productTitle}>{product.title}</Text>
+            <Text style={styles.price}>{product.price}</Text>
+            <Text style={styles.productDescription}>{product.description}</Text>
+            <Text style={styles.brandText}>by {product.brand}</Text>
           </View>
-          
+
+          {/* Updated Card Actions with new buttons */}
+          <View style={styles.productCardButtonContainer}>
+            <TouchableOpacity
+              style={[styles.minimalistButtonShared, styles.minimalistButtonPrimary]}
+              onPress={handleShopOnBrand}
+            >
+              <Text style={[styles.buttonTextShared, styles.buttonTextPrimary]}>Shop on Brand Website</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.minimalistButtonShared, styles.minimalistButtonSecondary]}
+              onPress={handleShopWithAgent}
+            >
+              <Text style={[styles.buttonTextShared, styles.buttonTextSecondary]}>Shop with Curator Agent</Text>
+            </TouchableOpacity>
+          </View>
           <View style={styles.cardActions}>
             <View style={styles.actionButtons}>
-              <TouchableOpacity 
-                style={styles.actionButton}
-                onPress={() => {
-                  try { Vibration.vibrate(5); } catch (e) {}
-                }}
-              >
-                <Text style={styles.actionButtonText}>♥</Text>
+              <TouchableOpacity style={styles.actionButton} onPress={handleFlip}>
+                <Text style={styles.actionButtonText}>ℹ️</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
-                style={styles.actionButton}
-                onPress={() => {
-                  try { Vibration.vibrate(5); } catch (e) {}
-                }}
-              >
-                <Text style={styles.actionButtonText}>💬</Text>
+              <TouchableOpacity style={styles.actionButton} onPress={handleARView}>
+                <Text style={styles.actionButtonText}>👁️</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
-                style={styles.actionButton}
-                onPress={() => {
-                  try { Vibration.vibrate(5); } catch (e) {}
-                }}
-              >
-                <Text style={styles.actionButtonText}>✈</Text>
+              <TouchableOpacity style={styles.actionButton} onPress={handleVirtualTryOn}>
+                <Text style={styles.actionButtonText}>👤</Text>
               </TouchableOpacity>
             </View>
-            
-            <View style={styles.gestureHint}>
-              <Text style={styles.gestureHintText}>← Swipe for details</Text>
-            </View>
-            
-            <TouchableOpacity 
-              style={styles.saveButton}
-              onPress={() => {
-                try { Vibration.vibrate(5); } catch (e) {}
-              }}
-            >
-              <Text style={styles.saveButtonText}>🔖</Text>
-            </TouchableOpacity>
-          </View>
-          
-          <View style={styles.likesRow}>
-            <Text style={styles.likesText}>
-              Liked by <Text style={styles.boldText}>128 people</Text>
-            </Text>
-          </View>
-          
-          <TouchableOpacity onPress={handleFlip}>
-            <Text style={styles.viewCommentsText}>View product details</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        // Back of card content
-        <View style={styles.cardContentBack}>
-          {/* Back card content remains the same */}
-          <View style={[styles.backHeader, {backgroundColor: `${themeColor}15`}]}>
-            <View style={styles.backHeaderContent}>
-              <TouchableOpacity onPress={handleFlip}>
-                <Text style={styles.backButtonText}>←</Text>
-              </TouchableOpacity>
-              <Text style={styles.backHeaderTitle}>Product Details</Text>
-            </View>
-          </View>
-          
-          <ScrollView style={styles.backScrollContent}>
-            <Text style={styles.backProductTitle}>{title}</Text>
-            <Text style={[styles.backProductPrice, {color: themeColor}]}>
-              ${price.toLocaleString()}
-            </Text>
-            
-            <View style={styles.specsContainer}>
-              <Text style={styles.specsTitle}>Specifications</Text>
-              <View style={styles.specsList}>
-                <View style={styles.specItem}>
-                  <Text style={styles.specLabel}>Category</Text>
-                  <Text style={styles.specValue}>{product.category}</Text>
-                </View>
-                <View style={styles.specItem}>
-                  <Text style={styles.specLabel}>Rating</Text>
-                  <Text style={styles.specValue}>★ {rating}</Text>
-                </View>
-                <View style={styles.specItem}>
-                  <Text style={styles.specLabel}>Tags</Text>
-                  <Text style={styles.specValue}>{product.tags.join(', ')}</Text>
-                </View>
-              </View>
-            </View>
-            
-            <View style={styles.highlightsContainer}>
-              <Text style={styles.highlightsTitle}>Why People Love It</Text>
-              <Text style={styles.highlightsText}>{whyBuy}</Text>
-            </View>
-            
-            <View style={styles.insightsContainer}>
-              <Text style={styles.insightsTitle}>Key Insights</Text>
-              {insights.map((insight, index) => (
-                <View key={index} style={styles.insightBar}>
-                  <View style={styles.insightBarHeader}>
-                    <Text style={styles.insightBarLabel}>{insight.label}</Text>
-                    <Text style={styles.insightBarValue}>{insight.value}/100</Text>
-                  </View>
-                  <View style={styles.insightBarTrack}>
-                    <View 
-                      style={[
-                        styles.insightBarFill, 
-                        { width: `${insight.value}%`, backgroundColor: insight.color }
-                      ]} 
-                    />
-                  </View>
-                </View>
-              ))}
-            </View>
-            
-            <View style={styles.gestureHintContainer}>
-              <Text style={styles.gestureHintText}>
-                Swipe up for {isApparel ? 'virtual try-on' : 'AR view'}
-              </Text>
-            </View>
-          </ScrollView>
-          
-          <View style={[styles.backFooter, {borderTopColor: `${themeColor}30`}]}>
-            <TouchableOpacity
-              style={[styles.buyNowButton, {backgroundColor: themeColor}]}
-              onPress={() => {
-                try { Vibration.vibrate(20); } catch (e) {}
-                openExternalLink(product.link);
-              }}
-            >
+            {/* Old Buy Now button removed/commented out
+            <TouchableOpacity style={styles.buyNowButton} onPress={handleShopOnBrand}>
               <Text style={styles.buyNowButtonText}>Buy Now</Text>
             </TouchableOpacity>
+            */}
           </View>
         </View>
+      ) : (
+        <View style={styles.cardContentBack}>
+          <TouchableOpacity style={styles.backButton} onPress={handleFlip}>
+            <Text style={styles.backButtonText}>←</Text>
+          </TouchableOpacity>
+          
+          <Text style={styles.backProductTitle}>{product.title}</Text>
+          <Text style={styles.backProductPrice}>{product.price}</Text>
+          
+          <View style={styles.highlightsContainer}>
+            <Text style={styles.highlightsTitle}>Why Buy This?</Text>
+            <Text style={styles.highlightsText}>{product.description}</Text>
+          </View>
+          
+          <TouchableOpacity style={styles.buyNowButton} onPress={handleShopOnBrand}>
+            <Text style={styles.buyNowButtonText}>Buy on {product.brand}</Text>
+          </TouchableOpacity>
+        </View>
       )}
-      
-      {/* AR Viewer Overlay */}
+
       <WebXRARViewer 
         product={product}
-        visible={showARView}
-        onClose={() => setShowARView(false)}
+        visible={showARViewer}
+        onClose={() => setShowARViewer(false)}
       />
-      
-      {/* Product Preview Overlay */}
+
       <ProductPreviewOverlay 
         product={product}
         visible={showProductPreview}
         onClose={() => setShowProductPreview(false)}
       />
-      
-      {/* Virtual Try-On Overlay */}
+
       <VirtualTryOn 
         product={product}
         visible={showVirtualTryOn}
         onClose={() => setShowVirtualTryOn(false)}
       />
-    </TouchableOpacity>
+    </View>
   );
 };
 
@@ -1601,28 +1977,39 @@ export default function App() {
   const [selectedLifeMoment, setSelectedLifeMoment] = useState(null);
   
   // State for app functionality
-  const [darkMode, setDarkMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isSearching, setIsSearching] = useState(false);
-  const [isLoadingAnimation, setIsLoadingAnimation] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(null);
+  const [products, setProducts] = useState([]);
   const [showPersonaPanel, setShowPersonaPanel] = useState(false);
   const [showLifeMomentPanel, setShowLifeMomentPanel] = useState(false);
-  const [isDiscoveryMode, setIsDiscoveryMode] = useState(true);
-  const [products, setProducts] = useState([]);
   const [showVisualSearch, setShowVisualSearch] = useState(false);
+  const [isLoadingAnimation, setIsLoadingAnimation] = useState(false);
+  const [isDiscoveryMode, setIsDiscoveryMode] = useState(true);
+  const [errorMessage, setErrorMessage] = useState(null);
+  const [showTrendingSocial, setShowTrendingSocial] = useState(false);
   
-  // Animation values for header
-  const scrollY = useState(new Animated.Value(0))[0];
-  const headerHeight = 300;
+  // State for AI Curation
+  const [showAiCurateView, setShowAiCurateView] = useState(null); // null, 'form', 'results'
+  const [aiSelectedBrands, setAiSelectedBrands] = useState([]);
+  const [aiPersonaStyle, setAiPersonaStyle] = useState('');
+  const [aiPersonaBudget, setAiPersonaBudget] = useState(''); // e.g., '$', '$$', '$$$'
+  const [aiLookingFor, setAiLookingFor] = useState('');
+  const [aiGeneratedProducts, setAiGeneratedProducts] = useState([]);
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [aiErrorMessage, setAiErrorMessage] = useState(null); // New state for AI errors
+  
+  // Extract unique brand names for AI Curation brand selection
+  const availableBrands = [...new Set(mockProducts.map(p => p.brand))].sort();
+  
+  // Animation values
+  const scrollY = useRef(new Animated.Value(0)).current;
   const headerOpacity = scrollY.interpolate({
-    inputRange: [0, headerHeight],
+    inputRange: [0, 100],
     outputRange: [1, 0.9],
     extrapolate: 'clamp',
   });
   const headerTranslate = scrollY.interpolate({
-    inputRange: [0, headerHeight],
-    outputRange: [0, -headerHeight / 3],
+    inputRange: [0, 100],
+    outputRange: [0, -10],
     extrapolate: 'clamp',
   });
   
@@ -1640,42 +2027,121 @@ export default function App() {
     }
   }, [selectedPersona, selectedLifeMoment]);
   
-  // Toggle dark mode
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-  };
-  
-  // Handle search
-  const handleSearch = () => {
-    if (!searchQuery.trim()) return;
-    
+  // Add browser history management
+  useEffect(() => {
+    const handlePopState = (event) => {
+      // Handle browser back button
+      setSearchQuery('');
+      setSelectedPersona(null);
+      setSelectedLifeMoment(null);
+      setShowTrendingSocial(false);
+      setShowAiCurateView(null); // Reset AI curate view
+      setAiSelectedBrands([]);
+      setAiPersonaStyle('');
+      setAiPersonaBudget('');
+      setAiLookingFor('');
+      // setAiGeneratedProducts([]); // Keep AI generated products to avoid re-fetching if user navigates back and forth quickly to results
+      setErrorMessage(null);
+
+      const pageState = event.state ? event.state.page : 'discovery';
+
+      switch (pageState) {
+        case 'discovery':
+          setIsDiscoveryMode(true);
+          setProducts(sortProducts([...mockProducts]));
+          break;
+        case 'trending':
+          setShowTrendingSocial(true);
+          setIsDiscoveryMode(false);
+          break;
+        case 'aiCurateForm':
+          setShowAiCurateView('form');
+          setIsDiscoveryMode(false);
+          break;
+        case 'aiCurateResults':
+          setShowAiCurateView('results');
+          setIsDiscoveryMode(false);
+          // Products should already be in aiGeneratedProducts state
+          break;
+        case 'products':
+          setIsDiscoveryMode(false);
+          // Attempt to restore previous product view context
+          if (event.state.persona) {
+            const foundPersona = personas.find(p => p.id === event.state.persona);
+            if (foundPersona) handlePersonaSelect(foundPersona, false); // false to prevent history push
+          } else if (event.state.lifeMoment) {
+            const foundMoment = lifeMoments.find(m => m.id === event.state.lifeMoment);
+            if (foundMoment) handleLifeMomentSelect(foundMoment, false);
+          } else if (event.state.searchQuery) {
+            setSearchQuery(event.state.searchQuery);
+            handleSearch(false);
+          } else {
+            // Fallback if specific product context is missing, show all products
+            setProducts(sortProducts([...mockProducts]));
+          }
+          break;
+        default:
+          setIsDiscoveryMode(true);
+          setProducts(sortProducts([...mockProducts]));
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('popstate', handlePopState);
+      // Push initial state only if not already on a specific view from a direct URL or refresh
+      if (isDiscoveryMode && !window.location.search) {
+         window.history.replaceState({ page: 'discovery' }, '', window.location.pathname);
+      } else if (showTrendingSocial && !window.location.search.includes('view=trending')) {
+        window.history.replaceState({ page: 'trending' }, '', '?view=trending');
+      } else if (showAiCurateView === 'form' && !window.location.search.includes('view=ai-curate')) {
+        window.history.replaceState({ page: 'aiCurateForm' }, '', '?view=ai-curate');
+      } else if (showAiCurateView === 'results' && !window.location.search.includes('view=ai-results')) {
+        window.history.replaceState({ page: 'aiCurateResults' }, '', '?view=ai-results');
+      } else if (!isDiscoveryMode && !showTrendingSocial && !showAiCurateView && !window.location.search) {
+         // Generic product view, could be from persona, lifemoment or search
+         // The individual handlers will push more specific states
+         window.history.replaceState({ page: 'products' }, '', window.location.pathname); 
+      }
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('popstate', handlePopState);
+      }
+    };
+  }, [isDiscoveryMode, showTrendingSocial, showAiCurateView]); // Add showAiCurateView to dependency array
+
+  // Update browser history when navigation occurs (Simplified)
+  // Specific pushState calls are now within the action handlers themselves (handleSearch, handlePersonaSelect, Start AI Curation button, etc.)
+  // This useEffect is now mainly for initial state or direct URL handling via popstate.
+
+  const handleSearch = (searchTerm, pushHistory = true) => {
+    if (!searchTerm.trim()) return;
+    setSearchQuery(searchTerm); // Set search query state
     setIsLoadingAnimation(true);
-    setIsSearching(true);
-    setErrorMessage(null);
-    
-    // Simulate search delay
+    setIsDiscoveryMode(false);
+    setShowTrendingSocial(false);
+    setShowAiCurateView(null);
+
+    if (pushHistory && typeof window !== 'undefined' && window.history && window.history.pushState) {
+      window.history.pushState({ page: 'products', searchQuery: searchTerm }, '', `?search=${encodeURIComponent(searchTerm)}`);
+    }
+
     setTimeout(() => {
-      // Search through products (case insensitive)
-      const query = searchQuery.toLowerCase();
-      const searchResults = mockProducts.filter(product => {
-        // Check if the search query is in title, description, or tags
-        return (
-          product.title.toLowerCase().includes(query) ||
-          product.description.toLowerCase().includes(query) ||
-          product.tags.some(tag => tag.toLowerCase().includes(query))
-        );
-      });
+      const searchResults = mockProducts.filter(product => 
+        product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+      
+      setProducts(sortProducts(searchResults.length > 0 ? searchResults : mockProducts));
+      setIsLoadingAnimation(false);
       
       if (searchResults.length === 0) {
-        setErrorMessage('No products found matching your search. Try another query.');
+        setErrorMessage('No products found. Try a different search term.');
       }
-      
-      // Apply persona preferences to search results
-      setProducts(sortProducts(searchResults));
-      setIsDiscoveryMode(false);
-      setIsLoadingAnimation(false);
-      setIsSearching(false);
-    }, 1500);
+    }, 1000);
   };
   
   // Calculate product relevance score based on selected persona and life moment
@@ -1798,15 +2264,143 @@ export default function App() {
   // Handle persona selection
   const handlePersonaSelect = (persona) => {
     setSelectedPersona(persona);
-    setShowPersonaPanel(false);
-    
-    // Apply persona-based personalization
+    setShowPersonaPanel(false); // Assuming this closes a panel
     setIsLoadingAnimation(true);
-    
+    setErrorMessage(null);
+
     setTimeout(() => {
-      setProducts(sortProducts([...mockProducts]));
+      let filteredProducts = [];
+      const personaId = persona.id;
+
+      console.log(`[DEBUG] Filtering for persona: ${personaId}`);
+
+      // Initial filter based on specific "-pick" tags for all personas
+      if (personaId === 'student') {
+        console.log('[DEBUG Student] Attempting primary filter for student-pick...');
+        filteredProducts = mockProducts.filter(p => p.tags.includes('student-pick'));
+        console.log(`[DEBUG Student] After primary \'student-pick\' filter, found ${filteredProducts.length} products. Titles:`, filteredProducts.map(p => p.id + ": " + p.title));
+      } else if (personaId === 'trendsetter') {
+        filteredProducts = mockProducts.filter(p => p.tags.includes('trendsetter-pick'));
+        console.log(`[DEBUG Trendsetter] After primary \'trendsetter-pick\' filter, found ${filteredProducts.length} products.`);
+      } else if (personaId === 'optimizer') {
+        filteredProducts = mockProducts.filter(p => p.tags.includes('optimizer-pick'));
+        console.log(`[DEBUG Optimizer] After primary \'optimizer-pick\' filter, found ${filteredProducts.length} products.`);
+      } else if (personaId === 'conscious') {
+        filteredProducts = mockProducts.filter(p => p.tags.includes('conscious-pick'));
+        console.log(`[DEBUG Conscious] After primary \'conscious-pick\' filter, found ${filteredProducts.length} products.`);
+      } else {
+        // Fallback for any persona that might not have a specific "-pick" logic above (should not happen with current personas)
+        console.log(`[DEBUG ${personaId}] No specific -pick logic. Applying general tag/category filter for ${personaId}.`);
+        filteredProducts = mockProducts.filter(p => 
+          (p.tags.includes(personaId)) || 
+          (p.category.toLowerCase().includes(personaId))
+        );
+      }
+      
+      console.log(`[DEBUG ${personaId}] After initial specific pick/filter, found ${filteredProducts.length} products.`);
+      if (filteredProducts.length > 0) {
+         console.log(`[DEBUG ${personaId}] Titles after initial pick: `, filteredProducts.map(p => p.title));
+      }
+
+      // Fallback logic if initial filter yields less than 5 products
+      if (filteredProducts.length < 5 && mockProducts.length > 0) {
+        console.log(`[DEBUG ${personaId}] Initial filter yielded < 5 products (${filteredProducts.length}). Attempting broader filter.`);
+        
+        let broaderFilter = [];
+        const originalPickCount = filteredProducts.length; // Store how many items the specific pick found
+        const specificPicksHadItems = originalPickCount > 0;
+
+        if (personaId === 'student') {
+            console.log('[DEBUG Student] Applying broader student filter...');
+            const studentBroadTags = ['budget-friendly', 'study-essential', 'campus-essential', 'portable', 'value-deal'];
+            broaderFilter = mockProducts.filter(p => {
+                const hasBroadTag = studentBroadTags.some(tag => p.tags.includes(tag));
+                const isRelevantCategory = ['laptop', 'accessories', 'electronics', 'subscription', 'food'].includes(p.category);
+                return hasBroadTag || isRelevantCategory;
+            });
+            console.log(`[DEBUG Student] After broader student filter, found ${broaderFilter.length} products. Titles:`, broaderFilter.map(p=>p.id + ": " + p.title));
+        } else {
+            // Broader filter logic for other personas (trendsetter, optimizer, conscious)
+            console.log(`[DEBUG ${personaId}] Applying broader filter for non-student persona ${personaId}...`);
+            const personaTags = { 
+                trendsetter: ['premium', 'innovative', 'stylish-travel', 'beauty-tech', 'camera-excellence', 'luxury-travel', 'design-focused', 'wearable-tech', 'fashionable-function'],
+                optimizer: ['pro', 'performance', 'ergonomic', 'office-essential', 'productivity-tool', 'tech-essential', 'business-laptop', 'audio-excellence'],
+                conscious: ['sustainable', 'eco-friendly', 'organic', 'minimalist', 'durable-design', 'ethical-brand', 'sustainable-fashion', 'health-conscious'],
+            };
+            broaderFilter = mockProducts.filter(p => {
+                return personaTags[personaId]?.some(tag => p.tags.includes(tag)) || 
+                       p.category.toLowerCase().includes(personaId);
+            });
+            console.log(`[DEBUG ${personaId}] Broader filter for ${personaId} found ${broaderFilter.length} products.`);
+             if (broaderFilter.length > 0) {
+                console.log(`[DEBUG ${personaId}] Titles from broader filter: `, broaderFilter.map(p => p.title));
+            }
+        }
+
+        if (broaderFilter.length >= 5) {
+            console.log(`[DEBUG ${personaId}] Broader filter successful (${broaderFilter.length} products). Using broader set.`);
+            filteredProducts = broaderFilter;
+        } else {
+            console.log(`[DEBUG ${personaId}] Broader filter also yielded < 5 products (${broaderFilter.length}).`);
+            // If specific picks originally had items, and broader search didn't get 5, prefer the original specific picks.
+            // This prevents a good specific small set from being overridden by an even smaller (or empty) broad set.
+            if (specificPicksHadItems) {
+                console.log(`[DEBUG ${personaId}] Broader filter insufficient. Reverting to original specific -pick items (${originalPickCount} products) because they existed.`);
+                // Re-fetch the original picks to ensure `filteredProducts` is correctly set
+                 if (personaId === 'student') {
+                    filteredProducts = mockProducts.filter(p => p.tags.includes('student-pick'));
+                 } else if (personaId === 'trendsetter') {
+                    filteredProducts = mockProducts.filter(p => p.tags.includes('trendsetter-pick'));
+                 } else if (personaId === 'optimizer') {
+                    filteredProducts = mockProducts.filter(p => p.tags.includes('optimizer-pick'));
+                 } else if (personaId === 'conscious') {
+                    filteredProducts = mockProducts.filter(p => p.tags.includes('conscious-pick'));
+                 }
+                 // If, after all this, filteredProducts is still empty (e.g. no -pick and no broad results)
+                 // then the critical fallback below will catch it.
+            } else {
+                // If specific picks had NO items, and broader also failed to get 5, then we check broaderFilter.
+                // If broaderFilter has *any* items, use them. Otherwise, it'll go to critical fallback.
+                if(broaderFilter.length > 0){
+                    console.log(`[DEBUG ${personaId}] Original picks were empty, broader filter has ${broaderFilter.length}. Using broader filter results.`);
+                    filteredProducts = broaderFilter;
+                } else {
+                    console.log(`[DEBUG ${personaId}] Original picks were empty, and broader filter was also empty. Will proceed to critical fallback if necessary.`);
+                    // `filteredProducts` remains empty here, will be caught by critical fallback if mockProducts has items.
+                }
+            }
+        }
+      }
+      
+      console.log(`[DEBUG ${personaId}] After all primary and secondary filtering, product count: ${filteredProducts.length}.`);
+
+      // CRITICAL FALLBACK: If all filtering attempts for a persona result in zero products, show all products.
+      if (filteredProducts.length === 0 && mockProducts.length > 0) {
+          console.warn(`[DEBUG ${personaId}] CRITICAL FALLBACK: All filtering resulted in zero products. Showing all ${mockProducts.length} available products instead for ${personaId}.`);
+          filteredProducts = [...mockProducts];
+      }
+
+      console.log(`[DEBUG ${personaId}] FINAL products to be set before sorting for ${personaId}: ${filteredProducts.length} items.`);
+      if (filteredProducts.length > 0) {
+        console.log(`[DEBUG ${personaId}] Final Titles before sorting:`, filteredProducts.map(p => p.title));
+      } else {
+        console.log(`[DEBUG ${personaId}] No products to display for ${personaId} after all filtering.`);
+      }
+
+      setProducts(sortProducts(filteredProducts)); 
       setIsLoadingAnimation(false);
       setIsDiscoveryMode(false);
+      
+      if (filteredProducts.length === 0 && mockProducts.length > 0) { // This message might now be redundant due to the critical fallback above but kept for safety.
+        setErrorMessage(`No products specifically matched "${persona.name}". We're showing all available products instead.`);
+         console.log(`[UI HINT] Setting error message for ${personaId} as no specific products found, but showing all due to fallback.`);
+      } else if (filteredProducts.length === 0 && mockProducts.length === 0) {
+        setErrorMessage(`No products available in the store at the moment.`);
+        console.log(`[UI HINT] Setting error message as no products in store.`);
+      } else {
+        setErrorMessage(null); // Clear any previous error messages if products are found
+      }
+
     }, 1000);
   };
   
@@ -1814,24 +2408,99 @@ export default function App() {
   const handleLifeMomentSelect = (moment) => {
     setSelectedLifeMoment(moment);
     setShowLifeMomentPanel(false);
-    
-    // Apply life moment-based personalization
     setIsLoadingAnimation(true);
-    
+    setErrorMessage(null);
+
     setTimeout(() => {
-      // Get trending products for this life moment if available
-      if (moment && trendingByLifeMoment[moment.id]) {
-        const trendingForMoment = trendingByLifeMoment[moment.id];
-        
-        // Combine trending items with regular products and sort
-        const combinedProducts = [...trendingForMoment, ...mockProducts];
-        setProducts(sortProducts(combinedProducts));
+      let filteredProducts = [];
+      const momentId = moment.id;
+
+      console.log(`Filtering for life moment: ${momentId}`);
+
+      // Primary filter using specific life moment tags
+      if (momentId === 'new-arrival') {
+        filteredProducts = mockProducts.filter(p => p.tags.includes('new-arrival-essential'));
+      } else if (momentId === 'career-launch') {
+        filteredProducts = mockProducts.filter(p => p.tags.includes('career-launch-essential'));
+      } else if (momentId === 'sanctuary') {
+        filteredProducts = mockProducts.filter(p => p.tags.includes('sanctuary-essential'));
+      } else if (momentId === 'golden-years') {
+        filteredProducts = mockProducts.filter(p => p.tags.includes('golden-years-essential'));
+      } else if (momentId === 'gamer-setup') {
+        filteredProducts = mockProducts.filter(p => p.tags.includes('gamer-setup-essential'));
+      } else if (momentId === 'sustainable-living') {
+        filteredProducts = mockProducts.filter(p => p.tags.includes('sustainable-living-essential'));
+      } else if (momentId === 'wellness-retreat') {
+        filteredProducts = mockProducts.filter(p => p.tags.includes('wellness-retreat-essential'));
+      } else if (momentId === 'perfect-hosting') {
+        filteredProducts = mockProducts.filter(p => p.tags.includes('perfect-hosting-essential'));
       } else {
-        setProducts(sortProducts([...mockProducts]));
+        // Fallback for any other moment or if no specific picks are defined
+        filteredProducts = mockProducts.filter(p => 
+          (p.tags.includes(momentId)) || // General tag match
+          (p.category.toLowerCase().includes(momentId)) // General category match
+        );
       }
-      
+
+      console.log(`Initial filtered products for ${momentId}:`, filteredProducts.length);
+
+      // Ensure a minimum number of products, or show all if specific filter is too narrow
+      if (filteredProducts.length < 4 && mockProducts.length > 0) {
+        console.log(`Not enough specific products for ${momentId}, broadening search.`);
+        // If specific picks are too few, try a broader filter based on general tags or categories
+        let broaderFilter = mockProducts.filter(p => {
+          const momentTags = { // Define some broader tags for each moment if specific picks are < 4
+            'new-arrival': ['baby', 'infant-care', 'parenting', 'premium-parenting', 'smart-parenting'],
+            'career-launch': ['pro', 'performance', 'premium', 'office-essential', 'productivity-tool', 'business-laptop'],
+            'sanctuary': ['home-comfort', 'premium-comfort', 'design-focused', 'premium-kitchen', 'ergonomic'],
+            'golden-years': ['senior-friendly', 'easy-to-use', 'reading-comfort', 'portable-audio', 'large-screen'],
+            'gamer-setup': ['gaming', 'performance', 'tech-essential', 'high-refresh', 'competitive-gaming'],
+            'sustainable-living': ['sustainable', 'eco-friendly', 'organic', 'minimalist', 'ethical-brand'],
+            'wellness-retreat': ['health-tech', 'wellness', 'comfort-wear', 'self-care', 'relaxation'],
+            'perfect-hosting': ['kitchen', 'entertaining', 'premium-kitchen', 'quality-brew', 'versatile-appliance']
+          };
+          return momentTags[momentId]?.some(tag => p.tags.includes(tag)) || 
+                 p.category.toLowerCase().includes(momentId) ||
+                 (momentId === 'new-arrival' && p.category === 'baby') ||
+                 (momentId === 'sanctuary' && (p.category === 'kitchen' || p.category === 'furniture')) ||
+                 (momentId === 'gamer-setup' && (p.category === 'electronics' || p.category === 'audio')) ||
+                 (momentId === 'perfect-hosting' && p.category === 'kitchen');
+        });
+
+        if (broaderFilter.length >= 4) {
+          filteredProducts = broaderFilter;
+        } else if (mockProducts.filter(p => p.tags.includes(momentId + "-essential")).length > 0 && filteredProducts.length === 0) {
+          // If there *are* -essential items but they were somehow filtered out, re-add them
+          filteredProducts = mockProducts.filter(p => p.tags.includes(momentId + "-essential"));
+        } else {
+          // If still not enough, use the initial specific picks or all if specific picks were zero
+          if(mockProducts.filter(p => p.tags.includes(momentId + "-essential")).length > 0 && filteredProducts.length === 0){
+            filteredProducts = mockProducts.filter(p => p.tags.includes(momentId + "-essential"));
+          } else if (filteredProducts.length === 0) { // Only show all if specific picks truly yield nothing
+            console.log(`No specific or broader products for ${momentId}, showing all products.`);
+            filteredProducts = [...mockProducts]; // Fallback to all products if no specific products found
+          }
+        }
+      }
+
+      // If after all attempts, filteredProducts is still empty, show all products.
+      // This is a final safety net.
+      if (filteredProducts.length === 0 && mockProducts.length > 0) {
+        console.log(`Critical fallback for ${momentId}: All filters resulted in zero products. Showing all products.`);
+        filteredProducts = [...mockProducts];
+      }
+
+      setProducts(sortProducts(filteredProducts)); // sortProducts will handle empty array if needed
       setIsLoadingAnimation(false);
       setIsDiscoveryMode(false);
+      
+      console.log(`Final products for ${momentId}:`, filteredProducts.length, filteredProducts.map(p=>p.title));
+      if (filteredProducts.length === 0 && mockProducts.length > 0) {
+        setErrorMessage(`No products found for "${moment.name}". We're showing all available products instead.`);
+      } else if (filteredProducts.length === 0 && mockProducts.length === 0) {
+        setErrorMessage(`No products available in the store at the moment.`);
+      }
+
     }, 1000);
   };
   
@@ -1905,144 +2574,30 @@ export default function App() {
     }, 1000);
   };
   
+  // --- Debug: Display API Key in UI ---
+  const [debugApiKeyDisplay, setDebugApiKeyDisplay] = useState('Checking...');
+  useEffect(() => {
+    const key = process.env.REACT_APP_CLAUDE_API_KEY;
+    if (key) {
+      setDebugApiKeyDisplay(`Key starts with: ${key.substring(0, 5)}... (Full key logged at module level)`);
+    } else {
+      setDebugApiKeyDisplay('REACT_APP_CLAUDE_API_KEY is NOT SET in process.env');
+    }
+  }, []);
+  // --- End Debug ---
+
   return (
-    <View style={[
-      styles.container,
-      darkMode && styles.containerDark
-    ]}>
-      <Animated.View 
-        style={[
-          styles.header, 
-          darkMode && styles.headerDark,
-          {
-            opacity: headerOpacity,
-            transform: [{ translateY: headerTranslate }]
-          }
-        ]}
-      >
-        <View style={styles.headerContent}>
-          <View style={styles.headerTopRow}>
-            <Text style={[styles.appTitle, darkMode && styles.appTitleDark]}>curator</Text>
-            <View style={styles.headerActions}>
-              {/* Visual Search button */}
-              <TouchableOpacity 
-                onPress={() => setShowVisualSearch(true)} 
-                style={styles.visualSearchButton}
-              >
-                <Text style={styles.visualSearchButtonIcon}>🔍📷</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity onPress={toggleDarkMode} style={styles.darkModeToggle}>
-                <Text style={styles.darkModeIcon}>{darkMode ? '☀️' : '🌙'}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-          <Text style={[styles.appSubtitle, darkMode && styles.appSubtitleDark]}>
-            AI-driven product discovery
-          </Text>
-        </View>
-        
-        <View style={styles.searchContainer}>
-          <View style={styles.searchInputWrapper}>
-            <TextInput
-              style={[
-                styles.searchBar, 
-                darkMode && styles.searchBarDark,
-                isSearching && styles.searchInputLoading
-              ]}
-              placeholder="Search products..."
-              placeholderTextColor={darkMode ? '#999' : '#999'}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              onSubmitEditing={handleSearch}
-            />
-            <TouchableOpacity 
-              style={[
-                styles.searchButton,
-                isSearching && styles.searchButtonLoading
-              ]} 
-              onPress={handleSearch}
-              disabled={isSearching}
-            >
-              <Text style={styles.searchButtonText}>
-                {isSearching ? '...' : 'Search'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-        
-        <View style={styles.selectionControls}>
-          <TouchableOpacity 
-            style={styles.selectionButton} 
-            onPress={() => setShowPersonaPanel(true)}
-          >
-            <Text style={styles.selectionButtonText}>
-              {selectedPersona ? selectedPersona.name : 'Select Persona'}
-            </Text>
-            <Text style={styles.selectionEmoji}>
-              {selectedPersona ? selectedPersona.emoji : '👤'}
-            </Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.lifeMomentButton} 
-            onPress={() => setShowLifeMomentPanel(true)}
-          >
-            <Text style={styles.lifeMomentButtonText}>
-              {selectedLifeMoment ? selectedLifeMoment.name : 'Life Moment'}
-            </Text>
-            <Text style={styles.selectionEmoji}>
-              {selectedLifeMoment ? selectedLifeMoment.emoji : '🔍'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-        
-        {/* Active Filters */}
-        {(selectedPersona || selectedLifeMoment) && (
-          <View style={styles.activeFiltersContainer}>
-            {selectedPersona && (
-              <View style={[styles.filterTag, { backgroundColor: selectedPersona.color }]}>
-                <Text style={styles.filterTagEmoji}>{selectedPersona.emoji}</Text>
-                <Text style={styles.filterTagText}>{selectedPersona.name}</Text>
-                <TouchableOpacity 
-                  style={styles.removeFilterButton} 
-                  onPress={removePersonaFilter}
-                >
-                  <Text style={styles.removeFilterText}>×</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-            
-            {selectedLifeMoment && (
-              <View style={[styles.filterTag, { backgroundColor: selectedLifeMoment.color }]}>
-                <Text style={styles.filterTagEmoji}>{selectedLifeMoment.emoji}</Text>
-                <Text style={styles.filterTagText}>{selectedLifeMoment.name}</Text>
-                <TouchableOpacity 
-                  style={styles.removeFilterButton} 
-                  onPress={removeLifeMomentFilter}
-                >
-                  <Text style={styles.removeFilterText}>×</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-        )}
-      </Animated.View>
-      
-      {/* Floating Persona Selector for quick filtering */}
-      <FloatingPersonaSelector 
-        personas={personas}
-        selectedPersona={selectedPersona}
-        onSelectPersona={handlePersonaSelect}
-        visible={!isDiscoveryMode && products.length > 0 && !showPersonaPanel && !showLifeMomentPanel}
-      />
-      
+    <View style={styles.container}>
+      {/* --- Debug: Display API Key in UI --- */}
+      <View style={{padding: 10, backgroundColor: '#ffffcc', zIndex: 9999 }}>
+        <Text style={{fontSize: 10, color: '#333', fontWeight: 'bold'}}>DEBUG PANEL:</Text>
+        <Text style={{fontSize: 10, color: '#333'}}>{debugApiKeyDisplay}</Text>
+      </View>
+      {/* --- End Debug --- */}
+
       {/* Content */}
       <ScrollView 
-        style={[
-          styles.content, 
-          darkMode && styles.contentDark
-        ]}
+        style={styles.content}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
           { useNativeDriver: true }
@@ -2054,74 +2609,341 @@ export default function App() {
             <Animated.View 
               style={styles.loadingPulse}
             />
-            <Text style={[
-              styles.loadingText,
-              darkMode && styles.loadingTextDark
-            ]}>
+            <Text style={styles.loadingText}>
               Personalizing for you...
             </Text>
           </View>
         ) : errorMessage ? (
-          <View style={[styles.errorContainer, darkMode && styles.errorContainerDark]}>
+          <View style={styles.errorContainer}>
             <Text style={styles.errorText}>{errorMessage}</Text>
+          </View>
+        ) : showTrendingSocial ? (
+          // Trending Social Page - Refactored to match product/persona page layout
+          <View style={styles.modernProductGrid}> {/* Use modernProductGrid for consistent padding and background */}
+            {/* Re-using the ultraModernMainHeader structure */}
+            <View style={styles.ultraModernMainHeader}>
+              <View style={styles.mainHeaderContent}>
+                <View style={styles.brandSection}>
+                  <Text style={styles.ultraModernBrandLabel}>CURATED FOR YOU</Text>
+                  <Text style={styles.ultraModernBrandTitle}>Trending on Social</Text>
+                  <Text style={styles.ultraModernBrandTagline}>
+                    {trendRadarData.length} products • what's capturing attention right now
+                  </Text>
+                </View>
+                
+                <View style={styles.ultraModernProductHeaderControls}>
+                  <TouchableOpacity 
+                    style={styles.ultraModernBackButton}
+                    onPress={() => {
+                      setShowTrendingSocial(false);
+                      setIsDiscoveryMode(true);
+                    }}
+                  >
+                    <Text style={styles.ultraModernBackButtonText}>← Discover</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+
+            {/* Trending Products Grid - now using productGrid for two-column layout */}
+            <View style={styles.productGrid}>
+              {trendRadarData.map((trendItem) => {
+                // Find the corresponding product in mockProducts
+                const product = mockProducts.find(p => 
+                  p.title.toLowerCase().includes(trendItem.title.toLowerCase()) ||
+                  p.category.toLowerCase() === trendItem.category.toLowerCase()
+                ) || {
+                  // Fallback product data based on trend item
+                  id: `trend-${trendItem.id}`,
+                  title: trendItem.title,
+                  price: trendItem.category === 'ELECTRONICS' ? '$399.99' : 
+                         trendItem.category === 'HOME' ? '$749.99' :
+                         trendItem.category === 'TRAVEL' ? '$275.00' : '$99.99',
+                  rating: '4.6',
+                  description: `Trending ${trendItem.category.toLowerCase()} product`,
+                  category: trendItem.category.toLowerCase(),
+                  image: trendItem.image,
+                  brand: trendItem.title.split(' ')[0],
+                  affiliateUrl: trendItem.brandUrl || '#',
+                  trendingStats: `${trendItem.trendChange} increase in social mentions • ${trendItem.isViral ? 'Going viral' : 'Steady growth'} • Featured across platforms`,
+                  hotTake: `This ${trendItem.category.toLowerCase()} product is trending because it perfectly captures what people are looking for right now. The surge in social media mentions and reviews shows real consumer excitement.`,
+                  whyBuyThis: `🔥 TRENDING PICK → ${trendItem.trendChange} surge in popularity • Social media approved • Join the conversation • Don't miss out on what everyone's talking about`
+                };
+
+                return (
+                  // Use modernProductCard for individual card styling
+                  <View key={`trending-${trendItem.id}`} style={styles.modernProductCard}>
+                    <View style={styles.productImageContainer}>
+                      <Image
+                        source={{ uri: product.image }}
+                        style={styles.productImage}
+                        resizeMode="cover"
+                      />
+                      <TouchableOpacity style={styles.favoriteButton}>
+                        <Text style={styles.favoriteIcon}>♡</Text>
+                      </TouchableOpacity>
+                      {trendItem.isViral && (
+                        <View style={styles.viralBadge}>
+                          <Text style={styles.viralBadgeText}>VIRAL</Text>
+                        </View>
+                      )}
+                    </View>
+
+                    <View style={styles.productInfo}>
+                      <Text style={styles.brandName}>{product.brand}</Text>
+                      <Text style={styles.productName} numberOfLines={2}>
+                        {product.title}
+                      </Text>
+
+                      <View style={styles.priceRow}>
+                        <Text style={styles.currentPrice}>{product.price}</Text>
+                        <Text style={styles.rating}>★ {product.rating}</Text>
+                      </View>
+
+                      {/* Trending Stats Section */}
+                      {product.trendingStats && (
+                        <View style={styles.trendingStatsContainer}>
+                          <Text style={styles.trendingStatsLabel}>🔥 TRENDING NOW</Text>
+                          <Text style={styles.trendingStatsText}>{product.trendingStats}</Text>
+                        </View>
+                      )}
+
+                      {/* Hot Take Section */}
+                      {product.hotTake && (
+                        <View style={styles.hotTakeContainer}>
+                          <Text style={styles.hotTakeLabel}>💭 CURATOR'S HOT TAKE</Text>
+                          <Text style={styles.hotTakeText}>{product.hotTake}</Text>
+                        </View>
+                      )}
+
+                      {/* Why Buy This Section */}
+                      {product.whyBuyThis && (
+                        <View style={styles.whyBuyThisContainer}>
+                          <Text style={styles.whyBuyThisText}>{product.whyBuyThis}</Text>
+                        </View>
+                      )}
+
+                      {/* Action Buttons */}
+                      <View style={styles.productCardButtonContainer}>
+                        <TouchableOpacity
+                          style={[styles.minimalistButtonShared, styles.minimalistButtonPrimary]}
+                          onPress={() => {
+                            if (trendItem.brandUrl) {
+                              openExternalLink(trendItem.brandUrl);
+                            } else if (product.affiliateUrl && product.affiliateUrl !== '#') {
+                              openExternalLink(product.affiliateUrl);
+                            } else {
+                              alert('Product link coming soon!');
+                            }
+                          }}
+                        >
+                          <Text style={[styles.buttonTextShared, styles.buttonTextPrimary]}>Shop on Brand Website</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.minimalistButtonShared, styles.minimalistButtonSecondary]}
+                          onPress={() => alert('The Curator Agent will assist you with this purchase soon!')}
+                        >
+                          <Text style={[styles.buttonTextShared, styles.buttonTextSecondary]}>Shop with Curator Agent</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
           </View>
         ) : isDiscoveryMode ? (
           <View style={styles.discoveryContainer}>
+            {/* Ultra-Modern Main Header */}
+            <View style={styles.ultraModernMainHeader}>
+              <View style={styles.mainHeaderContent}>
+                <View style={styles.brandSection}>
+                  <Text style={styles.ultraModernBrandLabel}>DISCOVERY</Text>
+                  <Text style={styles.ultraModernBrandTitle}>curator</Text>
+                  <Text style={styles.ultraModernBrandTagline}>
+                    where artificial intelligence meets intentional living
+                  </Text>
+                </View>
+                
+                <View style={styles.ultraModernHeaderControls}>
+                  <View style={styles.ultraModernSearchContainer}>
+                    <View style={styles.searchInputWrapper}>
+                      <TextInput
+                        style={styles.ultraModernSearchInput}
+                        placeholder="discover your perfect aesthetic..."
+                        placeholderTextColor="#A0A0A0"
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        onSubmitEditing={handleSearch}
+                      />
+                      <TouchableOpacity 
+                        style={styles.ultraModernSearchButton}
+                        onPress={handleSearch}
+                      >
+                        <Text style={styles.searchIcon}>⌕</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                  
+                  <View style={styles.ultraModernSelectorRow}>
+                    <TouchableOpacity 
+                      style={[styles.ultraModernSelector, selectedPersona && styles.ultraModernSelectorActive]}
+                      onPress={() => setShowPersonaPanel(true)}
+                    >
+                      <View style={styles.selectorContent}>
+                        {selectedPersona ? (
+                          <Image 
+                            source={{ uri: selectedPersona.icon }}
+                            style={styles.ultraModernSelectorIcon}
+                          />
+                        ) : (
+                          <View style={styles.ultraModernDefaultIcon}>
+                            <Text style={styles.defaultIconText}>S</Text>
+                          </View>
+                        )}
+                        <View style={styles.selectorTextContainer}>
+                          <Text style={styles.ultraModernSelectorLabel}>STYLE</Text>
+                          <Text style={styles.ultraModernSelectorValue}>
+                            {selectedPersona ? selectedPersona.name : 'Choose Your Aesthetic'}
+                          </Text>
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity 
+                      style={[styles.ultraModernSelector, selectedLifeMoment && styles.ultraModernSelectorActive]}
+                      onPress={() => setShowLifeMomentPanel(true)}
+                    >
+                      <View style={styles.selectorContent}>
+                        {selectedLifeMoment ? (
+                          <Image 
+                            source={{ uri: selectedLifeMoment.icon }}
+                            style={styles.ultraModernSelectorIcon}
+                          />
+                        ) : (
+                          <View style={styles.ultraModernDefaultIcon}>
+                            <Text style={styles.defaultIconText}>M</Text>
+                          </View>
+                        )}
+                        <View style={styles.selectorTextContainer}>
+                          <Text style={styles.ultraModernSelectorLabel}>MOMENT</Text>
+                          <Text style={styles.ultraModernSelectorValue}>
+                            {selectedLifeMoment ? selectedLifeMoment.name : 'Current Chapter'}
+                          </Text>
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity 
+                      style={styles.ultraModernSelector}
+                      onPress={() => setShowVisualSearch(true)}
+                    >
+                      <View style={styles.selectorContent}>
+                        <View style={styles.ultraModernDefaultIcon}>
+                          <Text style={styles.defaultIconText}>📷</Text>
+                        </View>
+                        <View style={styles.selectorTextContainer}>
+                          <Text style={styles.ultraModernSelectorLabel}>VISUAL</Text>
+                          <Text style={styles.ultraModernSelectorValue}>Search by Image</Text>
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </View>
+            
             <TrendRadar 
               items={trendRadarData}
               onItemPress={(item) => {
-                console.log('Trend item pressed:', item);
+                setShowTrendingSocial(true);
+                setIsDiscoveryMode(false);
+                setShowAiCurateView(null); // Reset AI view
+                if (typeof window !== 'undefined' && window.history && window.history.pushState) {
+                  window.history.pushState({ page: 'trending' }, '', '?view=trending');
+                }
+              }}
+              onSeeAll={() => {
+                setShowTrendingSocial(true);
+                setIsDiscoveryMode(false);
+                setShowAiCurateView(null); // Reset AI view
+                if (typeof window !== 'undefined' && window.history && window.history.pushState) {
+                  window.history.pushState({ page: 'trending' }, '', '?view=trending');
+                }
               }}
             />
             
-            <View style={styles.socialBundlesContainer}>
-              <View style={styles.sectionHeaderRow}>
-                <View style={styles.sectionTitleContainer}>
-                  <Text style={styles.sectionIcon}>👥</Text>
-                  <Text style={styles.sectionTitle}>Social Bundles</Text>
+            <View style={styles.ultraModernSocialBundlesContainer}>
+              <View style={styles.ultraModernSectionHeader}>
+                <View style={styles.sectionHeaderLeft}>
+                  <Text style={styles.ultraModernSectionLabel}>CURATED</Text>
+                  <Text style={styles.ultraModernSectionTitle}>Social Bundles</Text>
+                  <Text style={styles.ultraModernSectionSubtitle}>
+                    thoughtfully assembled collections from our community
+                  </Text>
                 </View>
-                <TouchableOpacity>
-                  <Text style={styles.sectionAction}>See All</Text>
+                <TouchableOpacity style={styles.modernSeeAllButton}>
+                  <Text style={styles.modernSeeAllText}>View Collection</Text>
+                  <Text style={styles.modernSeeAllArrow}>→</Text>
                 </TouchableOpacity>
               </View>
-              
-              <Text style={styles.sectionSubtitle}>
-                Curated collections from our community
-              </Text>
               
               <ScrollView 
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                style={styles.bundlesScroll}
+                style={styles.ultraModernBundlesScroll}
               >
                 {socialBundles.map((bundle) => (
                   <TouchableOpacity 
                     key={bundle.id} 
-                    style={styles.bundleCard}
-                  >
-                    <Image 
-                      source={{ uri: bundle.coverImage }}
-                      style={styles.bundleCover}
-                      resizeMode="cover"
-                    />
-                    <View style={styles.bundleContent}>
-                      <Text style={styles.bundleTitle}>{bundle.title}</Text>
+                    style={styles.ultraModernBundleCard}
+                    onPress={() => {
+                      // When a bundle is clicked, show its products
+                      setIsLoadingAnimation(true);
+                      setIsDiscoveryMode(false);
+                      setShowTrendingSocial(false);
+                      setShowAiCurateView(null); // Reset AI view
                       
-                      <View style={styles.bundleCreatorRow}>
+                      if (typeof window !== 'undefined' && window.history && window.history.pushState) {
+                        window.history.pushState({ page: 'products', socialBundle: bundle.id }, '', `?bundle=${bundle.id}`);
+                      }
+                      
+                      setTimeout(() => {
+                        setProducts(sortProducts(bundle.products));
+                        setIsLoadingAnimation(false);
+                      }, 800);
+                    }}
+                  >
+                    <View style={styles.ultraModernBundleImageContainer}>
+                      <Image 
+                        source={{ uri: bundle.coverImage }}
+                        style={styles.ultraModernBundleCover}
+                        resizeMode="cover"
+                      />
+                      <View style={styles.ultraModernBundleOverlay}>
+                        <View style={styles.ultraModernBundleStats}>
+                          <Text style={styles.ultraModernBundleStat}>♥ {bundle.likes.toLocaleString()}</Text>
+                          <Text style={styles.ultraModernBundleStat}>🔖 {bundle.saves}</Text>
+                        </View>
+                      </View>
+                    </View>
+                    <View style={styles.ultraModernBundleContent}>
+                      <Text style={styles.ultraModernBundleTitle}>{bundle.title}</Text>
+                      
+                      <View style={styles.ultraModernBundleCreatorRow}>
                         <Image 
                           source={{ uri: bundle.creator.avatar }}
-                          style={styles.creatorAvatar}
+                          style={styles.ultraModernCreatorAvatar}
                         />
-                        <Text style={styles.creatorName}>{bundle.creator.name}</Text>
+                        <Text style={styles.ultraModernCreatorName}>{bundle.creator.name}</Text>
                         {bundle.creator.verified && (
-                          <Text style={styles.verifiedBadge}>✓</Text>
+                          <Text style={styles.ultraModernVerifiedBadge}>✓</Text>
                         )}
                       </View>
                       
-                      <View style={styles.bundleStats}>
-                        <Text style={styles.bundleStat}>♥ {bundle.likes}</Text>
-                        <Text style={styles.bundleStat}>🔖 {bundle.saves}</Text>
-                      </View>
+                      <Text style={styles.ultraModernBundleProductCount}>
+                        {bundle.products.length} carefully selected items
+                      </Text>
                     </View>
                   </TouchableOpacity>
                 ))}
@@ -2129,87 +2951,402 @@ export default function App() {
             </View>
             
             <View style={styles.shopByVibeContainer}>
-              <View style={styles.sectionHeaderRow}>
-                <View style={styles.sectionTitleContainer}>
-                  <Text style={styles.sectionIcon}>✨</Text>
-                  <Text style={styles.sectionTitle}>Shop by Vibe</Text>
+              <View style={styles.ultraModernSectionHeader}>
+                <View style={styles.sectionHeaderLeft}>
+                  <Text style={styles.ultraModernSectionLabel}>AESTHETIC</Text>
+                  <Text style={styles.ultraModernSectionTitle}>Shop by Vibe</Text>
+                  <Text style={styles.ultraModernSectionSubtitle}>
+                    Discover your aesthetic language through curated collections
+                  </Text>
                 </View>
-                <TouchableOpacity>
-                  <Text style={styles.sectionAction}>See All</Text>
+                <TouchableOpacity style={styles.modernSeeAllButton}>
+                  <Text style={styles.modernSeeAllText}>Explore All</Text>
+                  <Text style={styles.modernSeeAllArrow}>→</Text>
                 </TouchableOpacity>
               </View>
               
-              <Text style={styles.sectionSubtitle}>
-                Discover products that match your aesthetic
-              </Text>
-              
-              <View style={styles.moodsGrid}>
+              <View style={styles.ultraModernMoodsGrid}>
                 {moodBoards.map((mood) => (
                   <TouchableOpacity 
                     key={mood.id} 
-                    style={styles.moodCard}
+                    style={styles.ultraModernMoodCard}
+                    onPress={() => {
+                      // When a mood is clicked, filter products by aesthetic
+                      setIsLoadingAnimation(true);
+                      setIsDiscoveryMode(false);
+                      setShowTrendingSocial(false);
+                      setShowAiCurateView(null); // Reset AI view
+
+                      if (typeof window !== 'undefined' && window.history && window.history.pushState) {
+                        window.history.pushState({ page: 'products', mood: mood.id }, '', `?mood=${mood.id}`);
+                      }
+                      
+                      setTimeout(() => {
+                        // Enhanced mood-based filtering logic
+                        const moodProducts = mockProducts.filter(product => {
+                          if (mood.id === 'minimalist') {
+                            return product.tags.includes('premium') || product.tags.includes('pro') || product.category === 'laptop';
+                          } else if (mood.id === 'cyberpunk') {
+                            return product.category === 'laptop' || product.category === 'wearables' || product.tags.includes('tech');
+                          } else if (mood.id === 'cottagecore') {
+                            return product.category === 'baby' || product.tags.includes('comfort') || product.tags.includes('home');
+                          } else if (mood.id === 'clean-girl') {
+                            return product.tags.includes('premium') || product.category === 'skincare' || product.tags.includes('beauty');
+                          } else if (mood.id === 'dark-academia') {
+                            return product.category === 'laptop' || product.tags.includes('premium') || product.tags.includes('book');
+                          } else if (mood.id === 'soft-luxury') {
+                            return product.tags.includes('premium') || product.tags.includes('luxury') || product.tags.includes('gift');
+                          } else {
+                            return product.tags.includes('premium') || product.tags.includes('gift');
+                          }
+                        });
+                        setProducts(sortProducts(moodProducts.length > 0 ? moodProducts : mockProducts));
+                        setIsLoadingAnimation(false);
+                      }, 800);
+                    }}
                   >
-                    <Image 
-                      source={{ uri: mood.coverImage }}
-                      style={styles.moodCover}
-                      resizeMode="cover"
-                    />
-                    <View style={[
-                      styles.moodOverlay,
-                      { backgroundColor: `${mood.color}80` }
-                    ]}>
-                      <Text style={styles.moodEmoji}>{mood.emoji}</Text>
-                      <Text style={styles.moodName}>{mood.name}</Text>
+                    <View style={styles.ultraModernMoodImageContainer}>
+                      <Image 
+                        source={{ uri: mood.coverImage }}
+                        style={styles.ultraModernMoodCover}
+                        resizeMode="cover"
+                      />
+                      <View style={[
+                        styles.ultraModernMoodOverlay,
+                        { background: mood.gradient, backgroundColor: mood.color }
+                      ]} />
+                    </View>
+                    
+                    <View style={styles.ultraModernMoodContent}>
+                      <View style={styles.moodNameRow}>
+                        <Text style={styles.moodEmoji}>{mood.emoji}</Text>
+                        <Text style={styles.ultraModernMoodName}>{mood.name}</Text>
+                      </View>
+                      
+                      <Text style={styles.cursiveDescription}>
+                        {mood.cursiveDescription}
+                      </Text>
+                      
+                      <Text style={styles.philosophyText}>
+                        {mood.philosophyText}
+                      </Text>
                     </View>
                   </TouchableOpacity>
                 ))}
               </View>
             </View>
             
-            {/* Visual Categories */}
-            <View style={styles.categoryEntryContainer}>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={styles.categoryScroll}
-              >
+            {/* Ultra-Modern Categories */}
+            <View style={styles.ultraModernCategoryContainer}>
+              <View style={styles.ultraModernSectionHeader}>
+                <View style={styles.sectionHeaderLeft}>
+                  <Text style={styles.ultraModernSectionLabel}>BROWSE</Text>
+                  <Text style={styles.ultraModernSectionTitle}>Shop by Category</Text>
+                  <Text style={styles.ultraModernSectionSubtitle}>
+                    explore our curated world of intentional products
+                  </Text>
+                </View>
+              </View>
+              
+              <View style={styles.ultraModernCategoryGrid}>
                 {productCategories.map((category) => (
                   <TouchableOpacity
                     key={category.id}
-                    style={styles.categoryItem}
+                    style={styles.ultraModernCategoryItem}
+                    onPress={() => {
+                      // When a category is clicked, filter products by category name
+                      setIsLoadingAnimation(true);
+                      setIsDiscoveryMode(false);
+                      setShowTrendingSocial(false);
+                      setShowAiCurateView(null); // Reset AI view
+
+                      if (typeof window !== 'undefined' && window.history && window.history.pushState) {
+                        window.history.pushState({ page: 'products', category: category.name }, '', `?category=${encodeURIComponent(category.name)}`);
+                      }
+
+                      setTimeout(() => {
+                        const categoryProducts = mockProducts.filter(product => 
+                          product.category.toLowerCase().includes(category.id.toLowerCase()) ||
+                          product.tags.some(tag => tag.toLowerCase().includes(category.id.toLowerCase()))
+                        );
+                        setProducts(sortProducts(categoryProducts.length > 0 ? categoryProducts : mockProducts));
+                        setIsLoadingAnimation(false);
+                      }, 800);
+                    }}
                   >
-                    <View 
-                      style={[
-                        styles.categoryIcon,
-                        { backgroundColor: `${category.color}15` }
-                      ]}
-                    >
-                      <Text style={styles.categoryEmoji}>{category.emoji}</Text>
+                    <View style={styles.ultraModernCategoryIcon}>
+                      <Image 
+                        source={{ uri: category.image }}
+                        style={styles.ultraModernCategoryImage}
+                        resizeMode="cover"
+                      />
                     </View>
-                    <Text style={styles.categoryName}>{category.name}</Text>
+                    <Text style={styles.ultraModernCategoryName}>{category.name}</Text>
+                    <Text style={styles.ultraModernCategoryDescription}>
+                      {category.description}
+                    </Text>
                   </TouchableOpacity>
                 ))}
-              </ScrollView>
+              </View>
             </View>
           </View>
         ) : products.length === 0 ? (
-          <View style={[styles.emptyContainer, darkMode && styles.emptyContainerDark]}>
-            <Text style={[styles.emptyPrimary, darkMode && styles.emptyPrimaryDark]}>
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyPrimary}>
               No products found
             </Text>
-            <Text style={[styles.emptySecondary, darkMode && styles.emptySecondaryDark]}>
+            <Text style={styles.emptySecondary}>
               Try adjusting your filters or search query
             </Text>
+            <TouchableOpacity 
+              style={styles.emptyStateNeonBackButton} // Use new style
+              onPress={() => {
+                setIsDiscoveryMode(true);
+                setSearchQuery('');
+                setSelectedPersona(null);
+                setSelectedLifeMoment(null);
+                setProducts(sortProducts([...mockProducts]));
+                setErrorMessage(null);
+              }}
+            >
+              <Text style={styles.neonBackButtonText}>← Back to Discovery</Text>
+            </TouchableOpacity>
           </View>
         ) : (
-          <View style={styles.productList}>
-            {products.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onPress={() => {}}
-              />
-            ))}
+          <View style={styles.modernProductGrid}>
+            {/* Ultra-Modern Product Header - Consistent with Homepage */}
+            <View style={styles.ultraModernMainHeader}>
+              <View style={styles.mainHeaderContent}>
+                <View style={styles.brandSection}>
+                  <Text style={styles.ultraModernBrandLabel}>
+                    {selectedPersona ? 'CURATED FOR' : selectedLifeMoment ? 'CURATED FOR' : 'DISCOVERY'}
+                  </Text>
+                  <Text style={styles.ultraModernBrandTitle}>
+                    {selectedPersona ? selectedPersona.name : selectedLifeMoment ? selectedLifeMoment.name : 'curator'}
+                  </Text>
+                  <Text style={styles.ultraModernBrandTagline}>
+                    {selectedPersona?.id === 'student'
+                      ? `${products.length} budget essentials • carefully selected for your lifestyle`
+                      : selectedLifeMoment
+                        ? `${products.length} products • perfectly aligned with this chapter`
+                        : selectedPersona
+                          ? `${products.length} products • intentionally curated for your aesthetic`
+                          : `${products.length} products • where artificial intelligence meets intentional living`
+                    }
+                  </Text>
+                </View>
+                
+                <View style={styles.ultraModernProductHeaderControls}>
+                  <TouchableOpacity 
+                    style={styles.ultraModernBackButton}
+                    onPress={() => {
+                      setIsDiscoveryMode(true);
+                      setSearchQuery('');
+                      setSelectedPersona(null);
+                      setSelectedLifeMoment(null);
+                      setProducts(sortProducts([...mockProducts])); // Reset to all products, sorted
+                      setErrorMessage(null);
+                      // Add browser history management
+                      if (window.history && window.history.pushState) {
+                        window.history.pushState(null, null, window.location.pathname);
+                      }
+                    }}
+                  >
+                    <Text style={styles.ultraModernBackButtonText}>← Discover</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+            
+            {/* Premium Product Grid */}
+            <View style={styles.productGrid}>
+              {products.length === 0 ? (
+                <View style={styles.noProductsMessage}>
+                  <Text style={styles.noProductsText}>
+                    No products found for this selection. 
+                  </Text>
+                  <Text style={styles.noProductsSubtext}>
+                    Try selecting a different persona or go back to discovery.
+                  </Text>
+                </View>
+              ) : (
+                products.map((product) => (
+                  <View key={product.id} style={selectedPersona?.id === 'student' ? styles.studentProductCard : styles.modernProductCard}>
+                    {selectedPersona?.id === 'student' ? (
+                      // REFINED Student Persona Card Layout
+                      <>
+                        <View style={styles.studentImageContainer}> {/* Using studentImageContainer which mirrors productImageContainer */}
+                          <Image
+                            source={{ uri: product.image }}
+                            style={styles.productImage} // Reusing common productImage style
+                            resizeMode="cover"
+                          />
+                          {/* studentCardBadge removed */}
+                           <TouchableOpacity style={styles.favoriteButton}>
+                            <Text style={styles.favoriteIcon}>♡</Text>{/* Standardized Icon */}
+                          </TouchableOpacity>
+                        </View>
+                        <View style={styles.studentInfo}>
+                          <Text style={styles.studentBrandName}>{product.brand}</Text>
+                          <Text style={styles.studentProductName} numberOfLines={2}>
+                            {product.title}
+                          </Text>
+                          <View style={styles.studentPriceRow}>
+                            <Text style={styles.studentCurrentPrice}>{product.price}</Text>
+                            <Text style={styles.studentRating}>★ {product.rating}</Text> {/* Using ★ for rating value as it's common */}
+                          </View>
+
+                          {(product.studentReview || product.whyStudentsLove) && (
+                            <View style={styles.studentExclusiveContent}>
+                              {product.studentReview && (
+                                <>
+                                  <Text style={styles.studentReviewLabel}>Student Review:</Text>
+                                  <Text style={styles.studentReviewText}>"{product.studentReview}"</Text>
+                                </>
+                              )}
+                              {product.whyStudentsLove && (
+                                <>
+                                  <Text style={styles.studentWhyLoveLabel}>Why Students Love It:</Text>
+                                  <Text style={styles.studentWhyLoveText}>{product.whyStudentsLove}</Text>
+                                </>
+                              )}
+                            </View>
+                          )}
+
+                          {/* Ultra-Modern Why Buy This Section */}
+                          {product.whyBuyThis && (
+                            <View style={styles.whyBuyThisContainer}>
+                              <Text style={styles.whyBuyThisText}>{product.whyBuyThis}</Text>
+                            </View>
+                          )}
+
+                          {/* Trending Stats Section */}
+                          {product.trendingStats && (
+                            <View style={styles.trendingStatsContainer}>
+                              <Text style={styles.trendingStatsLabel}>🔥 TRENDING NOW</Text>
+                              <Text style={styles.trendingStatsText}>{product.trendingStats}</Text>
+                            </View>
+                          )}
+
+                          {/* Hot Take Section */}
+                          {product.hotTake && (
+                            <View style={styles.hotTakeContainer}>
+                              <Text style={styles.hotTakeLabel}>💭 CURATOR'S HOT TAKE</Text>
+                              <Text style={styles.hotTakeText}>{product.hotTake}</Text>
+                            </View>
+                          )}
+
+                          {/* Updated Student Button Layout with two minimalist buttons */}
+                          <View style={styles.productCardButtonContainer}>
+                            <TouchableOpacity
+                              style={[styles.minimalistButtonShared, styles.minimalistButtonPrimary]}
+                              onPress={() => openExternalLink(product.affiliateUrl)}
+                            >
+                              <Text style={[styles.buttonTextShared, styles.buttonTextPrimary]}>Shop on Brand Website</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[styles.minimalistButtonShared, styles.minimalistButtonSecondary]}
+                              onPress={() => alert('The Curator Agent will assist you with this purchase soon!')}
+                            >
+                              <Text style={[styles.buttonTextShared, styles.buttonTextSecondary]}>Shop with Curator Agent</Text>
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                      </>
+                    ) : (
+                      // Default/Modern Product Card Layout (existing)
+                      <>
+                        <View style={styles.productImageContainer}>
+                          <Image
+                            source={{ uri: product.image }}
+                            style={styles.productImage}
+                            resizeMode="cover"
+                          />
+                          <TouchableOpacity style={styles.favoriteButton}>
+                            <Text style={styles.favoriteIcon}>♡</Text>
+                          </TouchableOpacity>
+                        </View>
+
+                        <View style={styles.productInfo}>
+                          <Text style={styles.brandName}>{product.brand}</Text>
+                          <Text style={styles.productName} numberOfLines={2}>
+                            {product.title}
+                          </Text>
+
+                          <View style={styles.priceRow}>
+                            <Text style={styles.currentPrice}>{product.price}</Text>
+                            <Text style={styles.rating}>★ {product.rating}</Text>
+                          </View>
+
+                          {/* Persona Exclusive Content for modernProductCard */}
+                          {(product.optimizerInsight || product.trendsetterTip || product.consciousChoiceDetail) && selectedPersona && selectedPersona.id !== 'student' && (
+                            <View style={styles.personaExclusiveContentContainer}>
+                              {selectedPersona.id === 'optimizer' && product.optimizerInsight && (
+                                <>
+                                  <Text style={styles.personaInsightLabel}>Pro Tip:</Text>
+                                  <Text style={styles.personaInsightText}>{product.optimizerInsight}</Text>
+                                </> 
+                              )}
+                              {selectedPersona.id === 'trendsetter' && product.trendsetterTip && (
+                                <>
+                                  <Text style={styles.personaInsightLabel}>Style Note:</Text>
+                                  <Text style={styles.personaInsightText}>{product.trendsetterTip}</Text>
+                                </> 
+                              )}
+                              {selectedPersona.id === 'conscious' && product.consciousChoiceDetail && (
+                                <>
+                                  <Text style={styles.personaInsightLabel}>Conscious Detail:</Text>
+                                  <Text style={styles.personaInsightText}>{product.consciousChoiceDetail}</Text>
+                                </> 
+                              )}
+                            </View>
+                          )}
+
+                          {/* Ultra-Modern Why Buy This Section for Non-Students */}
+                          {product.whyBuyThis && (
+                            <View style={styles.whyBuyThisContainer}>
+                              <Text style={styles.whyBuyThisText}>{product.whyBuyThis}</Text>
+                            </View>
+                          )}
+
+                          {/* Trending Stats Section */}
+                          {product.trendingStats && (
+                            <View style={styles.trendingStatsContainer}>
+                              <Text style={styles.trendingStatsLabel}>🔥 TRENDING NOW</Text>
+                              <Text style={styles.trendingStatsText}>{product.trendingStats}</Text>
+                            </View>
+                          )}
+
+                          {/* Hot Take Section */}
+                          {product.hotTake && (
+                            <View style={styles.hotTakeContainer}>
+                              <Text style={styles.hotTakeLabel}>💭 CURATOR'S HOT TAKE</Text>
+                              <Text style={styles.hotTakeText}>{product.hotTake}</Text>
+                            </View>
+                          )}
+
+                          {/* Updated Non-Student Button Layout with two minimalist buttons */}
+                          <View style={styles.productCardButtonContainer}>
+                            <TouchableOpacity
+                              style={[styles.minimalistButtonShared, styles.minimalistButtonPrimary]}
+                              onPress={() => openExternalLink(product.affiliateUrl)}
+                            >
+                              <Text style={[styles.buttonTextShared, styles.buttonTextPrimary]}>Shop on Brand Website</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[styles.minimalistButtonShared, styles.minimalistButtonSecondary]}
+                              onPress={() => alert('The Curator Agent will assist you with this purchase soon!')}
+                            >
+                              <Text style={[styles.buttonTextShared, styles.buttonTextSecondary]}>Shop with Curator Agent</Text>
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                      </>
+                    )}
+                  </View>
+                ))
+              )}
+            </View>
           </View>
         )}
       </ScrollView>
@@ -2220,6 +3357,268 @@ export default function App() {
         onClose={() => setShowVisualSearch(false)}
         onSearch={handleVisualSearch}
       />
+      
+      {/* Persona Selection Panel */}
+      <PersonaSelectionPanel
+        visible={showPersonaPanel}
+        onClose={() => setShowPersonaPanel(false)}
+        personas={personas}
+        selectedPersona={selectedPersona}
+        onSelectPersona={handlePersonaSelect}
+      />
+      
+      {/* Life Moment Selection Panel */}
+      <LifeMomentSelectionPanel
+        visible={showLifeMomentPanel}
+        onClose={() => setShowLifeMomentPanel(false)}
+        lifeMoments={lifeMoments}
+        selectedLifeMoment={selectedLifeMoment}
+        onSelectLifeMoment={handleLifeMomentSelect}
+      />
+
+      {/* New AI Curation Section */}
+      <View style={styles.ultraModernAiCurationContainer}> {/* New container style needed */}
+        <View style={styles.ultraModernSectionHeader}>
+          <View style={styles.sectionHeaderLeft}>
+            <Text style={styles.ultraModernSectionLabel}>PERSONALIZE</Text>
+            <Text style={styles.ultraModernSectionTitle}>Curate with AI</Text>
+            <Text style={styles.ultraModernSectionSubtitle}>
+              Describe your style, select favorite brands, and let our AI build a unique collection just for you.
+            </Text>
+          </View>
+        </View>
+        <TouchableOpacity 
+          style={styles.ultraModernPrimaryButton} // Re-use or create a new primary button style
+          onPress={() => {
+            setShowAiCurateView('form');
+            setIsDiscoveryMode(false); // Hide discovery content
+            setShowTrendingSocial(false); // Ensure other views are hidden
+            // Push history state for AI Curation form
+            if (typeof window !== 'undefined' && window.history && window.history.pushState) {
+              window.history.pushState({ page: 'aiCurateForm' }, '', '?view=ai-curate');
+            }
+          }}
+        >
+          <Text style={styles.ultraModernPrimaryButtonText}>Start AI Curation</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* AI Curation Form View (To be built next) */}
+      {showAiCurateView === 'form' ? (
+        <View style={styles.aiCurateFormContainer}>
+          {/* Header for AI Curation Form */}
+          <View style={styles.ultraModernMainHeader}>
+            <View style={styles.mainHeaderContent}>
+              <View style={styles.brandSection}>
+                <Text style={styles.ultraModernBrandLabel}>AI CURATION</Text>
+                <Text style={styles.ultraModernBrandTitle}>Tell Us About You</Text>
+                <Text style={styles.ultraModernBrandTagline}>
+                  Help our AI understand your preferences to create the perfect bundle.
+                </Text>
+              </View>
+              <View style={styles.ultraModernProductHeaderControls}>
+                <TouchableOpacity 
+                  style={styles.ultraModernBackButton}
+                  onPress={() => {
+                    setShowAiCurateView(null);
+                    setIsDiscoveryMode(true); // Go back to discovery
+                    if (typeof window !== 'undefined' && window.history && window.history.pushState) {
+                      window.history.pushState({ page: 'discovery' }, '', window.location.pathname.split('?')[0]);
+                    }
+                  }}
+                >
+                  <Text style={styles.ultraModernBackButtonText}>← Discover</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+          {/* Form elements will go here */}
+          <ScrollView style={styles.aiFormScrollView}>
+            <Text style={styles.aiFormSectionTitle}>Your Favorite Brands (select up to 5)</Text>
+            <View style={styles.aiBrandSelectionContainer}>
+              {availableBrands.map(brand => (
+                <TouchableOpacity
+                  key={brand}
+                  style={[
+                    styles.aiBrandChip,
+                    aiSelectedBrands.includes(brand) && styles.aiBrandChipSelected
+                  ]}
+                  onPress={() => {
+                    if (aiSelectedBrands.includes(brand)) {
+                      setAiSelectedBrands(aiSelectedBrands.filter(b => b !== brand));
+                    } else {
+                      if (aiSelectedBrands.length < 5) {
+                        setAiSelectedBrands([...aiSelectedBrands, brand]);
+                      }
+                    }
+                  }}
+                >
+                  <Text style={styles.aiBrandChipText}>{brand}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={styles.aiFormSectionTitle}>Describe Your Style</Text>
+            <TextInput
+              style={styles.aiTextInput}
+              placeholder="e.g., minimalist, vibrant, classic, tech-focused"
+              value={aiPersonaStyle}
+              onChangeText={setAiPersonaStyle}
+              placeholderTextColor="#A0A0A0"
+            />
+
+            <Text style={styles.aiFormSectionTitle}>Your Budget Preference</Text>
+            <View style={styles.aiBudgetSelectorContainer}>
+              {['$', '$$', '$$$'].map(budget => (
+                <TouchableOpacity
+                  key={budget}
+                  style={[
+                    styles.aiBudgetChip,
+                    aiPersonaBudget === budget && styles.aiBudgetChipSelected
+                  ]}
+                  onPress={() => setAiPersonaBudget(budget)}
+                >
+                  <Text style={styles.aiBudgetChipText}>{budget}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={styles.aiFormSectionTitle}>What are you looking for specifically?</Text>
+            <TextInput
+              style={styles.aiTextInput}
+              placeholder="e.g., a new laptop for college, a gift for a friend, summer travel essentials"
+              value={aiLookingFor}
+              onChangeText={setAiLookingFor}
+              placeholderTextColor="#A0A0A0"
+              multiline
+              numberOfLines={3}
+            />
+
+            <TouchableOpacity 
+              style={styles.ultraModernPrimaryButton} 
+              onPress={async () => { // Make onPress async
+                setIsAiLoading(true);
+                setAiErrorMessage(null); // Clear previous errors
+                setAiGeneratedProducts([]); // Clear previous results
+
+                try {
+                  const generated = await fetchAiCuratedProducts(
+                    aiSelectedBrands,
+                    aiPersonaStyle,
+                    aiPersonaBudget,
+                    aiLookingFor
+                  );
+                  setAiGeneratedProducts(generated);
+                  setShowAiCurateView('results');
+                  // Push history state for AI Curation results
+                  if (typeof window !== 'undefined' && window.history && window.history.pushState) {
+                    window.history.pushState({ page: 'aiCurateResults' }, '', '?view=ai-results');
+                  }
+                } catch (error) {
+                  console.error("Error during AI Curation:", error);
+                  setAiErrorMessage(error.message || "An unexpected error occurred while curating products.");
+                  setShowAiCurateView('results'); // Still go to results view to show the error
+                   if (typeof window !== 'undefined' && window.history && window.history.pushState) {
+                    window.history.pushState({ page: 'aiCurateResults', error: true }, '', '?view=ai-results&error=true');
+                  }
+                } finally {
+                  setIsAiLoading(false);
+                }
+              }}
+            >
+              {isAiLoading ? (
+                <Text style={styles.ultraModernPrimaryButtonText}>Curating...</Text>
+              ) : (
+                <Text style={styles.ultraModernPrimaryButtonText}>Curate My Shopping Bundle</Text>
+              )}
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+      ) : showAiCurateView === 'results' ? (
+        // AI Curation Results View (To be built next)
+        <View style={styles.modernProductGrid}> 
+          <View style={styles.ultraModernMainHeader}>
+            <View style={styles.mainHeaderContent}>
+              <View style={styles.brandSection}>
+                <Text style={styles.ultraModernBrandLabel}>AI CURATED FOR YOU</Text>
+                <Text style={styles.ultraModernBrandTitle}>Your Personal Collection</Text>
+                <Text style={styles.ultraModernBrandTagline}>
+                  {aiGeneratedProducts.length} products • Based on your preferences: {aiSelectedBrands.join(', ')}, {aiPersonaStyle}, {aiPersonaBudget}
+                </Text>
+              </View>
+              <View style={styles.ultraModernProductHeaderControls}>
+                <TouchableOpacity 
+                  style={styles.ultraModernBackButton}
+                  onPress={() => {
+                    setShowAiCurateView('form'); // Go back to the form
+                     if (typeof window !== 'undefined' && window.history && window.history.pushState) {
+                      window.history.pushState({ page: 'aiCurateForm' }, '', '?view=ai-curate');
+                    }
+                  }}
+                >
+                  <Text style={styles.ultraModernBackButtonText}>← Edit Preferences</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+          {isAiLoading ? (
+            <View style={styles.loadingContainer}>
+              <Animated.View style={styles.loadingPulse} />
+              <Text style={styles.loadingText}>Generating your curated collection...</Text>
+            </View>
+          ) : aiGeneratedProducts.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyPrimary}>AI Couldn't Find Matches</Text>
+              <Text style={styles.emptySecondary}>Please try adjusting your preferences.</Text>
+            </View>
+          ) : (
+            <View style={styles.productGrid}>
+              {aiGeneratedProducts.map((product) => (
+                <View key={product.id} style={styles.modernProductCard}>
+                  {/* Using existing product card structure */}
+                  <View style={styles.productImageContainer}>
+                    <Image
+                      source={{ uri: product.image }}
+                      style={styles.productImage}
+                      resizeMode="cover"
+                    />
+                    <TouchableOpacity style={styles.favoriteButton}>
+                      <Text style={styles.favoriteIcon}>♡</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.productInfo}>
+                    <Text style={styles.brandName}>{product.brand}</Text>
+                    <Text style={styles.productName} numberOfLines={2}>{product.title}</Text>
+                    <View style={styles.priceRow}>
+                      <Text style={styles.currentPrice}>{product.price}</Text>
+                      <Text style={styles.rating}>★ {product.rating}</Text>
+                    </View>
+                    {product.whyBuyThis && (
+                      <View style={styles.whyBuyThisContainer}>
+                        <Text style={styles.whyBuyThisText}>{product.whyBuyThis}</Text>
+                      </View>
+                    )}
+                    <View style={styles.productCardButtonContainer}>
+                      <TouchableOpacity
+                        style={[styles.minimalistButtonShared, styles.minimalistButtonPrimary]}
+                        onPress={() => openExternalLink(product.affiliateUrl)}
+                      >
+                        <Text style={[styles.buttonTextShared, styles.buttonTextPrimary]}>Shop on Brand Website</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.minimalistButtonShared, styles.minimalistButtonSecondary]}
+                        onPress={() => alert('The Curator Agent will assist you with this purchase soon!')}
+                      >
+                        <Text style={[styles.buttonTextShared, styles.buttonTextSecondary]}>Shop with Curator Agent</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -2227,2748 +3626,2315 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.light,
+    backgroundColor: '#FFFFFF',
   },
-  
-  // Update ticker styles for luxury look
-  tickerContainer: {
-    marginHorizontal: 20,
-    marginBottom: 15,
-    marginTop: 5,
-    backgroundColor: COLORS.light,
-    borderRadius: 8,
-    shadowColor: COLORS.primary,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    zIndex: 2,
-    borderWidth: 1,
-    borderColor: COLORS.highlight,
-  },
-  tickerProgress: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    paddingTop: 8,
-    paddingBottom: 4,
-  },
-  tickerProgressDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: COLORS.highlight,
-    marginHorizontal: 3,
-  },
-  tickerProgressDotActive: {
-    backgroundColor: COLORS.primary,
-  },
-  tickerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
-  tickerIconContainer: {
-    marginRight: 12,
-  },
-  tickerIcon: {
-    fontSize: 18,
-    color: COLORS.primary,
-  },
-  tickerTextContainer: {
-    flex: 1,
-  },
-  tickerLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-    letterSpacing: 1.5,
-    marginBottom: 4,
-    color: COLORS.accent2,
-  },
-  tickerText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: COLORS.primary,
-    lineHeight: 18,
-  },
-  tickerDark: {
-    backgroundColor: COLORS.darkGray,
-    borderColor: '#333',
-  },
-  tickerTextDark: {
-    color: COLORS.light,
-  },
-  
-  header: {
-    backgroundColor: COLORS.light,
-    padding: 20,
-    paddingTop: 40,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 5,
-    zIndex: 10,
-  },
-  headerContent: {
-    marginBottom: 20,
-  },
-  appTitle: {
-    fontSize: 28,
-    fontWeight: '300', // More elegant thin font
-    color: COLORS.primary,
-    letterSpacing: 1, // More spacing for luxury look
-    textTransform: 'lowercase', // Luxury brands often use lowercase
-  },
-  appSubtitle: {
-    fontSize: 14,
-    fontWeight: '300',
-    color: COLORS.accent2,
-    marginTop: 4,
-    letterSpacing: 0.5,
-  },
-  searchContainer: {
-    marginBottom: 20,
-  },
-  searchInputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 5,
-  },
-  searchBar: {
-    flex: 1,
-    height: 48,
-    backgroundColor: COLORS.lightGray,
-    borderRadius: 4, // Even more subtle radius
-    paddingHorizontal: 16,
-    fontSize: 16,
-    color: COLORS.primary,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    fontWeight: '300', // Thinner text for luxury
-  },
-  searchButton: {
-    marginLeft: 10,
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: 20,
-    height: 48,
-    borderRadius: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  searchButtonText: {
-    color: COLORS.light,
-    fontSize: 14,
-    fontWeight: '400',
-    letterSpacing: 0.5,
-  },
-  
-  // Social proof header
-  socialProofHeader: {
-    backgroundColor: COLORS.primary,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-    marginBottom: 20,
-  },
-  socialProofText: {
-    color: COLORS.light,
-    fontSize: 15,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-  
-  // Selection Controls
-  selectionControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 15,
-    marginTop: 5,
-  },
-  selectionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    borderRadius: 4,
-    flex: 1,
-    marginRight: 10,
-  },
-  lifeMomentButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.secondary,
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    borderRadius: 4,
-    flex: 1,
-  },
-  selectionButtonText: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: COLORS.light,
-    flex: 1,
-    letterSpacing: 0.3,
-  },
-  lifeMomentButtonText: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: COLORS.light,
-    flex: 1,
-    letterSpacing: 0.3,
-  },
-  selectionEmoji: {
-    fontSize: 16,
-    marginLeft: 8,
-  },
-  
-  // Selection Panel Styles
-  selectionPanel: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 1000,
-  },
-  panelBackdrop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  panelContent: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: COLORS.light,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-    paddingTop: 10,
-  },
-  panelHandle: {
-    width: 50,
-    height: 5,
-    backgroundColor: '#e0e0e0',
-    borderRadius: 2.5,
-    alignSelf: 'center',
-    marginBottom: 15,
-  },
-  panelHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  panelTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-  },
-  closePanel: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: COLORS.lightGray,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  closePanelText: {
-    fontSize: 24,
-    color: COLORS.midGray,
-    lineHeight: 30,
-  },
-  panelSections: {
-    marginBottom: 20,
-  },
-  panelSection: {
-    marginBottom: 25,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-    marginBottom: 15,
-  },
-  personaGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  momentGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  personaItem: {
-    backgroundColor: COLORS.light,
-    padding: 15,
-    borderRadius: 16,
-    marginBottom: 12,
-    width: '48%',
-    shadowColor: COLORS.primary,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    borderWidth: 1,
-    borderColor: '#eaeaea',
-    alignItems: 'center',
-  },
-  emojiCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  itemEmoji: {
-    fontSize: 24,
-  },
-  itemName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-    textAlign: 'center',
-  },
-  selectedBadge: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  selectedBadgeText: {
-    color: COLORS.light,
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  panelFooter: {
-    paddingVertical: 15,
-    alignItems: 'center',
-  },
-  applyButton: {
-    backgroundColor: COLORS.secondary,
-    paddingHorizontal: 25,
-    paddingVertical: 16,
-    borderRadius: 30,
-    width: '100%',
-    alignItems: 'center',
-  },
-  applyButtonText: {
-    color: COLORS.light,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  
-  // Active filters
-  activeFiltersContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 20,
-  },
-  filterTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 30,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    marginRight: 10,
-    marginBottom: 10,
-  },
-  filterTagEmoji: {
-    fontSize: 16,
-    marginRight: 5,
-  },
-  filterTagText: {
-    color: COLORS.light,
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  removeFilterButton: {
-    marginLeft: 8,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  removeFilterText: {
-    color: COLORS.light,
-    fontSize: 14,
-    fontWeight: 'bold',
-    lineHeight: 20,
-  },
-  
-  // Content
   content: {
     flex: 1,
-    padding: 20,
+    paddingHorizontal: 0,
   },
-  productList: {
-    gap: 25,
+  discoveryContainer: {
+    paddingHorizontal: 40,
+    paddingVertical: 0,
+    backgroundColor: '#FFFFFF',
   },
-  loadingContainer: {
-    padding: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingPulse: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: COLORS.secondary,
-    marginBottom: 10,
-  },
-  loadingText: {
-    fontSize: 16,
-    color: COLORS.midGray,
-  },
-  errorContainer: {
-    padding: 20,
-    backgroundColor: COLORS.light,
-    borderRadius: 12,
-    marginTop: 20,
-    borderWidth: 1,
-    borderColor: '#ffcccc',
-  },
-  errorText: {
-    color: COLORS.accent1,
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  emptyContainer: {
-    padding: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  emptyPrimary: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.primary,
-    textAlign: 'center',
-    marginBottom: 10,
-  },
-  emptySecondary: {
-    fontSize: 16,
-    color: COLORS.accent2,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  
-  // Product card styles
-  productCard: {
-    backgroundColor: COLORS.light,
-    borderRadius: 4,
-    marginBottom: 25,
-    shadowColor: COLORS.primary,
-    shadowOffset: {
-      width: 0,
-      height: 3,
-    },
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    elevation: 3,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  trendingProductCard: {
-    height: 200,
-  },
-  cardContent: {
-    padding: 20,
-  },
-  cardContentBack: {
-    padding: 20,
-    minHeight: 380,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 10,
-  },
-  cardHeaderTextContainer: {
-    flex: 1,
-  },
-  productTitle: {
-    fontSize: 18,
-    fontWeight: '400',
-    color: COLORS.primary,
-    marginBottom: 5,
-    lineHeight: 24,
-    letterSpacing: 0.3,
-  },
-  priceRatingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 5,
-  },
-  price: {
-    fontSize: 18,
-    fontWeight: '500',
-    color: COLORS.primary,
-    marginRight: 10,
-  },
-  ratingContainer: {
-    backgroundColor: COLORS.lightGray,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
-  },
-  rating: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.midGray,
-  },
-  cardDivider: {
-    height: 1,
-    backgroundColor: '#eaeaea',
-    marginVertical: 10,
-  },
-  description: {
-    fontSize: 15,
-    color: COLORS.midGray,
-    lineHeight: 22,
-    marginBottom: 16,
-  },
-  socialProofSection: {
-    marginBottom: 15,
-  },
-  whyBuyContainer: {
-    marginBottom: 10,
-  },
-  whyBuyLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.primary,
-    marginBottom: 4,
-  },
-  whyBuyText: {
-    fontSize: 14,
-    color: COLORS.midGray,
-    lineHeight: 20,
-    fontStyle: 'italic',
-  },
-  insightPreview: {
-    marginTop: 10,
-  },
-  insightPreviewItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 5,
-  },
-  insightDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 5,
-  },
-  insightPreviewText: {
-    fontSize: 13,
-    color: COLORS.midGray,
-  },
-  insightPreviewMore: {
-    fontSize: 13,
-    color: COLORS.secondary,
-    fontWeight: '600',
-    marginTop: 3,
-  },
-  cardFooter: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: 10,
-  },
-  viewButton: {
-    backgroundColor: COLORS.secondary,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 25,
-  },
-  viewButtonText: {
-    color: COLORS.light,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  
-  // Card back styles
-  closeButton: {
-    position: 'absolute',
-    top: 15,
-    right: 15,
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: COLORS.lightGray,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 10,
-  },
-  closeButtonText: {
-    fontSize: 20,
-    color: COLORS.midGray,
-    fontWeight: 'bold',
-  },
-  detailsTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-    marginBottom: 20,
-    marginTop: 10,
-  },
-  insightCardsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  insightCard: {
-    width: '48%',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 10,
-    alignItems: 'center',
-  },
-  insightCardValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 5,
-  },
-  insightCardLabel: {
-    fontSize: 14,
-    color: COLORS.midGray,
-    textAlign: 'center',
-  },
-  verdictSection: {
-    marginBottom: 20,
-    backgroundColor: COLORS.lightGray,
-    padding: 15,
-    borderRadius: 12,
-  },
-  detailsSubtitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.primary,
-    marginBottom: 8,
-  },
-  verdictText: {
-    fontSize: 15,
-    color: COLORS.midGray,
-    lineHeight: 22,
-  },
-  socialActions: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: 20,
-  },
-  socialActionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.lightGray,
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    borderRadius: 20,
-    marginHorizontal: 5,
-  },
-  socialActionText: {
-    fontSize: 14,
-    color: COLORS.primary,
-    fontWeight: '600',
-    marginLeft: 5,
-  },
-  buyButton: {
-    backgroundColor: COLORS.accent2,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderRadius: 30,
-    alignItems: 'center',
-  },
-  buyButtonText: {
-    color: COLORS.light,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  
-  // Trending section styles
-  trendingSection: {
-    marginBottom: 25,
-    backgroundColor: COLORS.light,
-    borderRadius: 16,
-    padding: 15,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-  },
-  trendingHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  trendingBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
-    marginRight: 10,
-  },
-  trendingBadgeText: {
-    color: COLORS.light,
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  trendingTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-  },
-  trendingSubtitle: {
-    fontSize: 15,
-    color: COLORS.midGray,
-    marginBottom: 15,
-  },
-  trendingScroll: {
-    paddingBottom: 5,
-  },
-  trendingCard: {
-    backgroundColor: COLORS.light,
-    borderRadius: 16,
-    marginRight: 12,
-    shadowColor: COLORS.primary,
-    shadowOffset: {
-      width: 0,
-      height: 3,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#eaeaea',
-    width: 220,
-  },
-  trendingCardContent: {
-    padding: 15,
-  },
-  trendingImagePlaceholder: {
-    height: 120,
-    backgroundColor: COLORS.secondary,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  trendingEmoji: {
-    fontSize: 50,
-  },
-  trendingProductTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-    marginBottom: 8,
-    height: 40,
-  },
-  trendingPriceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  trendingPrice: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: COLORS.secondary,
-  },
-  trendingRatingText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: COLORS.midGray,
-  },
-  trendingSocialProof: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  trendingAvatarGroup: {
-    flexDirection: 'row',
-    marginRight: 8,
-  },
-  trendingAvatar: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 1,
-    borderColor: COLORS.light,
-  },
-  trendingSocialText: {
-    fontSize: 12,
-    color: COLORS.midGray,
-  },
-  trendingViewButton: {
-    backgroundColor: COLORS.secondary,
-    borderRadius: 20,
-    paddingVertical: 8,
-    alignItems: 'center',
-  },
-  trendingViewButtonText: {
-    color: COLORS.light,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  
-  // Visual Category Entry Points
-  categoryEntryContainer: {
-    marginBottom: 15,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  categoryScroll: {
-    paddingHorizontal: 15,
-  },
-  categoryStory: {
-    alignItems: 'center',
-    marginRight: 16,
-    width: 75,
-  },
-  categoryStoryRing: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    padding: 2,
-    backgroundColor: COLORS.light,
-    backgroundImage: 'linear-gradient(45deg, #833AB4, #FD1D1D, #FCAF45)',
-  },
-  categoryStoryInner: {
-    flex: 1,
-    backgroundColor: COLORS.light,
-    borderRadius: 33,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  categoryStoryEmoji: {
-    fontSize: 30,
-  },
-  categoryStoryName: {
-    fontSize: 12,
-    color: COLORS.darkGray,
-    marginTop: 4,
-    textAlign: 'center',
-  },
-  
-  // TrendRadar
+  // TrendRadar styles
   trendRadarContainer: {
-    marginBottom: 25,
-  },
-  sectionHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  sectionTitleContainer: {
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 28,
-    fontWeight: '600',
-    color: COLORS.primary,
-    marginBottom: 8,
-  },
-  sectionSubtitle: {
-    fontSize: 17,
-    fontWeight: '400',
-    color: COLORS.accent1,
+    marginBottom: 80,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 0,
+    padding: 0,
+    shadowColor: 'transparent',
   },
   trendRadarGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    marginTop: 20,
+    gap: 24,
   },
-  trendRadarItem: {
+  trendRadarCard: {
     width: '48%',
-    marginBottom: 20,
-    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    marginBottom: 24,
     overflow: 'hidden',
-    backgroundColor: COLORS.light,
-    shadowColor: COLORS.primary,
+    borderWidth: 1,
+    borderColor: '#E8E8E8',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.06,
     shadowRadius: 12,
+    elevation: 4,
   },
   trendRadarImageContainer: {
-    height: 160,
+    height: 240,
+    position: 'relative',
+    backgroundColor: '#F8F8F8',
   },
   trendRadarImage: {
     width: '100%',
     height: '100%',
-  },
-  trendRadarContent: {
-    padding: 16,
-  },
-  trendRadarCategory: {
-    fontSize: 13,
-    color: COLORS.accent1,
-    marginBottom: 4,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  trendRadarTitle: {
-    fontSize: 17,
-    fontWeight: '500',
-    color: COLORS.primary,
-    marginBottom: 8,
-  },
-  trendRadarChange: {
-    fontSize: 14,
-    color: COLORS.primary,
-    fontWeight: '500',
-    backgroundColor: COLORS.highlight,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 12,
-    alignSelf: 'flex-start',
-  },
-  
-  // Social Bundles
-  socialBundlesContainer: {
-    marginBottom: 25,
-  },
-  bundlesScroll: {
-    paddingLeft: 15,
-    paddingRight: 5,
-  },
-  bundleCard: {
-    width: 220,
-    marginRight: 10,
-    borderRadius: 8,
-    overflow: 'hidden',
-    backgroundColor: COLORS.light,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  bundleCover: {
-    width: '100%',
-    height: 220,
-  },
-  bundleCreatorContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-  },
-  bundleCreatorAvatar: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-  },
-  bundleTextContainer: {
-    marginLeft: 10,
-    flex: 1,
-  },
-  bundleTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.darkGray,
-    marginBottom: 2,
-  },
-  bundleCreatorName: {
-    fontSize: 12,
-    color: COLORS.midGray,
-  },
-  
-  // Shop by Vibe
-  shopByVibeContainer: {
-    marginBottom: 30,
-    backgroundColor: COLORS.light,
-    borderRadius: 20,
-    padding: 20,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-  },
-  moodsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  moodCard: {
-    width: '48%',
-    height: 150,
-    backgroundColor: COLORS.light,
-    borderRadius: 16,
-    marginBottom: 15,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  moodCover: {
-    width: '100%',
-    height: '100%',
-  },
-  moodOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  moodEmoji: {
-    fontSize: 32,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  moodName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.light,
-    textAlign: 'center',
-  },
-  
-  // Enhanced Hero
-  enhancedHeroContainer: {
-    marginBottom: 25,
-    backgroundColor: COLORS.light,
-    borderRadius: 16,
-    padding: 0,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    overflow: 'hidden',
-    position: 'relative',
-    zIndex: 1, // Add this line to ensure proper layering
-  },
-  heroImageStrip: {
-    height: 180,
-    flexDirection: 'row',
-    backgroundColor: COLORS.primary,
-  },
-  heroImage: {
-    width: '20%',
-    height: '100%',
-  },
-  heroContent: {
-    padding: 20,
-    paddingBottom: 30,
-    backgroundColor: 'rgba(0,0,0,0.8)',
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-  heroTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: COLORS.light,
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  heroSubtitle: {
-    fontSize: 16,
-    color: '#CCCCCC',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  getStartedButton: {
-    backgroundColor: COLORS.secondary,
-    paddingHorizontal: 30,
-    paddingVertical: 14,
-    borderRadius: 30,
-    alignItems: 'center',
-    alignSelf: 'center',
-    width: '80%',
-    maxWidth: 300,
-  },
-  getStartedButtonText: {
-    color: COLORS.light,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  closeHeroButton: {
-    position: 'absolute',
-    top: 15,
-    right: 15,
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 10,
-  },
-  closeHeroText: {
-    fontSize: 20,
-    color: COLORS.light,
-    fontWeight: 'bold',
-    lineHeight: 22,
-  },
-  
-  // Dark mode
-  containerDark: {
-    backgroundColor: COLORS.darkGray,
-  },
-  headerDark: {
-    backgroundColor: COLORS.darkGray,
-  },
-  appTitleDark: {
-    color: COLORS.light,
-  },
-  appSubtitleDark: {
-    color: COLORS.midGray,
-  },
-  searchInputLoading: {
-    borderColor: COLORS.accent2,
-  },
-  searchBarDark: {
-    backgroundColor: COLORS.darkGray,
-    borderColor: '#eaeaea',
-  },
-  contentDark: {
-    backgroundColor: COLORS.darkGray,
-  },
-  loadingTextDark: {
-    color: COLORS.light,
-  },
-  errorContainerDark: {
-    backgroundColor: COLORS.darkGray,
-    borderColor: '#ffcccc',
-  },
-  emptyPrimaryDark: {
-    color: COLORS.light,
-  },
-  emptySecondaryDark: {
-    color: COLORS.midGray,
-  },
-  
-  // Discovery Container
-  discoveryContainer: {
-    marginBottom: 20,
-  },
-  
-  // Header
-  headerTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 5,
-  },
-  darkModeToggle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: COLORS.lightGray,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  darkModeIcon: {
-    fontSize: 18,
-  },
-  
-  // Search Animation
-  searchInputLoading: {
-    borderWidth: 2,
-    borderColor: COLORS.secondary,
-    borderRadius: 12,
-  },
-  searchButtonLoading: {
-    backgroundColor: COLORS.accent2,
-  },
-  
-  // Loading Animation 
-  loadingPulse: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.secondary,
-    marginBottom: 15,
-    opacity: 0.7,
-  },
-  
-  // Category styles
-  categoryEntryContainer: {
-    marginBottom: 30,
-  },
-  categoryScroll: {
-    paddingVertical: 10,
-  },
-  categoryItem: {
-    padding: 15,
-    borderRadius: 16,
-    marginRight: 15,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#eaeaea',
-    width: 100,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-  },
-  categoryIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  categoryEmoji: {
-    fontSize: 28,
-  },
-  categoryName: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-    textAlign: 'center',
-  },
-  
-  // TrendRadar styles
-  trendRadarContainer: {
-    marginBottom: 30,
-    backgroundColor: COLORS.light,
-    borderRadius: 20,
-    padding: 20,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-  },
-  sectionHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  sectionTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  sectionIcon: {
-    fontSize: 20,
-    marginRight: 10,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-  },
-  sectionAction: {
-    fontSize: 14,
-    color: COLORS.secondary,
-    fontWeight: '600',
-  },
-  sectionSubtitle: {
-    fontSize: 15,
-    color: COLORS.midGray,
-    marginBottom: 20,
-  },
-  trendRadarList: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  trendRadarItem: {
-    width: '48%',
-    backgroundColor: COLORS.light,
-    borderRadius: 16,
-    marginBottom: 15,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#eaeaea',
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-  },
-  trendRadarImageContainer: {
-    height: 120,
-    position: 'relative',
-  },
-  trendRadarImage: {
-    width: '100%',
-    height: '100%',
+    objectFit: 'cover',
   },
   viralBadge: {
     position: 'absolute',
-    top: 10,
-    right: 10,
-    backgroundColor: COLORS.accent1,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 10,
+    top: 16,
+    left: 16,
+    backgroundColor: '#EF4444',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    shadowColor: '#EF4444',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
   viralBadgeText: {
-    color: COLORS.light,
-    fontSize: 12,
-    fontWeight: 'bold',
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
+  trendOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderTopLeftRadius: 12,
+  },
+  trendChangeText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '600',
   },
   trendRadarContent: {
-    padding: 12,
+    padding: 20,
+  },
+  trendRadarCategory: {
+    fontSize: 11,
+    color: '#8B5CF6',
+    fontWeight: '500',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 6,
   },
   trendRadarTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-    marginBottom: 4,
+    fontWeight: '400',
+    color: '#1A1A1A',
+    lineHeight: 22,
+    letterSpacing: -0.1,
   },
-  trendRadarCategory: {
-    fontSize: 14,
-    color: COLORS.midGray,
-    marginBottom: 6,
+  // Social bundles styles
+  ultraModernSocialBundlesContainer: {
+    marginBottom: 80,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 0,
+    padding: 0,
+    shadowColor: 'transparent',
   },
-  trendRadarStats: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  ultraModernBundlesScroll: {
+    paddingVertical: 10,
+    marginTop: 20,
   },
-  trendRadarChange: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginRight: 5,
-  },
-  highChangeText: {
-    color: COLORS.accent2,
-  },
-  normalChangeText: {
-    color: COLORS.secondary,
-  },
-  trendRadarPeriod: {
-    fontSize: 12,
-    color: COLORS.midGray,
-  },
-  
-  // Shop by Vibe styles
-  shopByVibeContainer: {
-    marginBottom: 30,
-    backgroundColor: COLORS.light,
-    borderRadius: 20,
-    padding: 20,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-  },
-  moodsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  moodCard: {
-    width: '48%',
-    height: 150,
-    backgroundColor: COLORS.light,
-    borderRadius: 16,
-    marginBottom: 15,
+  ultraModernBundleCard: {
+    width: Platform.OS === 'web' ? 'auto' : '31%', // Responsive width
+    aspectRatio: '4/5', // Elegant proportions
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20, // More sophisticated rounded corners
     overflow: 'hidden',
+    borderWidth: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
+    elevation: 8,
     position: 'relative',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', // Smooth hover effect
+    cursor: 'pointer',
   },
-  moodCover: {
+  ultraModernBundleImageContainer: {
+    height: '60%', // Image takes up 60% of card
+    position: 'relative',
+    backgroundColor: '#F8F8F8',
+  },
+  ultraModernBundleCover: {
     width: '100%',
     height: '100%',
+    objectFit: 'cover',
+    filter: 'contrast(1.1) saturate(1.2)', // Enhanced image quality
   },
-  moodOverlay: {
+  ultraModernBundleOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
+    opacity: 0.3, // Subtle overlay
   },
-  moodEmoji: {
-    fontSize: 32,
-    marginBottom: 8,
-    textAlign: 'center',
+  ultraModernBundleContent: {
+    height: '40%', // Content takes up 40% of card
+    padding: 24,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
   },
-  moodName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.light,
-    textAlign: 'center',
+  ultraModernBundleTitle: {
+    fontSize: 20,
+    fontWeight: '400',
+    color: '#1A1A1A',
+    marginBottom: 12,
+    lineHeight: 26,
+    letterSpacing: -0.2,
   },
-  
-  // Social bundles styles
-  socialBundlesContainer: {
-    marginBottom: 30,
-    backgroundColor: COLORS.light,
-    borderRadius: 20,
-    padding: 20,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-  },
-  bundlesScroll: {
-    paddingVertical: 10,
-  },
-  bundleCard: {
-    width: 250,
-    backgroundColor: COLORS.light,
-    borderRadius: 16,
-    marginRight: 15,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#eaeaea',
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-  },
-  bundleCover: {
-    width: '100%',
-    height: 140,
-  },
-  bundleContent: {
-    padding: 15,
-  },
-  bundleTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-    marginBottom: 10,
-  },
-  bundleCreatorRow: {
+  ultraModernBundleCreatorRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 8,
   },
-  creatorAvatar: {
+  ultraModernCreatorAvatar: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    marginRight: 8,
+    marginRight: 10,
+    backgroundColor: '#F0F0F0',
   },
-  creatorName: {
+  ultraModernCreatorName: {
     fontSize: 14,
-    fontWeight: '500',
-    color: COLORS.primary,
-    marginRight: 5,
+    fontWeight: '400',
+    color: '#666666',
+    marginRight: 6,
   },
-  verifiedBadge: {
-    fontSize: 12,
-    color: COLORS.secondary,
-    backgroundColor: `${COLORS.secondary}20`,
+  ultraModernVerifiedBadge: {
+    fontSize: 10,
+    color: '#6366F1',
+    backgroundColor: '#6366F115',
     width: 16,
     height: 16,
     borderRadius: 8,
     textAlign: 'center',
     lineHeight: 16,
   },
-  bundleStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  bundleStat: {
+  ultraModernBundleProductCount: {
     fontSize: 12,
-    color: COLORS.midGray,
+    color: '#999999',
+    fontWeight: '400',
   },
-  
-  // Dark mode enhancements
-  containerDark: {
-    backgroundColor: '#121212',
+  shopByVibeContainer: {
+    marginBottom: 80,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 0,
+    padding: 0,
+    shadowColor: 'transparent',
   },
-  headerDark: {
-    backgroundColor: '#1A1A1A',
-    borderBottomColor: '#333',
-  },
-  contentDark: {
-    backgroundColor: '#121212',
-  },
-  appTitleDark: {
-    color: COLORS.light,
-  },
-  appSubtitleDark: {
-    color: '#BBBBBB',
-  },
-  searchBarDark: {
-    backgroundColor: '#2A2A2A',
-    borderColor: '#444',
-    color: COLORS.light,
-  },
-  loadingTextDark: {
-    color: '#BBBBBB',
-  },
-  errorContainerDark: {
-    backgroundColor: '#2A2A2A',
-    borderColor: COLORS.accent1 + '40',
-  },
-  emptyContainerDark: {
-    backgroundColor: '#1A1A1A',
-  },
-  emptyPrimaryDark: {
-    color: COLORS.light,
-  },
-  emptySecondaryDark: {
-    color: '#BBBBBB',
-  },
-  
-  // Add styles for vertical persona cycler
-  personaCyclerContainer: {
-    position: 'fixed',
-    right: 0,
-    top: 120,
-    bottom: 20,
-    width: 280,
-    backgroundColor: COLORS.light,
-    borderTopLeftRadius: 4,
-    borderBottomLeftRadius: 4,
-    zIndex: 100,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: -2, height: 0 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    padding: 15,
-    display: 'flex',
-    flexDirection: 'column',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRightWidth: 0,
-  },
-  personaCyclerHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 15,
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eaeaea',
-  },
-  personaCyclerTitle: {
+  sectionSubtitle: {
     fontSize: 16,
-    fontWeight: '400',
-    color: COLORS.primary,
-    letterSpacing: 0.5,
-  },
-  closeCyclerButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: COLORS.lightGray,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  closeCyclerText: {
-    fontSize: 18,
-    color: COLORS.accent2,
-    lineHeight: 22,
-  },
-  personaList: {
-    flex: 1,
-  },
-  personaCyclerItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 4,
-    marginBottom: 10,
-    backgroundColor: COLORS.light,
-    borderWidth: 1,
-    borderColor: '#eaeaea',
-  },
-  personaCyclerEmoji: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  personaCyclerEmojiText: {
-    fontSize: 20,
-  },
-  personaCyclerInfo: {
-    flex: 1,
-  },
-  personaCyclerName: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: COLORS.primary,
-    marginBottom: 4,
-  },
-  personaCyclerDesc: {
-    fontSize: 12,
-    color: COLORS.accent2,
-    lineHeight: 16,
-  },
-  personaSelectedBadge: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  personaSelectedText: {
-    color: COLORS.light,
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  cycleThroughButton: {
-    backgroundColor: COLORS.primary,
-    paddingVertical: 12,
-    borderRadius: 4,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  cycleThroughText: {
-    color: COLORS.light,
-    fontSize: 14,
-    fontWeight: '400',
-    letterSpacing: 0.5,
-  },
-  
-  // New moment cycler container
-  momentCyclerContainer: {
-    position: 'fixed',
-    right: 0,
-    top: 120,
-    bottom: 20,
-    width: 280,
-    backgroundColor: COLORS.light,
-    borderTopLeftRadius: 4,
-    borderBottomLeftRadius: 4,
-    zIndex: 100,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: -2, height: 0 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    padding: 15,
-    display: 'flex',
-    flexDirection: 'column',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRightWidth: 0,
-  },
-  
-  // Unified cycler component styles
-  cyclerHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 15,
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eaeaea',
-  },
-  cyclerTitle: {
-    fontSize: 16,
-    fontWeight: '400',
-    color: COLORS.primary,
-    letterSpacing: 0.5,
-  },
-  cyclerList: {
-    flex: 1,
-  },
-  cyclerItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 4,
-    marginBottom: 10,
-    backgroundColor: COLORS.light,
-    borderWidth: 1,
-    borderColor: '#eaeaea',
-  },
-  cyclerEmoji: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  cyclerEmojiText: {
-    fontSize: 20,
-  },
-  cyclerInfo: {
-    flex: 1,
-  },
-  cyclerName: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: COLORS.primary,
-    marginBottom: 4,
-  },
-  cyclerDesc: {
-    fontSize: 12,
-    color: COLORS.accent2,
-    lineHeight: 16,
-  },
-  cyclerSelectedBadge: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  cyclerSelectedText: {
-    color: COLORS.light,
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  
-  // Uniqlo-inspired styles
-  uniqloHeader: {
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    marginBottom: 10,
-  },
-  uniqloHeaderText: {
-    fontSize: 12,
     fontWeight: '600',
-    letterSpacing: 1,
     color: COLORS.darkGray,
+    marginBottom: 10,
   },
-  uniqloStyleHeader: {
-    padding: 12,
-    paddingBottom: 4,
+  moodsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginTop: 20,
+    gap: 24,
   },
-  uniqloStyleCategory: {
-    fontSize: 11,
-    color: COLORS.midGray,
-    marginBottom: 4,
-    letterSpacing: 1,
+  moodCard: {
+    width: '48%',
+    height: 200, // Increased height for better proportions
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12, // More modern rounded corners
+    marginBottom: 0,
+    overflow: 'hidden',
+    borderWidth: 0, // Remove border for cleaner look
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08, // Stronger shadow for better depth
+    shadowRadius: 12,
+    elevation: 4,
+    position: 'relative',
   },
-  
-  // AR button style
-  arButton: {
-    position: 'absolute',
-    top: 12,
-    right: 70, // Position next to Preview button
-    backgroundColor: 'rgba(255,69,0,0.8)', // Orange-red for AR
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 4,
+  moodCover: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#F8F8F8',
+    objectFit: 'cover', // For web - ensures proper aspect ratio
   },
-  arButtonText: {
-    color: COLORS.light,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  
-  // WebXR AR Viewer styles
-  arOverlay: {
+  moodOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-  },
-  arContent: {
-    width: '90%',
-    maxWidth: 600,
-    backgroundColor: COLORS.light,
-    borderRadius: 12,
-    padding: 20,
-    alignItems: 'center',
-  },
-  arTitle: {
-    fontSize: 20,
-    fontWeight: '500',
-    marginBottom: 20,
-    color: COLORS.darkGray,
-  },
-  arViewport: {
-    width: '100%',
-    height: 400,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 8,
-    marginBottom: 20,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  arLoading: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  arLoadingText: {
-    color: COLORS.midGray,
-    marginBottom: 10,
-  },
-  arReadyContainer: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    background: 'linear-gradient(135deg, rgba(99,102,241,0.8), rgba(139,92,246,0.8))',
+    backgroundColor: 'rgba(99,102,241,0.8)', // fallback
   },
-  arEmoji: {
-    fontSize: 60,
-    marginBottom: 20,
-  },
-  arMessage: {
+  moodName: {
+    fontSize: 18,
+    fontWeight: '400',
+    color: '#FFFFFF',
     textAlign: 'center',
-    color: COLORS.darkGray,
-    marginBottom: 25,
-    lineHeight: 22,
+    marginBottom: 4,
+    letterSpacing: -0.2,
   },
-  arStartButton: {
-    backgroundColor: '#4CAF50',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 25,
-  },
-  arStartButtonText: {
-    color: COLORS.light,
-    fontWeight: '600',
-    fontSize: 16,
-  },
-  arActiveContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#000',
-  },
-  arActiveText: {
-    color: COLORS.light,
-    textAlign: 'center',
-    position: 'absolute',
-    top: 20,
-    left: 20,
-    right: 20,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    padding: 10,
-    borderRadius: 8,
-  },
-  arUnsupportedContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  arErrorEmoji: {
-    fontSize: 40,
-    marginBottom: 15,
-  },
-  arErrorText: {
-    textAlign: 'center',
-    color: '#D32F2F',
-    lineHeight: 22,
-  },
-  arActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-  },
-  arCloseButton: {
-    flex: 1,
-    backgroundColor: COLORS.lightGray,
-    paddingVertical: 12,
-    borderRadius: 6,
-    alignItems: 'center',
-    marginRight: 10,
-  },
-  arCloseText: {
-    color: COLORS.darkGray,
-    fontWeight: '600',
-  },
-  arHelpButton: {
-    flex: 1,
-    backgroundColor: COLORS.accent1,
-    paddingVertical: 12,
-    borderRadius: 6,
-    alignItems: 'center',
-  },
-  arHelpText: {
-    color: COLORS.light,
-    fontWeight: '600',
-  },
-  
-  // Clean price tag (Uniqlo style)
-  priceTag: {
-    position: 'absolute',
-    top: 12,
-    left: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 4,
-  },
-  priceTagText: {
-    color: COLORS.light,
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  
-  // Gesture hint styles
-  gestureHint: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    flex: 1,
-  },
-  gestureHintText: {
+  moodDescription: {
     fontSize: 12,
-    color: COLORS.midGray,
-    fontStyle: 'italic',
-  },
-  gestureHintContainer: {
-    alignItems: 'center',
-    paddingVertical: 15,
-  },
-  
-  // Specifications container styles
-  specsContainer: {
-    marginBottom: 24,
-    backgroundColor: COLORS.lightGray,
-    borderRadius: 8,
-    padding: 15,
-  },
-  specsTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.darkGray,
-    marginBottom: 12,
-  },
-  specsList: {
-    gap: 10,
-  },
-  specItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    paddingBottom: 8,
-  },
-  specLabel: {
-    fontSize: 14,
-    color: COLORS.midGray,
-  },
-  specValue: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: COLORS.darkGray,
-  },
-  
-  // Pagination styles
-  pagination: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 15,
-    marginBottom: 10,
-  },
-  paginationDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: COLORS.border,
-    marginHorizontal: 4,
-  },
-  paginationDotActive: {
-    backgroundColor: COLORS.accent1,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  swipeNavigation: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 5,
-    paddingHorizontal: 10,
-  },
-  swipeButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: COLORS.accent1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  swipeButtonDisabled: {
-    backgroundColor: COLORS.border,
-    opacity: 0.5,
-  },
-  swipeButtonText: {
-    color: COLORS.light,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  swipeIndicator: {
-    alignItems: 'center',
-  },
-  swipeIndicatorText: {
-    fontSize: 13,
-    color: COLORS.midGray,
-    fontStyle: 'italic',
-  },
-  
-  // Update TrendRadar container
-  trendRadarContainer: {
-    marginBottom: 25,
-    paddingVertical: 15,
-  },
-  
-  // Update SocialBundles container
-  socialBundlesContainer: {
-    marginBottom: 25,
-    paddingTop: 10,
-  },
-  
-  // Update exploreInfo for cleaner look
-  exploreInfo: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(255,255,255,0.95)',
-    padding: 8,
-  },
-  exploreCategory: {
-    fontSize: 10,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    color: COLORS.midGray,
-    marginBottom: 3,
-  },
-  exploreTitle: {
-    color: COLORS.darkGray,
-    fontSize: 13,
-    fontWeight: '500',
-    marginBottom: 3,
-  },
-  exploreChange: {
-    color: '#4CD964',
-    fontWeight: '500',
-    fontSize: 12,
-  },
-  
-  // Voice navigation styles
-  voiceNavContainer: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
-    zIndex: 1000,
-  },
-  voiceButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: COLORS.accent1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  voiceButtonActive: {
-    backgroundColor: COLORS.accent3,
-  },
-  voiceButtonIcon: {
-    fontSize: 24,
-    color: COLORS.light,
-  },
-  listeningIndicator: {
-    position: 'absolute',
-    bottom: 60,
-    right: 0,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 16,
-    minWidth: 100,
-    alignItems: 'center',
-  },
-  listeningText: {
-    color: COLORS.light,
-    fontSize: 14,
-  },
-  transcriptContainer: {
-    position: 'absolute',
-    bottom: 60,
-    right: 0,
-    backgroundColor: COLORS.light,
-    padding: 10,
-    borderRadius: 8,
-    minWidth: 200,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-  },
-  transcriptText: {
-    color: COLORS.darkGray,
-    fontSize: 14,
-  },
-  errorContainer: {
-    position: 'absolute',
-    bottom: 60,
-    right: 0,
-    backgroundColor: '#FFE5E5',
-    padding: 10,
-    borderRadius: 8,
-    minWidth: 200,
-  },
-  errorText: {
-    color: '#D32F2F',
-    fontSize: 14,
-  },
-  
-  // Enhanced AR styles
-  arLoading: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    flex: 1,
-  },
-  arLoadingText: {
-    color: COLORS.midGray,
-    marginBottom: 8,
-  },
-  arError: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  arErrorEmoji: {
-    fontSize: 40,
-    marginBottom: 15,
-  },
-  arErrorText: {
+    color: 'rgba(255,255,255,0.9)',
     textAlign: 'center',
-    color: '#D32F2F',
-    lineHeight: 20,
+    fontWeight: '300',
+    lineHeight: 16,
   },
-  arRetryButton: {
-    backgroundColor: '#4CAF50',
+  categoryEntryContainer: {
+    marginBottom: 20,
   },
-  arHelpButton: {
+  categoryScroll: {
+    paddingVertical: 10,
     marginTop: 10,
   },
-  arHelpText: {
-    color: COLORS.accent1,
-    fontSize: 14,
+  categoryItem: {
+    width: 120, // Fixed width instead of percentage for consistency
+    alignItems: 'center',
+    marginRight: 16,
+    marginBottom: 10,
   },
-  
-  // Floating persona selector styles
-  floatingPersonaContainer: {
+  categoryIcon: {
+    width: 80, // Increased size for better visibility
+    height: 80,
+    borderRadius: 16, // More modern rounded corners
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+    overflow: 'hidden', // Ensure images stay within bounds
+    backgroundColor: '#F8F8F8', // Fallback background
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  categoryEmoji: {
+    fontSize: 36,
+  },
+  categoryName: {
+    fontSize: 13,
+    fontWeight: '500', // Lighter weight
+    color: COLORS.darkGray,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  heroSection: {
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    backgroundColor: '#667eea', // fallback
+    padding: 60,
+    borderRadius: 0,
+    marginBottom: 60,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  heroContent: {
+    alignItems: 'center',
+    textAlign: 'center',
+  },
+  heroTitle: {
+    fontSize: 48,
+    fontWeight: '300',
+    color: '#FFFFFF',
+    marginBottom: 20,
+    letterSpacing: -1,
+    lineHeight: 56,
+    textAlign: 'center',
+  },
+  heroSubtitle: {
+    fontSize: 20,
+    fontWeight: '400',
+    color: 'rgba(255,255,255,0.9)',
+    marginBottom: 50,
+    lineHeight: 30,
+    textAlign: 'center',
+    maxWidth: 600,
+  },
+  heroStats: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 60,
+  },
+  heroStat: {
+    alignItems: 'center',
+  },
+  heroStatNumber: {
+    fontSize: 32,
+    fontWeight: '300',
+    color: '#FFFFFF',
+    marginBottom: 8,
+    letterSpacing: -0.5,
+  },
+  heroStatLabel: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: 'rgba(255,255,255,0.8)',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  backToDiscoveryButton: {
+    backgroundColor: COLORS.accent2,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 6,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  backToDiscoveryText: {
+    color: COLORS.light,
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  // Right Side Panel Styles (Lyst-inspired)
+  rightSidePanel: {
     position: 'absolute',
-    bottom: 20,
-    left: 20,
-    right: 20,
-    zIndex: 900,
-    backgroundColor: 'rgba(255,255,255,0.95)',
-    borderRadius: 12,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1000,
+  },
+  rightPanelContent: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    width: 400,
+    backgroundColor: '#FAFAFA',
+    borderLeftWidth: 1,
+    borderLeftColor: '#E8E8E8',
+    paddingHorizontal: 30,
+    paddingVertical: 40,
+    shadowColor: '#000',
+    shadowOffset: { width: -2, height: 0 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+  },
+  rightPanelHeader: {
+    marginBottom: 30,
+  },
+  rightPanelTitle: {
+    fontSize: 28,
+    fontWeight: '300',
+    color: '#1A1A1A',
+    letterSpacing: -0.5,
+    marginBottom: 8,
+  },
+  rightPanelSubtitle: {
+    fontSize: 16,
+    color: '#666666',
+    fontWeight: '400',
+    marginBottom: 40,
+    lineHeight: 24,
+  },
+  closeRightPanel: {
+    position: 'absolute',
+    top: -10,
+    right: -10,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: COLORS.border,
   },
-  floatingPersonaContent: {
-    padding: 15,
+  closeRightPanelText: {
+    fontSize: 20,
+    color: '#999999',
+    fontWeight: '300',
   },
-  floatingPersonaTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.darkGray,
-    marginBottom: 10,
+  rightPersonaList: {
+    gap: 20,
   },
-  floatingPersonaChips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  floatingPersonaChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: COLORS.lightGray,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  floatingPersonaEmoji: {
-    fontSize: 16,
-    marginRight: 6,
-  },
-  floatingPersonaLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: COLORS.darkGray,
-  },
-  
-  // Updated styles for TrendRadar
-  exploreGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  exploreItem: {
-    width: '48%',
-    backgroundColor: COLORS.light,
+  rightPersonaItem: {
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    marginBottom: 15,
-    overflow: 'hidden',
+    padding: 20,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: '#F0F0F0',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
   },
-  exploreImage: {
-    width: '100%',
-    height: 100,
-  },
-  swipeNavigation: {
+  rightPersonaContent: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 10,
-    paddingHorizontal: 10,
   },
-  swipeButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: COLORS.accent1,
+  rightEmojiCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  rightItemEmoji: {
+    fontSize: 24,
+  },
+  rightPersonaImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+  rightPersonaText: {
+    flex: 1,
+  },
+  rightItemName: {
+    fontSize: 18,
+    fontWeight: '500',
+    color: '#1A1A1A',
+    marginBottom: 4,
+    letterSpacing: -0.2,
+  },
+  rightItemDescription: {
+    fontSize: 14,
+    color: '#666666',
+    lineHeight: 20,
+    fontWeight: '400',
+  },
+  rightSelectedBadge: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  swipeButtonDisabled: {
-    backgroundColor: COLORS.border,
-    opacity: 0.5,
-  },
-  swipeButtonText: {
-    color: COLORS.light,
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  
-  // Replace AR button styles with Preview button styles
-  previewButton: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 4,
-  },
-  previewButtonText: {
-    color: COLORS.light,
+  rightSelectedBadgeText: {
+    color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '600',
   },
-  
-  // Replace AR overlay styles with Product Preview styles
-  previewOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.8)',
+  // Section Header Styles (Lyst-inspired)
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    marginBottom: 30,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  sectionTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sectionIcon: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  sectionTitle: {
+    fontSize: 32,
+    fontWeight: '300',
+    color: '#1A1A1A',
+    letterSpacing: -0.5,
+  },
+  sectionAction: {
+    fontSize: 14,
+    color: '#666666',
+    fontWeight: '400',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    textDecorationLine: 'underline',
+  },
+  sectionSubtitle: {
+    fontSize: 18,
+    color: '#666666',
+    fontWeight: '400',
+    marginBottom: 40,
+    lineHeight: 26,
+  },
+  refinedHeader: {
+    backgroundColor: '#FFFFFF',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8E8E8',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 5,
+    zIndex: 10,
+  },
+  brandSection: {
+    marginBottom: 20,
+  },
+  brandTitle: {
+    fontSize: 28,
+    fontWeight: '300',
+    color: '#1A1A1A',
+    letterSpacing: -0.5,
+    marginBottom: 8,
+  },
+  brandTagline: {
+    fontSize: 16,
+    color: '#666666',
+    fontWeight: '400',
+    marginBottom: 40,
+    lineHeight: 24,
+  },
+  headerControls: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  refinedSearchInput: {
+    flex: 1,
+    height: 48,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 4,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    color: '#333333',
+    borderWidth: 1,
+    borderColor: '#E8E8E8',
+    fontWeight: '300',
+  },
+  searchIconButton: {
+    marginLeft: 10,
+    backgroundColor: '#6366F1',
+    paddingHorizontal: 20,
+    height: 48,
+    borderRadius: 4,
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 1000,
   },
-  previewContent: {
-    width: '90%',
-    maxWidth: 500,
-    backgroundColor: COLORS.light,
-    borderRadius: 12,
-    padding: 20,
+  searchIcon: {
+    fontSize: 18,
+    color: '#FFFFFF',
+  },
+  selectorRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
-  previewTitle: {
-    fontSize: 20,
-    fontWeight: '500',
-    marginBottom: 20,
-    color: COLORS.darkGray,
+  subtleSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: '#E8E8E8',
+    flex: 1,
+    marginRight: 10,
   },
-  previewImageContainer: {
-    width: '100%',
-    height: 300,
-    backgroundColor: COLORS.lightGray,
-    borderRadius: 8,
-    marginBottom: 20,
-    overflow: 'hidden',
-    position: 'relative',
+  selectorEmoji: {
+    fontSize: 16,
+    marginRight: 5,
   },
-  previewImage: {
-    width: '100%',
-    height: '100%',
+  selectorText: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: '#333333',
   },
-  previewProductInfo: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    padding: 12,
+  selectorIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    marginRight: 10,
   },
-  previewProductTitle: {
+  defaultSelectorIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    marginRight: 10,
+    backgroundColor: '#F0F0F0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  defaultIconText: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.light,
-    marginBottom: 4,
+    color: '#666666',
   },
-  previewProductPrice: {
-    fontSize: 14,
-    color: COLORS.light,
+  sectionLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#999999',
+    textTransform: 'uppercase',
+    letterSpacing: 2,
+    marginBottom: 8,
   },
-  previewLoading: {
+  categoryImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
+  },
+  premiumSearchContainer: {
     flex: 1,
+    marginRight: 20,
+    marginBottom: 20,
+  },
+  searchGlow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 6,
+    shadowColor: '#6366F1',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 25,
+    elevation: 12,
+    borderWidth: 2,
+    borderColor: '#6366F1',
+    position: 'relative',
+    overflow: 'hidden',
+    // Web-specific neon glow effects
+    ...(Platform.OS === 'web' && {
+      boxShadow: `
+        0 0 20px rgba(99, 102, 241, 0.3),
+        0 0 40px rgba(99, 102, 241, 0.2),
+        0 0 60px rgba(99, 102, 241, 0.1),
+        inset 0 0 20px rgba(99, 102, 241, 0.05)
+      `,
+      background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+      transition: 'all 0.3s ease',
+    }),
+  },
+  premiumSearchInput: {
+    flex: 1,
+    height: 56,
+    backgroundColor: 'transparent',
+    borderRadius: 12,
+    paddingHorizontal: 20,
+    fontSize: 18,
+    color: '#1A1A1A',
+    fontWeight: '400',
+    letterSpacing: -0.2,
+    outline: 'none',
+    ...(Platform.OS === 'web' && {
+      '&:focus': {
+        outline: 'none',
+      },
+    }),
+  },
+  premiumSearchButton: {
+    backgroundColor: '#6366F1',
+    paddingHorizontal: 24,
+    height: 48,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#6366F1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    ...(Platform.OS === 'web' && {
+      boxShadow: `
+        0 0 15px rgba(99, 102, 241, 0.4),
+        0 0 30px rgba(99, 102, 241, 0.2)
+      `,
+      background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
+      transition: 'all 0.2s ease',
+      cursor: 'pointer',
+      '&:hover': {
+        transform: 'translateY(-1px)',
+        boxShadow: `
+          0 0 20px rgba(99, 102, 241, 0.5),
+          0 0 40px rgba(99, 102, 241, 0.3)
+        `,
+      },
+    }),
   },
-  previewLoadingText: {
+  premiumSearchIcon: {
+    fontSize: 20,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  productImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
+  },
+  price: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.accent1,
+    marginBottom: 5,
+  },
+  brandText: {
+    fontSize: 14,
     color: COLORS.midGray,
     marginBottom: 10,
   },
-  previewError: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+  modernProductGrid: {
+    paddingHorizontal: 40,
+    paddingVertical: 20,
+    backgroundColor: '#FFFFFF',
   },
-  previewErrorEmoji: {
-    fontSize: 40,
-    marginBottom: 15,
+  gridHeader: {
+    marginBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8E8E8',
+    paddingBottom: 10,
   },
-  previewErrorText: {
-    textAlign: 'center',
-    color: '#D32F2F',
-    lineHeight: 20,
+  gridHeaderContent: {
+    flexDirection: 'row', // Keep as row for overall layout
+    justifyContent: 'space-between', // To push button to the right
+    alignItems: 'flex-start', // Align items to the top for the new stacked title
+    paddingBottom: 10, // Keep some padding below the entire header block
   },
-  previewActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
+  personaGridHeaderContainer: {
+    // This container will now hold the label, title, and subtitle
+    marginBottom: 0, // Remove bottom margin as it's handled by gridHeaderContent padding
   },
-  previewCloseButton: {
-    flex: 1,
-    backgroundColor: COLORS.lightGray,
-    paddingVertical: 12,
-    borderRadius: 6,
-    alignItems: 'center',
-    marginRight: 10,
-  },
-  previewCloseText: {
-    color: COLORS.darkGray,
-    fontWeight: '600',
-  },
-  previewBuyButton: {
-    flex: 2,
-    backgroundColor: COLORS.accent1,
-    paddingVertical: 12,
-    borderRadius: 6,
-    alignItems: 'center',
-  },
-  previewBuyText: {
-    color: COLORS.light,
-    fontWeight: '600',
-  },
-  
-  // Virtual Try-On button styles
-  tryOnButton: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    backgroundColor: 'rgba(159,43,104,0.8)', // Purple for Try-On
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 4,
-  },
-  tryOnButtonText: {
-    color: COLORS.light,
+  personaGridHeaderLabel: {
     fontSize: 12,
     fontWeight: '600',
+    color: '#999999', // Matches "TRENDING" label
+    textTransform: 'uppercase',
+    letterSpacing: 2,
+    marginBottom: 4, // Space between label and main title
   },
-  
-  // Virtual Try-On overlay styles
-  tryOnOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
+  personaGridHeaderTitle: { // For the main persona name, styled like "What's Hot Now"
+    fontSize: 32,
+    fontWeight: '300',
+    color: '#1A1A1A',
+    letterSpacing: -0.5,
+    marginBottom: 4, // Add space between title and subtitle
   },
-  tryOnContent: {
-    width: '90%',
-    maxWidth: 600,
-    backgroundColor: COLORS.light,
-    borderRadius: 12,
-    padding: 20,
-    alignItems: 'center',
+  gridTitle: { // Will be repurposed for the main title part or removed if not needed
+    fontSize: 24, // Keep as a fallback or for non-persona views
+    fontWeight: 'bold',
+    color: '#1A1A1A',
   },
-  tryOnTitle: {
-    fontSize: 20,
-    fontWeight: '500',
-    marginBottom: 20,
-    color: COLORS.darkGray,
+  gridSubtitle: { // This will be used for the product count under the main title
+    fontSize: 14,
+    color: '#666666',
+    fontWeight: '400',
+    // marginBottom: 5, // Removed, spacing handled by container/title
   },
-  tryOnWorkspace: {
-    width: '100%',
-    height: 450,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 8,
-    marginBottom: 20,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  tryOnUploadArea: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  tryOnInstructions: {
-    fontSize: 16,
-    color: COLORS.darkGray,
-    textAlign: 'center',
-    marginBottom: 30,
-    lineHeight: 24,
-  },
-  tryOnButtonsRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: 20,
-  },
-  tryOnButton: {
-    backgroundColor: COLORS.accent1,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 25,
-    marginHorizontal: 10,
-  },
-  tryOnButtonText: {
-    color: COLORS.light,
-    fontWeight: '600',
-  },
-  tryOnError: {
-    color: '#D32F2F',
-    marginTop: 15,
-  },
-  tryOnProcessing: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  tryOnProcessingText: {
-    fontSize: 16,
-    color: COLORS.darkGray,
-    marginBottom: 20,
-  },
-  tryOnLoader: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 3,
-    borderColor: COLORS.accent1,
-    borderTopColor: 'transparent',
-    animationName: 'spin',
-    animationDuration: '1s',
-    animationTimingFunction: 'linear',
-    animationIterationCount: 'infinite',
-  },
-  tryOnResult: {
-    flex: 1,
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 10,
-  },
-  tryOnResultImage: {
-    width: '100%',
-    height: '80%',
-    borderRadius: 8,
-  },
-  tryOnResultCaption: {
-    fontSize: 16,
-    color: COLORS.darkGray,
-    marginVertical: 10,
-  },
-  tryOnActionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-  },
-  tryOnShareButton: {
-    backgroundColor: COLORS.accent2,
-    paddingVertical: 10,
+  elegantBackButton: {
+    backgroundColor: '#6366F1',
     paddingHorizontal: 15,
-    borderRadius: 20,
-    marginHorizontal: 5,
-    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 4,
     alignItems: 'center',
   },
-  tryOnShareButtonText: {
-    color: COLORS.light,
+  elegantBackText: {
+    color: '#FFFFFF',
+    fontSize: 14,
     fontWeight: '600',
   },
-  tryOnTryAgainButton: {
-    backgroundColor: COLORS.accent1,
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 20,
-    marginHorizontal: 5,
-    flex: 1,
-    alignItems: 'center',
-  },
-  tryOnTryAgainButtonText: {
-    color: COLORS.light,
-    fontWeight: '600',
-  },
-  tryOnFooter: {
+  productGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
-    width: '100%',
   },
-  tryOnCloseButton: {
-    flex: 1,
-    backgroundColor: COLORS.lightGray,
-    paddingVertical: 12,
-    borderRadius: 6,
-    alignItems: 'center',
-    marginRight: processedImage ? 10 : 0,
-  },
-  tryOnCloseButtonText: {
-    color: COLORS.darkGray,
-    fontWeight: '600',
-  },
-  tryOnBuyButton: {
-    flex: 2,
-    backgroundColor: COLORS.accent1,
-    paddingVertical: 12,
-    borderRadius: 6,
-    alignItems: 'center',
-  },
-  tryOnBuyButtonText: {
-    color: COLORS.light,
-    fontWeight: '600',
-  },
-  
-  // Visual Search styles
-  visualSearchOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-  },
-  visualSearchContent: {
-    width: '90%',
-    maxWidth: 650,
-    backgroundColor: COLORS.light,
-    borderRadius: 12,
-    padding: 20,
-    alignItems: 'center',
-  },
-  visualSearchTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    marginBottom: 20,
-    color: COLORS.darkGray,
-  },
-  visualSearchWorkspace: {
-    width: '100%',
-    height: 500,
-    backgroundColor: '#f0f0f0',
+  modernProductCard: {
+    width: '48%',
+    backgroundColor: '#FFFFFF',
     borderRadius: 8,
     marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 3,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E8E8E8',
+  },
+  productImageContainer: {
+    height: 200,
     position: 'relative',
+    backgroundColor: '#F8F8F8',
   },
-  visualSearchUploadArea: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  visualSearchInstructions: {
-    fontSize: 18,
-    color: COLORS.darkGray,
-    textAlign: 'center',
-    marginBottom: 30,
-    lineHeight: 24,
-    maxWidth: '80%',
-  },
-  visualSearchButtonsRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: 20,
-  },
-  visualSearchButton: {
-    backgroundColor: COLORS.accent1,
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 25,
-    marginHorizontal: 10,
-  },
-  visualSearchButtonText: {
-    color: COLORS.light,
-    fontWeight: '600',
-    fontSize: 16,
-  },
-  visualSearchError: {
-    color: '#D32F2F',
-    marginTop: 15,
-    fontSize: 16,
-  },
-  visualSearchAnalyzing: {
-    flex: 1,
-    position: 'relative',
-  },
-  visualSearchImage: {
-    width: '100%',
-    height: '100%',
-  },
-  visualSearchAnalyzingOverlay: {
+  favoriteButton: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    top: 10,
+    right: 10,
+    backgroundColor: 'rgba(255,255,255,0.8)',
+    padding: 5,
+    borderRadius: 15,
   },
-  visualSearchAnalyzingText: {
-    color: COLORS.light,
+  favoriteIcon: {
     fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 20,
+    color: '#FF9500',
   },
-  visualSearchLoader: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 3,
-    borderColor: COLORS.accent1,
-    borderTopColor: 'transparent',
-    animationName: 'spin',
-    animationDuration: '1s',
-    animationTimingFunction: 'linear',
-    animationIterationCount: 'infinite',
+  viralBadge: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    backgroundColor: '#FF3B30',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
-  visualSearchDetected: {
-    flex: 1,
-    position: 'relative',
-    padding: 10,
+  viralBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  visualSearchImageContainer: {
-    width: '100%',
-    height: '75%',
-    position: 'relative',
+  productInfo: {
+    padding: 15,
+  },
+  brandName: {
+    fontSize: 14,
+    color: '#666666',
+    marginBottom: 5,
+  },
+  trendingStatsText: {
+    fontSize: 12,
+    color: COLORS.midGray,
+    lineHeight: 16,
+  },
+  hotTakeContainer: {
     marginBottom: 10,
+    backgroundColor: COLORS.lightGray,
+    padding: 10,
+    borderRadius: 6,
   },
-  visualSearchBoundingBox: {
-    position: 'absolute',
-    borderWidth: 2,
-    borderStyle: 'solid',
-    justifyContent: 'flex-end',
-    alignItems: 'flex-start',
-  },
-  visualSearchObjectLabel: {
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    color: COLORS.light,
-    fontSize: 12,
-    padding: 4,
-    borderRadius: 4,
-    marginBottom: -25,
-  },
-  visualSearchSelectionInstructions: {
-    marginBottom: 15,
-    alignItems: 'center',
-  },
-  visualSearchSelectionText: {
-    fontSize: 16,
+  hotTakeLabel: {
+    fontSize: 14,
+    fontWeight: '600',
     color: COLORS.darkGray,
     marginBottom: 5,
   },
-  visualSearchSelectedCount: {
-    fontSize: 14,
-    color: COLORS.accent1,
-    fontWeight: '600',
+  hotTakeText: {
+    fontSize: 12,
+    color: COLORS.midGray,
+    lineHeight: 16,
   },
-  visualSearchActionButton: {
-    backgroundColor: COLORS.accent1,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 25,
-    alignSelf: 'center',
-  },
-  visualSearchActionButtonDisabled: {
-    backgroundColor: COLORS.midGray,
-    opacity: 0.7,
-  },
-  visualSearchActionButtonText: {
-    color: COLORS.light,
-    fontWeight: '600',
+  productName: {
     fontSize: 16,
+    fontWeight: '600',
+    color: '#1A1A1A',
+    marginBottom: 10,
   },
-  visualSearchSearching: {
+  priceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  currentPrice: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.accent1,
+  },
+  rating: {
+    fontSize: 12,
+    color: '#FF9500',
+  },
+  shopButton: {
+    backgroundColor: '#6366F1',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 4,
+    alignItems: 'center',
+  },
+  shopButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  studentContent: {
+    marginBottom: 10,
+  },
+  studentReviewLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333333',
+    marginBottom: 5,
+  },
+  studentReview: {
+    fontSize: 12,
+    color: '#666666',
+    lineHeight: 18,
+  },
+  whyStudentsLoveLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333333',
+    marginBottom: 5,
+  },
+  whyStudentsLove: {
+    fontSize: 12,
+    color: '#666666',
+    lineHeight: 18,
+  },
+  studentShopButton: {
+    backgroundColor: '#FF9500',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 4,
+    alignItems: 'center',
+  },
+  studentShopButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  noProductsMessage: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  visualSearchSearchingText: {
+  noProductsText: {
     fontSize: 18,
-    color: COLORS.darkGray,
-    marginBottom: 20,
+    fontWeight: '600',
+    color: COLORS.accent1,
+    textAlign: 'center',
+    marginBottom: 10,
   },
-  visualSearchFooter: {
+  noProductsSubtext: {
+    fontSize: 16,
+    color: COLORS.accent2,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+
+  // REFINED Student Persona Specific Product Card Styles (Ultra Luxury / Minimalist)
+  studentProductCard: {
+    width: '48%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8, // Consistent with modernProductCard
+    marginBottom: 24,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.07, // Softer shadow
+    shadowRadius: 10,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#EAEAEA', // Light, subtle border
+    overflow: 'hidden',
+  },
+  studentImageContainer: { // Same as productImageContainer for consistency
+    height: 200,
+    position: 'relative',
+    backgroundColor: '#F8F8F8', // Consistent placeholder color
+  },
+  studentInfo: {
+    padding: 20, // More padding for a spacious feel
+  },
+  studentBrandName: {
+    fontSize: 13,
+    fontWeight: '400',
+    color: '#555555', // Medium grey
+    marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  studentProductName: {
+    fontSize: 18, // Slightly larger for better readability
+    fontWeight: '500', // Refined weight
+    color: '#2C3E50', // Dark, sophisticated grey/blue
+    marginBottom: 10,
+    lineHeight: 24,
+  },
+  studentPriceRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  studentCurrentPrice: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#00796B', // Deep teal/green for value, but sophisticated
+  },
+  studentRating: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#FFA000', // Muted gold/amber for rating star
+  },
+  studentExclusiveContent: {
+    marginTop: 10, // Add some space before this section
+    marginBottom: 16,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#EEEEEE', // Very subtle separator
+  },
+  studentReviewText: {
+    fontSize: 14,
+    color: '#555555',
+    fontStyle: 'italic',
+    lineHeight: 20,
+    marginBottom: 10,
+  },
+  studentWhyLoveText: {
+    fontSize: 14,
+    color: '#555555',
+    lineHeight: 20,
+  },
+  studentDealButton: {
+    backgroundColor: '#2C3E50', // Dark sophisticated grey/blue
+    paddingVertical: 12,
+    paddingHorizontal: 15, 
+    borderRadius: 6, // Slightly more refined radius
+    alignItems: 'center',
+    marginTop: 10, // Space before button
+  },
+  studentDealButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+
+  studentGridTitle: { // Refined student grid title
+    fontSize: 26, // Slightly reduced for elegance
+    fontWeight: '300', // Lighter font weight for luxury feel
+    color: '#2C3E50',
+    fontFamily: Platform.OS === 'ios' ? 'AvenirNext-Regular' : 'sans-serif-light',
+    letterSpacing: 0.5,
+  },
+  studentGridSubtitle: { // Refined student grid subtitle
+    fontSize: 14,
+    color: '#555555',
+    fontWeight: '400',
+  },
+  // NEON Back Button Styles (Inspired by Search Bar)
+  neonBackButton: {
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 12, // Match search button
+    backgroundColor: '#FFFFFF', // Light base
+    borderWidth: 1, // Subtle border
+    borderColor: '#6366F180', // Neon color with some transparency
+    shadowColor: '#6366F1', // This shadow will apply on native
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2, 
+    shadowRadius: 8,
+    elevation: 4,
+    alignSelf: 'flex-start',
+    ...(Platform.OS === 'web' ? { // Web-specific base styles
+      cursor: 'pointer',
+      transition: 'all 0.2s ease', // Basic transition for web
+    } : {}),
+  },
+  neonBackButtonText: {
+    color: '#6366F1', // Neon color for text
+    fontSize: 14,
+    fontWeight: '500', // Refined weight
+    letterSpacing: 0.5,
+  },
+  // Specific style for the empty state back button to allow centering if needed
+  emptyStateNeonBackButton: { 
+    paddingHorizontal: 20, 
+    paddingVertical: 12,
+    borderRadius: 12, 
+    backgroundColor: '#FFFFFF', 
+    borderWidth: 1, 
+    borderColor: '#6366F180', 
+    shadowColor: '#6366F1', // This shadow will apply on native
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2, 
+    shadowRadius: 8,
+    elevation: 4,
+    marginTop: 20,
+    ...(Platform.OS === 'web' ? { // Web-specific base styles
+      cursor: 'pointer',
+      transition: 'all 0.2s ease', // Basic transition for web
+    } : {}),
+  },
+  // Styles for Persona Exclusive Content in modernProductCard
+  personaExclusiveContentContainer: {
+    marginTop: 10,
+    marginBottom: 12,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#EEEEEE', // Subtle separator
+  },
+  personaInsightLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#333333',
+    marginBottom: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.7,
+  },
+  personaInsightText: {
+    fontSize: 14,
+    color: '#555555',
+    lineHeight: 20,
+  },
+  // Styles for New Minimalist Buttons
+  productCardButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 16, // Add some space above the buttons
+    gap: 10, // Space between the two buttons
+  },
+  minimalistButtonShared: { // Base style for both buttons
+    flex: 1, // Allow buttons to share space
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 40, // Ensure a decent tap target height
+  },
+  minimalistButtonPrimary: { // For "Shop on Brand Website"
+    backgroundColor: '#FFFFFF',
+    borderColor: '#6366F1', // Primary neon accent
+  },
+  minimalistButtonSecondary: { // For "Shop with Curator Agent"
+    backgroundColor: '#F7F7FA', // Very light neutral
+    borderColor: '#DCDCE0', // Softer neutral border
+  },
+  buttonTextShared: { // Base text style for both buttons
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  buttonTextPrimary: {
+    color: '#6366F1', // Primary neon accent
+  },
+  buttonTextSecondary: {
+    color: '#2C2C38', // Clear, dark text
+  },
+  cardActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0', // Lighter separator
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  actionButton: {
+    padding: 8,
+    marginRight: 8,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 20,
+  },
+  actionButtonText: {
+    fontSize: 16,
+  },
+  buyNowButton: { // This style might be repurposed or removed if the new buttons fully replace it
+    backgroundColor: COLORS.accent1, // Or primary neon color
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    borderRadius: 8,
+    flexGrow: 1, // Allow it to take available space if other items are fixed
+    marginLeft: 10, // if actionButtons are present
+    alignItems: 'center',
+  },
+  buyNowButtonText: {
+    color: COLORS.light,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+
+  // Back of the card styles
+  cardContentBack: {
+    padding: 20,
+    minHeight: 380,
+  },
+  backButton: {
+    padding: 15,
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+  },
+  backButtonText: {
+    fontSize: 24,
+    color: COLORS.darkGray,
+  },
+  backProductTitle: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: COLORS.darkGray,
+    marginBottom: 10,
+  },
+  backProductPrice: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 20,
+  },
+  highlightsContainer: {
+    marginBottom: 20,
+    backgroundColor: COLORS.lightGray,
+    padding: 15,
+    borderRadius: 8,
+  },
+  highlightsTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.darkGray,
+    marginBottom: 8,
+  },
+  highlightsText: {
+    fontSize: 14,
+    color: COLORS.midGray,
+    lineHeight: 20,
+    fontStyle: 'italic',
+  },
+  insightsContainer: {
+    marginBottom: 20,
+  },
+  insightsTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.darkGray,
+    marginBottom: 15,
+  },
+  insightBar: {
+    marginBottom: 15,
+  },
+  insightBarHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+  insightBarLabel: {
+    fontSize: 14,
+    color: COLORS.darkGray,
+    fontWeight: '500',
+  },
+  insightBarValue: {
+    fontSize: 14,
+    color: COLORS.midGray,
+    fontWeight: '600',
+  },
+  insightBarTrack: {
+    height: 6,
+    backgroundColor: COLORS.lightGray,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  insightBarFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  backFooter: {
+    borderTopWidth: 1,
+    paddingTop: 20,
+  },
+  whyBuyThisContainer: {
+    marginBottom: 10,
+  },
+  whyBuyThisText: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#1A1A1A',
+    fontWeight: '500',
+    textAlign: 'left',
+    padding: 12,
+    backgroundColor: 'linear-gradient(135deg, #F8F9FF 0%, #E8EFFF 100%)', // Light gradient background
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E1E8F4',
+    letterSpacing: 0.3,
+    // For web, add these properties
+    ...(Platform.OS === 'web' ? {
+      backgroundImage: 'linear-gradient(135deg, #F8F9FF 0%, #E8EFFF 100%)',
+      backgroundColor: '#F8F9FF', // Fallback
+    } : {
+      backgroundColor: '#F8F9FF', // Solid color for mobile
+    }),
+  },
+  categoryImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
+    objectFit: 'cover', // For web - prevents image stretching
+    backgroundColor: '#F8F8F8', // Fallback background
+  },
+  ultraModernSectionHeader: {
+    backgroundColor: 'transparent',
+    padding: 0,
+    borderBottomWidth: 0,
+    shadowColor: 'transparent',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    marginBottom: 48,
+    paddingBottom: 0,
+  },
+  sectionHeaderLeft: {
+    flex: 1,
+  },
+  ultraModernSectionLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#999999',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    marginBottom: 8,
+  },
+  ultraModernSectionTitle: {
+    fontSize: 42,
+    fontWeight: '200',
+    color: '#1A1A1A',
+    letterSpacing: -1.2,
+    lineHeight: 48,
+    marginBottom: 16,
+    fontFamily: Platform.OS === 'web' ? '"Inter", -apple-system, BlinkMacSystemFont, sans-serif' : 'System',
+  },
+  ultraModernSectionSubtitle: {
+    fontSize: 16,
+    color: '#666666',
+    fontWeight: '400',
+    lineHeight: 24,
+    maxWidth: 480,
+    fontStyle: 'italic',
+  },
+  modernSeeAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 0,
+    backgroundColor: 'transparent',
+  },
+  modernSeeAllText: {
+    fontSize: 14,
+    color: '#1A1A1A',
+    fontWeight: '500',
+    letterSpacing: 0.5,
+    marginRight: 8,
+  },
+  modernSeeAllArrow: {
+    fontSize: 16,
+    color: '#1A1A1A',
+    transform: [{ translateX: 0 }],
+    transition: 'transform 0.2s ease',
+  },
+  ultraModernMoodsGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, 1fr)', // 3 columns for better spacing
+    gap: '32px',
+    marginTop: 0,
+    ...(Platform.OS !== 'web' ? {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+    } : {}),
+  },
+  ultraModernMoodCard: {
+    width: Platform.OS === 'web' ? 'auto' : '31%', // Responsive width
+    aspectRatio: '4/5', // Elegant proportions
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20, // More sophisticated rounded corners
+    overflow: 'hidden',
+    borderWidth: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
+    elevation: 8,
+    position: 'relative',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', // Smooth hover effect
+    cursor: 'pointer',
+  },
+  ultraModernMoodImageContainer: {
+    height: '60%', // Image takes up 60% of card
+    position: 'relative',
+    backgroundColor: '#F8F8F8',
+  },
+  ultraModernMoodCover: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+    filter: 'contrast(1.1) saturate(1.2)', // Enhanced image quality
+  },
+  ultraModernMoodOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0.3, // Subtle overlay
+  },
+  ultraModernMoodContent: {
+    height: '40%', // Content takes up 40% of card
+    padding: 24,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+  },
+  moodNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  moodEmoji: {
+    fontSize: 20,
+    marginRight: 8,
+  },
+  ultraModernMoodName: {
+    fontSize: 18,
+    fontWeight: '500',
+    color: '#1A1A1A',
+    letterSpacing: -0.3,
+    flex: 1,
+  },
+  cursiveDescription: {
+    fontSize: 14,
+    color: '#666666',
+    fontStyle: 'italic',
+    lineHeight: 20,
+    marginBottom: 8,
+    fontFamily: Platform.OS === 'web' ? '"Playfair Display", Georgia, serif' : 'System',
+  },
+  philosophyText: {
+    fontSize: 11,
+    color: '#999999',
+    fontWeight: '400',
+    lineHeight: 16,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  ultraModernMainHeader: {
+    backgroundColor: 'transparent',
+    padding: 0,
+    borderBottomWidth: 0,
+    shadowColor: 'transparent',
+    marginBottom: 48,
+    paddingBottom: 0,
+  },
+  mainHeaderContent: {
+    flexDirection: 'column',
+    gap: 40,
+  },
+  brandSection: {
+    marginBottom: 0,
+  },
+  ultraModernHeaderControls: {
+    flexDirection: 'column',
+    gap: 24,
+  },
+  ultraModernProductHeaderControls: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    marginTop: 24,
+  },
+  ultraModernSearchContainer: {
     width: '100%',
   },
-  visualSearchCloseButton: {
+  searchInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8F8F8',
+    borderRadius: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: '#E8E8E8',
+  },
+  ultraModernSearchInput: {
     flex: 1,
+    height: 56,
+    backgroundColor: 'transparent',
+    fontSize: 18,
+    color: '#1A1A1A',
+    fontWeight: '400',
+    letterSpacing: -0.2,
+    outline: 'none',
+    ...(Platform.OS === 'web' && {
+      outline: 'none',
+    }),
+  },
+  ultraModernSearchButton: {
+    padding: 8,
+    backgroundColor: 'transparent',
+  },
+  searchIcon: {
+    fontSize: 20,
+    color: '#666666',
+  },
+  ultraModernSelectorRow: {
+    flexDirection: 'row',
+    gap: 16,
+    flexWrap: 'wrap',
+  },
+  ultraModernSelector: {
+    flex: 1,
+    minWidth: 200,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E8E8E8',
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  ultraModernSelectorActive: {
+    borderColor: '#6366F1',
+    backgroundColor: '#F8F9FF',
+  },
+  selectorContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  ultraModernSelectorIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+  },
+  ultraModernDefaultIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F0F0F0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  defaultIconText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#666666',
+  },
+  selectorTextContainer: {
+    flex: 1,
+  },
+  ultraModernSelectorLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#999999',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  ultraModernSelectorValue: {
+    fontSize: 14,
+    color: '#1A1A1A',
+    fontWeight: '500',
+    lineHeight: 18,
+  },
+  ultraModernBrandLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#999999',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    marginBottom: 8,
+  },
+  ultraModernBrandTitle: {
+    fontSize: 42,
+    fontWeight: '200',
+    color: '#1A1A1A',
+    letterSpacing: -1.2,
+    lineHeight: 48,
+    marginBottom: 16,
+    fontFamily: Platform.OS === 'web' ? '"Inter", -apple-system, BlinkMacSystemFont, sans-serif' : 'System',
+  },
+  ultraModernBrandTagline: {
+    fontSize: 16,
+    color: '#666666',
+    fontWeight: '400',
+    lineHeight: 24,
+    maxWidth: 480,
+    fontStyle: 'italic',
+  },
+  ultraModernCategoryContainer: {
+    marginBottom: 120,
+    backgroundColor: 'transparent',
+    borderRadius: 0,
+    padding: 40,
+    paddingTop: 60,
+    shadowColor: 'transparent',
+  },
+  ultraModernCategoryGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, 1fr)', // 3 columns for better spacing
+    gap: '32px',
+    marginTop: 0,
+    ...(Platform.OS !== 'web' ? {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+    } : {}),
+  },
+  ultraModernCategoryItem: {
+    width: Platform.OS === 'web' ? 'auto' : '31%', // Responsive width
+    aspectRatio: '4/5', // Elegant proportions
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20, // More sophisticated rounded corners
+    overflow: 'hidden',
+    borderWidth: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
+    elevation: 8,
+    position: 'relative',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', // Smooth hover effect
+    cursor: 'pointer',
+  },
+  ultraModernCategoryIcon: {
+    height: '60%', // Image takes up 60% of card
+    position: 'relative',
+    backgroundColor: '#F8F8F8',
+  },
+  ultraModernCategoryImage: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+    filter: 'contrast(1.1) saturate(1.2)', // Enhanced image quality
+  },
+  ultraModernCategoryName: {
+    fontSize: 18,
+    fontWeight: '500',
+    color: '#1A1A1A',
+    letterSpacing: -0.3,
+    padding: 24,
+    paddingBottom: 8,
+  },
+  ultraModernCategoryDescription: {
+    fontSize: 14,
+    color: '#666666',
+    fontStyle: 'italic',
+    lineHeight: 20,
+    paddingLeft: 24,
+    paddingRight: 24,
+    paddingBottom: 24,
+    fontFamily: Platform.OS === 'web' ? '"Playfair Display", Georgia, serif' : 'System',
+  },
+  ultraModernTrendRadarContainer: {
+    marginBottom: 120,
+    backgroundColor: 'transparent',
+    borderRadius: 0,
+    padding: 40,
+    paddingTop: 60,
+    shadowColor: 'transparent',
+  },
+  ultraModernTrendRadarGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, 1fr)', // 2 columns for trending items
+    gap: '32px',
+    marginTop: 0,
+    ...(Platform.OS !== 'web' ? {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+    } : {}),
+  },
+  ultraModernTrendRadarCard: {
+    width: Platform.OS === 'web' ? 'auto' : '48%', // Responsive width
+    aspectRatio: '3/2', // Wider aspect ratio for trending items
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20, // More sophisticated rounded corners
+    overflow: 'hidden',
+    borderWidth: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
+    elevation: 8,
+    position: 'relative',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', // Smooth hover effect
+    cursor: 'pointer',
+  },
+  ultraModernTrendRadarImageContainer: {
+    height: '70%', // Image takes up 70% of card
+    position: 'relative',
+    backgroundColor: '#F8F8F8',
+  },
+  ultraModernTrendRadarImage: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+    filter: 'contrast(1.1) saturate(1.2)', // Enhanced image quality
+  },
+  ultraModernViralBadge: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    backgroundColor: '#FF4757',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  ultraModernViralBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  ultraModernTrendOverlay: {
+    position: 'absolute',
+    bottom: 16,
+    right: 16,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  ultraModernTrendChangeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+  },
+  ultraModernTrendRadarContent: {
+    height: '30%', // Content takes up 30% of card
+    padding: 20,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  ultraModernTrendRadarCategory: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#999999',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 6,
+  },
+  ultraModernTrendRadarTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#1A1A1A',
+    letterSpacing: -0.2,
+    lineHeight: 20,
+  },
+  ultraModernBackButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    backgroundColor: '#F8F8F8',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E8E8E8',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+  },
+  ultraModernBackButtonText: {
+    fontSize: 14,
+    color: '#1A1A1A',
+    fontWeight: '500',
+    letterSpacing: 0.3,
+  },
+  trendingStatsContainer: {
+    marginBottom: 10,
     backgroundColor: COLORS.lightGray,
-    paddingVertical: 14,
+    padding: 10,
     borderRadius: 6,
-    alignItems: 'center',
-    marginRight: 10,
   },
-  visualSearchCloseButtonText: {
+  trendingStatsLabel: {
+    fontSize: 14,
+    fontWeight: '600',
     color: COLORS.darkGray,
-    fontWeight: '600',
+    marginBottom: 5,
   },
-  visualSearchResetButton: {
-    flex: 1,
-    backgroundColor: COLORS.accent2,
-    paddingVertical: 14,
+  trendingStatsText: {
+    fontSize: 12,
+    color: COLORS.midGray,
+    lineHeight: 16,
+  },
+  hotTakeContainer: {
+    marginBottom: 10,
+    backgroundColor: COLORS.lightGray,
+    padding: 10,
     borderRadius: 6,
-    alignItems: 'center',
   },
-  visualSearchResetButtonText: {
-    color: COLORS.light,
+  hotTakeLabel: {
+    fontSize: 14,
     fontWeight: '600',
+    color: COLORS.darkGray,
+    marginBottom: 5,
+  },
+  hotTakeText: {
+    fontSize: 12,
+    color: COLORS.midGray,
+    lineHeight: 16,
+  },
+  ultraModernAiCurationContainer: {
+    marginBottom: 120,
+    backgroundColor: 'transparent',
+    borderRadius: 0,
+    padding: 40,
+    paddingTop: 60,
+    shadowColor: 'transparent',
+  },
+  ultraModernPrimaryButton: {
+    backgroundColor: '#6366F1',
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 20,
+    shadowColor: '#6366F1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+    ...(Platform.OS === 'web' && {
+      boxShadow: `
+        0 0 15px ${hexToRgba(COLORS.primary, 0.4)},
+        0 0 30px ${hexToRgba(COLORS.primary, 0.2)}
+      `,
+      background: `linear-gradient(135deg, ${COLORS.primary} 0%, ${shadeColor(COLORS.primary, -20)} 100%)`,
+      transition: 'all 0.2s ease',
+      cursor: 'pointer',
+      '&:hover': {
+        transform: 'translateY(-1px)',
+        boxShadow: `
+          0 0 20px ${hexToRgba(COLORS.primary, 0.5)},
+          0 0 40px ${hexToRgba(COLORS.primary, 0.3)}
+        `,
+      },
+    }),
+  },
+  ultraModernPrimaryButtonText: {
+    color: COLORS.buttonPrimaryText,
+    fontSize: 14,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+  },
+  aiCurateFormContainer: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+  aiFormScrollView: {
+    paddingHorizontal: 40,
+    paddingVertical: 20,
+  },
+  aiFormSectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginBottom: 15,
+    marginTop: 10,
+  },
+  aiBrandSelectionContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 25,
+  },
+  aiBrandChip: {
+    backgroundColor: COLORS.card,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  aiBrandChipSelected: {
+    borderColor: COLORS.primary,
+    backgroundColor: hexToRgba(COLORS.primary, 0.1),
+  },
+  aiBrandChipText: {
+    fontSize: 14,
+    color: COLORS.text,
+    fontWeight: '500',
+  },
+  aiTextInput: {
+    backgroundColor: COLORS.textInputBackground,
+    color: COLORS.text,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    fontSize: 15,
+    marginBottom: 25,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.5,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  aiBudgetSelectorContainer: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 25,
+  },
+  aiBudgetChip: {
+    backgroundColor: COLORS.card,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 60,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  aiBudgetChipSelected: {
+    borderColor: COLORS.primary,
+    backgroundColor: hexToRgba(COLORS.primary, 0.1),
+  },
+  aiBudgetChipText: {
+    fontSize: 15,
+    color: COLORS.text,
+    fontWeight: '500',
   },
 }); 
+
+// Placeholder components to fix missing component errors
+const FloatingPersonaSelector = ({ personas, selectedPersona, onSelectPersona, visible }) => {
+  if (!visible) return null;
+  
+  return (
+    <View style={styles.floatingPersonaSelector}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        {personas.map((persona) => (
+          <TouchableOpacity
+            key={persona.id}
+            style={[
+              styles.floatingPersonaItem,
+              selectedPersona?.id === persona.id && styles.floatingPersonaItemSelected
+            ]}
+            onPress={() => onSelectPersona(persona)}
+          >
+            <Text style={styles.floatingPersonaEmoji}>{persona.emoji}</Text>
+            <Text style={styles.floatingPersonaName}>{persona.name}</Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </View>
+  );
+};
+
+const TrendRadar = ({ items, onItemPress, onSeeAll }) => {
+  return (
+    <View style={styles.ultraModernTrendRadarContainer}>
+      <View style={styles.ultraModernSectionHeader}>
+        <View style={styles.sectionHeaderLeft}>
+          <Text style={styles.ultraModernSectionLabel}>TRENDING</Text>
+          <Text style={styles.ultraModernSectionTitle}>What's Hot Now</Text>
+          <Text style={styles.ultraModernSectionSubtitle}>
+            discover what's capturing attention in the community
+          </Text>
+        </View>
+        <TouchableOpacity 
+          style={styles.modernSeeAllButton}
+          onPress={() => onSeeAll && onSeeAll()}
+        >
+          <Text style={styles.modernSeeAllText}>See All</Text>
+          <Text style={styles.modernSeeAllArrow}>→</Text>
+        </TouchableOpacity>
+      </View>
+      
+      <View style={styles.ultraModernTrendRadarGrid}>
+        {items.map((item) => (
+          <TouchableOpacity 
+            key={item.id} 
+            style={styles.ultraModernTrendRadarCard}
+            onPress={() => onItemPress && onItemPress(item)}
+          >
+            <View style={styles.ultraModernTrendRadarImageContainer}>
+              <Image 
+                source={{ uri: item.image }}
+                style={styles.ultraModernTrendRadarImage}
+                resizeMode="cover"
+              />
+              {item.isViral && (
+                <View style={styles.ultraModernViralBadge}>
+                  <Text style={styles.ultraModernViralBadgeText}>VIRAL</Text>
+                </View>
+              )}
+              <View style={styles.ultraModernTrendOverlay}>
+                <Text style={styles.ultraModernTrendChangeText}>{item.trendChange}</Text>
+              </View>
+            </View>
+            <View style={styles.ultraModernTrendRadarContent}>
+              <Text style={styles.ultraModernTrendRadarCategory}>{item.category}</Text>
+              <Text style={styles.ultraModernTrendRadarTitle}>{item.title}</Text>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  );
+};
+
+// Persona Selection Panel Component
+const PersonaSelectionPanel = ({ visible, onClose, personas, selectedPersona, onSelectPersona }) => {
+  if (!visible) return null;
+  
+  return (
+    <View style={styles.rightSidePanel}>
+      <TouchableOpacity style={styles.panelBackdrop} onPress={onClose} />
+      <View style={styles.rightPanelContent}>
+        <View style={styles.rightPanelHeader}>
+          <Text style={styles.rightPanelTitle}>Choose Your Style</Text>
+          <TouchableOpacity style={styles.closeRightPanel} onPress={onClose}>
+            <Text style={styles.closeRightPanelText}>×</Text>
+          </TouchableOpacity>
+        </View>
+        
+        <Text style={styles.rightPanelSubtitle}>
+          Personalize your discovery experience
+        </Text>
+        
+        <View style={styles.rightPersonaList}>
+          {personas.map((persona) => (
+            <TouchableOpacity
+              key={persona.id}
+              style={[
+                styles.rightPersonaItem,
+                selectedPersona?.id === persona.id && { 
+                  backgroundColor: `${persona.color}15`,
+                  borderColor: persona.color 
+                }
+              ]}
+              onPress={() => {
+                onSelectPersona(persona);
+                onClose();
+              }}
+            >
+              <View style={styles.rightPersonaContent}>
+                <View style={[styles.rightEmojiCircle, { backgroundColor: `${persona.color}20` }]}>
+                  <Image 
+                    source={{ uri: persona.icon }}
+                    style={styles.rightPersonaImage}
+                  />
+                </View>
+                <View style={styles.rightPersonaText}>
+                  <Text style={styles.rightItemName}>{persona.name}</Text>
+                  <Text style={styles.rightItemDescription}>{persona.description}</Text>
+                </View>
+                {selectedPersona?.id === persona.id && (
+                  <View style={[styles.rightSelectedBadge, { backgroundColor: persona.color }]}>
+                    <Text style={styles.rightSelectedBadgeText}>✓</Text>
+                  </View>
+                )}
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+    </View>
+  );
+};
+
+// Life Moment Selection Panel Component
+const LifeMomentSelectionPanel = ({ visible, onClose, lifeMoments, selectedLifeMoment, onSelectLifeMoment }) => {
+  if (!visible) return null;
+  
+  return (
+    <View style={styles.rightSidePanel}>
+      <TouchableOpacity style={styles.panelBackdrop} onPress={onClose} />
+      <View style={styles.rightPanelContent}>
+        <View style={styles.rightPanelHeader}>
+          <Text style={styles.rightPanelTitle}>Choose Your Moment</Text>
+          <TouchableOpacity style={styles.closeRightPanel} onPress={onClose}>
+            <Text style={styles.closeRightPanelText}>×</Text>
+          </TouchableOpacity>
+        </View>
+        
+        <Text style={styles.rightPanelSubtitle}>
+          Find products perfect for your life stage
+        </Text>
+        
+        <View style={styles.rightPersonaList}>
+          {lifeMoments.map((moment) => (
+            <TouchableOpacity
+              key={moment.id}
+              style={[
+                styles.rightPersonaItem,
+                selectedLifeMoment?.id === moment.id && { 
+                  backgroundColor: `${moment.color}15`,
+                  borderColor: moment.color 
+                }
+              ]}
+              onPress={() => {
+                onSelectLifeMoment(moment);
+                onClose();
+              }}
+            >
+              <View style={styles.rightPersonaContent}>
+                <View style={[styles.rightEmojiCircle, { backgroundColor: `${moment.color}20` }]}>
+                  <Image 
+                    source={{ uri: moment.icon }}
+                    style={styles.rightPersonaImage}
+                  />
+                </View>
+                <View style={styles.rightPersonaText}>
+                  <Text style={styles.rightItemName}>{moment.name}</Text>
+                  <Text style={styles.rightItemDescription}>{moment.description}</Text>
+                </View>
+                {selectedLifeMoment?.id === moment.id && (
+                  <View style={[styles.rightSelectedBadge, { backgroundColor: moment.color }]}>
+                    <Text style={styles.rightSelectedBadgeText}>✓</Text>
+                  </View>
+                )}
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+    </View>
+  );
+};
+
+// Placeholder function for fetching AI curated products
+async function fetchAiCuratedProducts(selectedBrands, personaStyle, personaBudget, lookingFor) {
+  console.log("Fetching AI Curated Products with:", {
+    selectedBrands,
+    personaStyle,
+    personaBudget,
+    lookingFor
+  });
+
+  let prompt = `You are "Curator," an expert AI shopping assistant specializing in ultra-modern, minimalist, and high-quality tech, lifestyle, and design products. Your goal is to curate a personalized shopping bundle for a user.
+
+User Preferences:
+- Liked Brands: ${selectedBrands.length > 0 ? selectedBrands.join(', ') : 'None specified'}
+- Desired Style: ${personaStyle || 'Not specified'}
+- Budget Indication: ${personaBudget || 'Not specified'}
+- Specifically LookingFor: ${lookingFor || 'A general collection based on style and brands'}
+
+Based on these preferences, please generate a list of 3-5 unique product recommendations. For each product, provide:
+1.  title: A concise and appealing product title (e.g., "Minimalist Smart Desk Lamp").
+2.  brand: The brand of the product (e.g., "Luminoir"). If it's a conceptual product, invent a plausible brand name.
+3.  whyBuyThis: A short, compelling sales pitch (1-2 sentences, max 150 characters) highlighting its key benefit or unique selling proposition, using modern language and potentially an emoji if appropriate (e.g., "💡 Smart illumination meets sleek design. Control brightness and color temperature via app for the perfect ambiance.").
+4.  category: A relevant category (e.g., 'home', 'tech', 'audio', 'accessories', 'lifestyle', 'design').
+5.  price: An estimated price as a string (e.g., "$129.99").
+6.  image: A URL to a high-quality, relevant placeholder image (600x600px). You can use Unsplash URLs like 'https://images.unsplash.com/photo-XXXXXXXXXXXXX?w=600&h=600&fit=crop&crop=center'. Try to pick images that match the product concept.
+7.  affiliateUrl: A placeholder URL like 'https://example.com/product-link'.
+
+Return the response as a JSON array of objects. Example product object:
+{
+  "title": "Aura Smart Diffuser",
+  "brand": "SereneScents",
+  "whyBuyThis": "✨ Create a calming oasis. Ultrasonic tech meets app-controlled aromatherapy for ultimate relaxation.",
+  "category": "home",
+  "price": "$89.00",
+  "image": "https://images.unsplash.com/photo-1604275980648-363d53333884?w=600&h=600&fit=crop&crop=center",
+  "affiliateUrl": "https://example.com/aura-diffuser"
+}
+
+Do not include any introductory text or explanations outside of the JSON array itself. The output must be only the JSON array.
+`;
+
+  // Read API Key from environment variable
+  const CLAUDE_API_KEY = process.env.REACT_APP_CLAUDE_API_KEY;
+  const API_URL = 'https://api.anthropic.com/v1/messages'; // Standard Claude Messages API endpoint
+
+  if (!CLAUDE_API_KEY) {
+    console.error("ERROR: REACT_APP_CLAUDE_API_KEY is not set. Please ensure it is defined in your .env file for local development, or in Netlify environment variables for production.");
+    console.error("To fix for local development: Create a .env file in your project root with REACT_APP_CLAUDE_API_KEY=your_actual_key_here and restart your development server.");
+    console.error("To fix for Netlify: Go to Site settings > Build & deploy > Environment, and add REACT_APP_CLAUDE_API_KEY with your key, then redeploy.");
+    throw new Error("AI API key is missing. Please see console for setup instructions.");
+  }
+
+  console.log("---- ATTEMPTING ACTUAL LLM API CALL ----");
+  console.log("Prompt being sent (first 500 chars):", prompt.substring(0,500));
+
+  try {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': CLAUDE_API_KEY,
+        'anthropic-version': '2023-06-01' 
+      },
+      body: JSON.stringify({
+        model: "claude-3-sonnet-20240229", 
+        max_tokens: 2048, 
+        messages: [
+          { role: "user", content: prompt } 
+        ],
+        temperature: 0.7,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('LLM API Error Response:', errorData);
+      let detailedErrorMessage = 'Failed to get a valid response from AI.';
+      if (errorData && errorData.error && errorData.error.message) {
+        detailedErrorMessage = `AI Error: ${errorData.error.message}`;
+      } else if (errorData && errorData.detail) {
+        detailedErrorMessage = `AI Error: ${errorData.detail}`;
+      }
+      throw new Error(detailedErrorMessage);
+    }
+
+    const data = await response.json();
+    console.log("LLM API Success. Full response data:", data);
+    
+    if (data.content && data.content.length > 0 && data.content[0].text) {
+      const productJsonString = data.content[0].text;
+      console.log("LLM Response content (productJsonString):", productJsonString);
+      try {
+        let cleanedJsonString = productJsonString.trim();
+        if (cleanedJsonString.startsWith('```json')) {
+          cleanedJsonString = cleanedJsonString.substring(7);
+          if (cleanedJsonString.endsWith('```')) {
+            cleanedJsonString = cleanedJsonString.substring(0, cleanedJsonString.length - 3);
+          }
+        } else if (cleanedJsonString.startsWith('```')) {
+            cleanedJsonString = cleanedJsonString.substring(3);
+            if (cleanedJsonString.endsWith('```')) {
+                cleanedJsonString = cleanedJsonString.substring(0, cleanedJsonString.length - 3);
+            }
+        }
+        
+        const generatedProducts = JSON.parse(cleanedJsonString.trim());
+        console.log("Parsed generated products:", generatedProducts);
+        return generatedProducts;
+      } catch (parseError) {
+        console.error("Error parsing JSON response from LLM:", parseError);
+        console.error("Raw LLM response string that failed to parse:", productJsonString);
+        throw new Error("AI returned an invalid JSON format. Check the console for the raw response. You may need to adjust the prompt or the AI model settings to ensure it *only* returns a valid JSON array.");
+      }
+    } else {
+      console.error("Unexpected response structure from LLM. 'data.content[0].text' is missing or invalid:", data);
+      throw new Error("AI returned an unexpected response structure. Check console for details.");
+    }
+
+  } catch (error) {
+    console.error('Error fetching AI curated products:', error);
+    if (error instanceof Error) {
+        throw error; 
+    } else {
+        throw new Error('An unknown error occurred while communicating with the AI.');
+    }
+  }
+}
+
+// Initialize products on component mount
+// ... existing code ...

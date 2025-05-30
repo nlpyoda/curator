@@ -735,7 +735,7 @@ export default function App() {
             ) : (
               renderProductList()
             )}
-          </View>
+    </View>
           
           <ProductDetail
             item={selectedProduct}

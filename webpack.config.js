@@ -15,6 +15,14 @@ module.exports = async function (env, argv) {
     ...config.resolve.alias,
     'react-native-linear-gradient': __dirname + '/__mocks__/react-native-linear-gradient.js'
   };
+
+  // Add fallback for crypto module
+  config.resolve.fallback = {
+    ...config.resolve.fallback,
+    "crypto": require.resolve("crypto-browserify"),
+    "stream": require.resolve("stream-browserify"),
+    "vm": require.resolve("vm-browserify")
+  };
   
   return config;
 }; 
