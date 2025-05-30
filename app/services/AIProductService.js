@@ -1,26 +1,142 @@
 // AIProductService for React Native
-import { MOCK_PRODUCTS } from './mockData';
+import { MOCK_PRODUCTS } from './mockData.js';
+import { DatabaseService } from './DatabaseService.js';
 
 export class AIProductService {
   constructor() {
-    this.useMockData = true; // Always use mock data in React Native
+    this.useMockData = true; // Start with mock data, can be overridden
     this.initialized = false;
     this.MOCK_PRODUCTS = MOCK_PRODUCTS; // Store reference to mock data
+    this.databaseService = null;
+    this.databaseAvailable = false;
   }
 
   async initialize() {
     try {
-      console.log('AI Product Service initialized with mock data');
+      // Try to initialize database service
+      try {
+        this.databaseService = new DatabaseService();
+        await this.databaseService.initialize();
+        
+        // Test database connection by checking if we have any products
+        const testProducts = await this.databaseService.prisma.product.findMany({ take: 1 });
+        if (testProducts.length > 0) {
+          this.databaseAvailable = true;
+          this.useMockData = false;
+          console.log('AI Product Service initialized with database');
+        } else {
+          console.log('Database is empty, using mock data');
+        }
+      } catch (dbError) {
+        console.log('Database not available, using mock data:', dbError.message);
+        this.databaseAvailable = false;
+        this.useMockData = true;
+      }
+      
       this.initialized = true;
     } catch (error) {
       console.error('Failed to initialize AI service:', error);
+      // Fallback to mock data
+      this.useMockData = true;
+      this.initialized = true;
+    }
+  }
+
+  async searchProductsFromDatabase(query, persona) {
+    try {
+      // For database search, we'll use text-based search first, then potentially embeddings later
+      const normalizedQuery = query.toLowerCase().trim();
+      
+      // Search products by title, description, features, and tags
+      const products = await this.databaseService.prisma.product.findMany({
+        where: {
+          OR: [
+            { title: { contains: normalizedQuery, mode: 'insensitive' } },
+            { description: { contains: normalizedQuery, mode: 'insensitive' } },
+            { features: { contains: normalizedQuery, mode: 'insensitive' } },
+            { tags: { hasSome: normalizedQuery.split(' ') } },
+            { category: { contains: normalizedQuery, mode: 'insensitive' } },
+            { subCategory: { contains: normalizedQuery, mode: 'insensitive' } }
+          ]
+        },
+        take: 20 // Get more than we need for scoring
+      });
+
+      // Transform database format back to expected mock format for compatibility
+      const transformedProducts = products.map(product => ({
+        id: product.id,
+        title: product.title,
+        price: product.price,
+        link: product.link,
+        description: product.description,
+        features: product.features,
+        whyBuy: product.whyBuy,
+        reviews: {
+          amazon: product.amazonReviewSummary || '',
+          instagram: product.instagramReviewSummary || '',
+          marketplace: product.fbMarketplaceSummary || ''
+        },
+        prosAndCons: product.prosAndCons || { pros: [], cons: [] },
+        lastUpdated: product.lastUpdated.toISOString().split('T')[0],
+        source: product.source
+      }));
+
+      // Apply persona-based scoring similar to mock search
+      const results = transformedProducts.map(product => {
+        const personaLower = persona.toLowerCase();
+        let similarity = 0.5; // Base score
+        
+        // Increase score for persona-relevant keywords
+        if (personaLower.includes('tech') && 
+          (product.title.toLowerCase().includes('macbook') || 
+            product.title.toLowerCase().includes('headphones') || 
+            product.title.toLowerCase().includes('smart'))) {
+          similarity += 0.3;
+        }
+        
+        if (personaLower.includes('professional') && 
+          (product.description.toLowerCase().includes('professional') || 
+            product.description.toLowerCase().includes('work'))) {
+          similarity += 0.2;
+        }
+        
+        if (personaLower.includes('quality') && 
+          (product.prosAndCons.pros.some(pro => pro.toLowerCase().includes('quality')))) {
+          similarity += 0.2;
+        }
+        
+        return {
+          ...product,
+          similarity: Math.min(similarity, 0.97)
+        };
+      });
+      
+      // Sort by similarity and return top results
+      results.sort((a, b) => b.similarity - a.similarity);
+      
+      console.log(`Database search returned ${results.length} products`);
+      return results.slice(0, 10); // Return top 10
+      
+    } catch (error) {
+      console.error('Database search error:', error);
+      throw error;
     }
   }
 
   async searchProducts(query, persona) {
     console.log(`Searching for: ${query} with persona: ${persona}`);
     
-    // Always use mock data for now
+    // Try database first if available
+    if (this.databaseAvailable && this.databaseService) {
+      try {
+        return await this.searchProductsFromDatabase(query, persona);
+      } catch (dbError) {
+        console.log('Database search failed, falling back to mock data:', dbError.message);
+        // Fall through to mock data search
+      }
+    }
+    
+    // Fallback to mock data search
     return new Promise((resolve) => {
       setTimeout(() => {
         try {
@@ -224,7 +340,15 @@ export class AIProductService {
   }
 
   async cleanup() {
-    // Nothing to clean up with mock data
+    // Clean up database connection if available
+    if (this.databaseService) {
+      try {
+        await this.databaseService.cleanup();
+      } catch (error) {
+        console.error('Error cleaning up database service:', error);
+      }
+    }
     this.initialized = false;
+    this.databaseAvailable = false;
   }
 } 

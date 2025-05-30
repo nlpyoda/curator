@@ -65,572 +65,29 @@ const shadeColor = (color, percent) => {
 // Mock data for testing
 const mockProducts = [
   {
-    id: 1,
-    title: 'Sony WH-1000XM5 Wireless Headphones',
-    price: '$399.99',
-    rating: '4.8',
-    description: 'Industry-leading noise canceling, perfect for focus and immersive audio.',
-    category: 'audio',
-    tags: ['premium', 'wireless', 'noise-canceling', 'audio-excellence', 'travel-essential', 'optimizer-pick', 'trendsetter-pick', 'career-launch-essential', 'gamer-setup-essential', 'wellness-retreat-essential'],
-    image: 'https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=600&h=600&fit=crop&crop=center', // Premium headphones product shot
-    affiliateUrl: 'https://electronics.sony.com/audio/headphones/headband/p/wh1000xm5-l?mg=shopping&gad_source=1&gad_campaignid=22224130485&gbraid=0AAAAABiDjZjIa5DKjAugccBx3T6KuLFCb&gclid=CjwKCAjwi-DBBhA5EiwAXOHsGWew3GWTaHne6281N8_BDpE5qZdrbJcIgxWOT5Uz-yy9oisBKpJKBRoCdkgQAvD_BwE&gclsrc=aw.ds', // Sony official website link
-    brand: 'Sony',
-    insights: [],
-    optimizerInsight: 'Exceptional noise cancellation for deep focus sessions.',
-    trendsetterTip: 'A must-have for travel in style and ultimate audio immersion.',
-    whyBuyThis: '✨ SILENCE IS GOLDEN → Industry-leading ANC blocks out the world • 30hr battery keeps you untethered • Premium comfort for marathon sessions • The gold standard pros swear by'
-  },
-  {
-    id: 2,
-    title: 'MacBook Pro 14-inch M3',
-    price: '$1,999.00',
-    rating: '4.9',
-    description: 'Supercharged by M3 Pro chip for demanding creative and professional workflows.',
-    category: 'laptop',
-    tags: ['premium', 'pro', 'creative-powerhouse', 'performance', 'optimizer-pick', 'trendsetter-pick', 'career-launch-essential', 'gamer-setup-essential'],
-    image: 'https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=600&h=600&fit=crop&crop=center', // Clean MacBook product shot
-    affiliateUrl: 'https://www.amazon.com/dp/B0CM5JV268', // Amazon MacBook Pro 14" M3 link
-    brand: 'Apple',
-    insights: [],
-    optimizerInsight: 'M3 Pro chip offers blazing fast performance for heavy workloads.',
-    trendsetterTip: 'The creative professional\'s standard for power and aesthetics.',
-    whyBuyThis: '🚀 POWER REDEFINED → M3 chip crushes any workflow • 22hr battery outlasts your ambition • Liquid Retina XDR makes pixels disappear • Your ideas deserve this canvas'
-  },
-  {
-    id: 3,
-    title: 'Dyson Supersonic Hair Dryer',
-    price: '$429.99',
-    rating: '4.7',
-    description: 'Engineered for different hair types with intelligent heat control for shine.',
-    category: 'beauty',
-    tags: ['premium', 'beauty-tech', 'innovative', 'trendsetter-pick', 'wellness-retreat-essential', 'sanctuary-essential'],
-    image: 'https://images.unsplash.com/photo-1620756236496-65f87a036c52?w=600&h=600&fit=crop&crop=center', // Luxury beauty device
-    affiliateUrl: 'https://www.dyson.com/hair-care/hair-dryers/supersonic/black-nickel', // Official Dyson website link
+    id: '1',
+    title: 'Dyson Supersonic™ Hair Dryer',
     brand: 'Dyson',
-    insights: [],
-    trendsetterTip: 'Revolutionary hair tech that makes a statement.',
-    whyBuyThis: '💫 SALON MEETS SCIENCE → Intelligent heat prevents damage • 3x faster than conventional dryers • Magnetic attachments snap on like magic • Your hair routine, revolutionized'
+    priceRange: [399, 429],
+    category: 'haircare',
+    tags: ['premium', 'tech', 'beauty'],
+    images: [
+      'https://images.unsplash.com/photo-1620331317314-530796315638?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=60', // Placeholder if original fails
+      // ... other images
+    ],
+    rating: 4.9,
+    description: 'Fast drying. No extreme heat. Engineered for different hair types.',
+    whyBuyThis: 'Top-tier haircare tech. Protects hair while drying fast. Iconic. ✨',
+    affiliateUrl: 'https://www.dyson.com/hair-care/hair-dryers/supersonic'
   },
-  {
-    id: 4,
-    title: 'Away Carry-On Suitcase',
-    price: '$275.00',
-    rating: '4.6',
-    description: 'Durable, lightweight polycarbonate shell with 360° spinner wheels and signature interior compression system.',
-    category: 'travel',
-    tags: ['travel-essential', 'durable', 'stylish-travel', 'conscious-pick', 'trendsetter-pick', 'career-launch-essential'],
-    image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&h=600&fit=crop&crop=center', // Premium luggage shot
-    affiliateUrl: 'https://www.awaytravel.com/products/carry-on-navy-blue', // Official Away navy blue carry-on
-    brand: 'Away',
-    insights: [],
-    consciousChoiceDetail: 'Durable materials and a lifetime warranty reduce waste.',
-    trendsetterTip: 'The iconic suitcase that started a travel revolution.',
-    whyBuyThis: '✈️ TRAVEL GAME CHANGER → Award-winning design loved by millions • Interior compression fits 45% more • TSA-approved lock built-in • Lifetime warranty covers everything • The suitcase that made travel stylish again',
-    trendingStats: '↗ 45% surge in searches • Featured in 200+ travel blogs this month • #1 carry-on on TikTok travel reviews • Sold 2M+ units worldwide',
-    hotTake: 'This isn\'t just luggage—it\'s the travel accessory that transformed an entire industry. From Instagram feeds to airport terminals, the Away Carry-On became the unofficial uniform of modern travelers. The navy blue colorway is having a major moment as travelers embrace sophisticated, timeless aesthetics over flashy designs.'
-  },
-  {
-    id: 5,
-    title: 'Technivorm Moccamaster KBGV Select',
-    price: '$359.00',
-    rating: '4.8',
-    description: 'Handmade in the Netherlands, brews a perfect pot of coffee, SCA certified.',
-    category: 'kitchen',
-    tags: ['premium-coffee', 'quality-brew', 'home-comfort', 'optimizer-pick', 'conscious-pick', 'sanctuary-essential', 'perfect-hosting-essential'],
-    image: 'https://images.unsplash.com/photo-1559528895-4145a049718a?w=600&h=600&fit=crop&crop=center', // Premium coffee maker
-    affiliateUrl: 'https://www.amazon.com/dp/B077JBQZPX', // Amazon Moccamaster link
-    brand: 'Technivorm',
-    insights: [],
-    optimizerInsight: 'Consistently brews SCA Gold Cup standard coffee for peak morning productivity.',
-    consciousChoiceDetail: 'Handmade, repairable, and built to last for years.',
-    whyBuyThis: '☕ COFFEE PERFECTION → SCA-certified brewing hits ideal temperature every time • Handcrafted in Netherlands with 5-year warranty • 10-cup capacity fuels your entire day • Barista-quality without the barista price'
-  },
-  {
-    id: 6,
-    title: 'iPhone 15 Pro',
-    price: '$999.00',
-    rating: '4.9',
-    description: 'Titanium design, A17 Pro chip, and a dramatically more powerful camera system.',
-    category: 'phone',
-    tags: ['premium', 'flagship', 'camera-excellence', 'performance', 'trendsetter-pick', 'optimizer-pick', 'career-launch-essential'],
-    image: 'https://images.unsplash.com/photo-1695026545927-d9a838c3267f?w=600&h=600&fit=crop&crop=center', // iPhone 15 Pro
-    affiliateUrl: 'https://www.amazon.com/dp/B0CHWV2Z1C', // Amazon iPhone 15 Pro link
-    brand: 'Apple',
-    insights: [],
-    whyBuyThis: '📱 TITANIUM EVOLUTION → A17 Pro chip leaves competition behind • Pro camera system captures life in stunning detail • Action Button customizes to your workflow • Built to last, designed to impress'
-  },
-  {
-    id: 7,
-    title: 'Herman Miller Aeron Chair Remastered',
-    price: '$1,395.00',
-    rating: '4.8',
-    description: 'The benchmark for ergonomic seating, fully adjustable for ultimate comfort and support.',
-    category: 'furniture',
-    tags: ['ergonomic', 'office-essential', 'premium-comfort', 'optimizer-pick', 'conscious-pick', 'career-launch-essential', 'sanctuary-essential', 'gamer-setup-essential'],
-    image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=600&h=600&fit=crop&crop=center', // Modern office chair
-    affiliateUrl: 'https://www.amazon.com/dp/B071G42VQD', // Amazon Herman Miller Aeron
-    brand: 'Herman Miller',
-    insights: [],
-    whyBuyThis: '🪑 ERGONOMIC LEGEND → 8-zone PostureFit technology supports your every move • 12-year warranty backs legendary durability • Breathable mesh keeps you cool under pressure • The chair that built Silicon Valley'
-  },
-  {
-    id: 8,
-    title: 'Nespresso Vertuo Next Deluxe',
-    price: '$229.00',
-    rating: '4.5',
-    description: 'Compact coffee and espresso machine with Centrifusion technology and sleek design.',
-    category: 'kitchen',
-    tags: ['coffee', 'convenience', 'home-cafe', 'student-pick', 'optimizer-pick', 'sanctuary-essential', 'perfect-hosting-essential'],
-    image: 'https://images.unsplash.com/photo-1610801524961-a8f09715958d?w=600&h=600&fit=crop&crop=center', // Elegant coffee machine
-    affiliateUrl: 'https://www.amazon.com/dp/B08HLYVJQL', // Amazon Nespresso Vertuo
-    brand: 'Nespresso',
-    insights: [],
-    whyBuyThis: '☕ ONE-TOUCH LUXURY → Centrifusion tech extracts perfect crema every time • 40-second brewing beats morning rush • Compact design fits any counter • Café-quality without leaving home'
-  },
-  {
-    id: 9,
-    title: 'Allbirds Wool Runners',
-    price: '$110.00',
-    rating: '4.6',
-    description: 'Soft, cozy, and sustainable sneakers made from ZQ Merino wool.',
-    category: 'shoes',
-    tags: ['sustainable', 'comfort-wear', 'casual-style', 'conscious-pick', 'student-pick', 'sustainable-living-essential', 'wellness-retreat-essential'],
-    image: 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d34?w=600&h=600&fit=crop&crop=center', // Clean sneaker shot
-    affiliateUrl: 'https://www.amazon.com/dp/B071K7W8T1', // Amazon Allbirds link
-    brand: 'Allbirds',
-    insights: [],
-    whyBuyThis: '👟 CLOUDS FOR YOUR FEET → Merino wool naturally regulates temperature • Machine washable keeps them fresh • Carbon-negative materials protect the planet • Comfort that converts non-believers'
-  },
-  {
-    id: 10,
-    title: 'Patagonia Nano Puff Jacket',
-    price: '$239.00',
-    rating: '4.7',
-    description: 'Lightweight, windproof, and water-resistant jacket with recycled insulation.',
-    category: 'clothing',
-    tags: ['sustainable-outdoor', 'lightweight-warmth', 'travel-packable', 'conscious-pick', 'sustainable-living-essential'],
-    image: 'https://images.unsplash.com/photo-1520903700003-46dcf53ea994?w=600&h=600&fit=crop&crop=center', // Updated Image
-    affiliateUrl: 'https://www.amazon.com/dp/B0887QPPX3', // Amazon Patagonia Nano Puff link
-    brand: 'Patagonia',
-    insights: [],
-    whyBuyThis: '🏔️ ADVENTURE ARMOR → Packable insulation weighs just 12oz • Weather-resistant DWR coating sheds light rain • 60g PrimaLoft recycled insulation keeps you warm • Your go-to layer for life outdoors'
-  },
-  // Student-focused products (Existing 5 + 1 new = 6)
-  {
-    id: 11,
-    title: 'MacBook Air M2',
-    price: '$999.00', // Adjusted price
-    rating: '4.8',
-    description: 'Perfect for students - lightweight, long battery life, great for notes and projects.',
-    category: 'laptop',
-    tags: ['student-pick', 'budget-friendly', 'portable', 'study-essential', 'performance', 'career-launch-essential'],
-    image: 'https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=600&h=600&fit=crop&crop=center',
-    affiliateUrl: 'https://www.amazon.com/dp/B0B3C4CLBJ', // Amazon MacBook Air M2 link (corrected)
-    brand: 'Apple',
-    studentReview: 'Perfect for coding, note-taking, and Netflix. Battery lasts all day!',
-    whyStudentsLove: 'Lightweight for campus carry, powerful enough for any major.',
-    insights: [],
-    whyBuyThis: '💻 STUDENT SUPERPOWER → M2 chip handles everything from coding to video editing • 18hr battery outlasts your longest study session • 2.7lb weight won\'t break your back • The laptop that gets you hired'
-  },
-  {
-    id: 12,
-    title: 'Anker PowerCore III Elite Portable Charger', // More specific model
-    price: '$49.99', // Adjusted price
-    rating: '4.7',
-    description: 'High-capacity portable charger to keep all your devices powered on the go.',
-    category: 'accessories',
-    tags: ['student-pick', 'budget-friendly', 'essential-tech', 'portable-power', 'travel', 'career-launch-essential', 'gamer-setup-essential'],
-    image: 'https://images.unsplash.com/photo-1609592806596-b43bada2e3c9?w=600&h=600&fit=crop&crop=center',
-    affiliateUrl: 'https://www.amazon.com/dp/B08LGM24ZP', // Amazon Anker PowerCore link
-    brand: 'Anker',
-    studentReview: 'Saved me countless times during finals week and long commutes!',
-    whyStudentsLove: 'Reliable, fast charging, and fits in any backpack.',
-    insights: [],
-    whyBuyThis: '🔋 POWER ANXIETY = GONE → 25,600mAh charges your phone 5+ times • 60W USB-C powers laptops too • MultiProtect safety system prevents overheating • Your digital lifeline for $50'
-  },
-  {
-    id: 13,
-    title: 'Spotify Premium Student + Hulu & Showtime', // Bundled offer
-    price: '$5.99/month',
-    rating: '4.9',
-    description: 'Music, movies, and shows for studying, relaxing, and entertainment.',
-    category: 'subscription',
-    tags: ['student-pick', 'budget-friendly', 'entertainment-bundle', 'study-break', 'value-deal', 'wellness-retreat-essential', 'gamer-setup-essential'],
-    image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600&h=600&fit=crop&crop=center',
-    affiliateUrl: 'https://www.amazon.com/dp/B08C7KG5LP', // Amazon Spotify gift card alternative
-    brand: 'Spotify',
-    studentReview: 'The best deal for endless entertainment and study playlists.',
-    whyStudentsLove: 'Three services for the price of one, essential for student life.',
-    insights: [],
-    whyBuyThis: '🎵 TRIPLE THREAT DEAL → Premium music + ad-free Hulu + Showtime for $6/month • 100M+ songs fuel your study sessions • Binge-worthy content for study breaks • Usually costs $35/month separately'
-  },
-  {
-    id: 14,
-    title: 'Hydro Flask Standard Mouth Bottle',
-    price: '$39.95',
-    rating: '4.7',
-    description: 'Reusable water bottle to stay hydrated, keeps drinks cold for 24 hours or hot for 12.',
-    category: 'accessories',
-    tags: ['student-pick', 'sustainable', 'health-conscious', 'campus-essential', 'conscious-pick', 'sustainable-living-essential', 'wellness-retreat-essential'],
-    image: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=600&h=600&fit=crop&crop=center', // New image
-    affiliateUrl: 'https://www.amazon.com/dp/B077SQDQWS', // Amazon Hydro Flask link
-    brand: 'Hydro Flask',
-    studentReview: 'Keeps my water cold all day, even in a stuffy lecture hall!',
-    whyStudentsLove: 'Eco-friendly, durable, and comes in cool colors.',
-    insights: [],
-    whyBuyThis: '🌊 HYDRATION HERO → TempShield insulation keeps drinks perfect for 24hrs • Dishwasher safe saves time • Lifetime warranty shows confidence • Campus essential that pays for itself'
-  },
-  {
-    id: 15,
-    title: 'Kanken Classic Backpack',
-    price: '$80.00',
-    rating: '4.6',
-    description: 'Iconic and durable backpack, perfect for carrying books, laptop, and essentials.',
-    category: 'accessories',
-    tags: ['student-pick', 'fashionable-function', 'durable-design', 'campus-style', 'trendsetter-pick', 'career-launch-essential', 'sustainable-living-essential'],
-    image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&h=600&fit=crop&crop=center', // New image
-    affiliateUrl: 'https://www.amazon.com/dp/B00005GUXL', // Amazon Kanken backpack link
-    brand: 'Fjallraven',
-    studentReview: 'Super comfy, fits everything, and I get so many compliments!',
-    whyStudentsLove: 'Stylish, practical, and built to last through all your college years.',
-    insights: [],
-    whyBuyThis: '🎒 CAMPUS ICON → Vinylon F fabric resists water and stains • Ergonomic straps prevent back pain • 16L capacity holds laptop + books + lunch • Swedish design that started a movement'
-  },
-  {
-    id: 16, // New product
-    title: 'Logitech MX Master 3S Mouse',
-    price: '$99.99',
-    rating: '4.9',
-    description: 'Advanced wireless mouse with ultra-fast scrolling and ergonomic design for productivity.',
-    category: 'accessories',
-    tags: ['optimizer-pick', 'ergonomic', 'productivity-tool', 'tech-essential', 'performance', 'career-launch-essential', 'gamer-setup-essential'],
-    image: 'https://images.unsplash.com/photo-1606416132922-7214bab15a56?w=600&h=600&fit=crop&crop=center', // New image
-    affiliateUrl: 'https://www.logitech.com/en-us/products/mice/mx-master-3s.910-006556.html',
-    brand: 'Logitech',
-    insights: []
-  },
-  {
-    id: 17, // New product
-    title: 'Kindle Paperwhite Signature Edition',
-    price: '$189.99',
-    rating: '4.8',
-    description: 'Glare-free display, waterproof, wireless charging, and adjustable warm light for reading.',
-    category: 'electronics',
-    tags: ['optimizer-pick', 'reading-gadget', 'travel-friendly', 'conscious-pick', 'student-pick', 'golden-years-essential', 'wellness-retreat-essential'],
-    image: 'https://images.unsplash.com/photo-1544947950-fa07a98ba8ec?w=600&h=600&fit=crop&crop=center', // New image
-    affiliateUrl: 'https://www.amazon.com/Kindle-Paperwhite-Signature-Edition-32/dp/B08N5J7S3L',
-    brand: 'Amazon',
-    insights: []
-  },
-  {
-    id: 18, // New product
-    title: 'Wacom Intuos Pro Medium',
-    price: '$379.95',
-    rating: '4.7',
-    description: 'Professional pen tablet for digital drawing, painting, and photo editing.',
-    category: 'electronics',
-    tags: ['trendsetter-pick', 'creative-tool', 'digital-art', 'pro-gear', 'optimizer-pick', 'career-launch-essential'],
-    image: 'https://images.unsplash.com/photo-1585288940045-07517f8371c7?w=600&h=600&fit=crop&crop=center', // New image
-    affiliateUrl: 'https://www.wacom.com/en-us/products/pen-tablets/wacom-intuos-pro',
-    brand: 'Wacom',
-    insights: []
-  },
-  {
-    id: 19, // New product
-    title: 'Rimowa Essential Lite Cabin Suitcase',
-    price: '$700.00',
-    rating: '4.8',
-    description: 'Exceptionally lightweight and durable polycarbonate suitcase, engineered for travelers.',
-    category: 'travel',
-    tags: ['trendsetter-pick', 'luxury-travel', 'lightweight', 'durable-design', 'premium', 'career-launch-essential'],
-    image: 'https://images.unsplash.com/photo-1561580119-a4004e4cef59?w=600&h=600&fit=crop&crop=center', // New image
-    affiliateUrl: 'https://www.rimowa.com/us/en/luggage/colour/black/cabin/82353624.html',
-    brand: 'Rimowa',
-    insights: []
-  },
-  {
-    id: 20, // New product
-    title: 'Moleskine Classic Notebook Large, Ruled',
-    price: '$22.95',
-    rating: '4.7',
-    description: 'Iconic notebook for writing, journaling, and sketching. Durable cover and quality paper.',
-    category: 'accessories',
-    tags: ['optimizer-pick', 'student-pick', 'writing-essential', 'classic-design', 'conscious-pick', 'career-launch-essential', 'sanctuary-essential'],
-    image: 'https://images.unsplash.com/photo-1516414447565-b14be0adf13e?w=600&h=600&fit=crop&crop=center', // New image
-    affiliateUrl: 'https://www.moleskine.com/en-us/shop/notebooks/classic-notebooks/classic-notebook-black-hard-cover-large-ruled-8058647629578.html',
-    brand: 'Moleskine',
-    insights: []
-  },
-  {
-    id: 21, // New product
-    title: 'Bose QuietComfort Ultra Earbuds',
-    price: '$299.00',
-    rating: '4.6',
-    description: 'World-class noise cancellation and high-fidelity audio in a compact earbud.',
-    category: 'audio',
-    tags: ['optimizer-pick', 'trendsetter-pick', 'premium-audio', 'noise-canceling', 'travel-essential', 'career-launch-essential', 'wellness-retreat-essential'],
-    image: 'https://images.unsplash.com/photo-1600003014704-538a195a697c?w=600&h=600&fit=crop&crop=center', // New image
-    affiliateUrl: 'https://www.bose.com/en_us/products/headphones/earbuds/bose-quietcomfort-ultra-earbuds.html',
-    brand: 'Bose',
-    insights: []
-  },
-  {
-    id: 22, // New Product
-    title: 'Oura Ring Gen3 Horizon',
-    price: '$349.00',
-    rating: '4.5',
-    description: 'Smart ring that tracks sleep, activity, readiness, and temperature with a sleek design.',
-    category: 'wearables',
-    tags: ['trendsetter-pick', 'health-tech', 'wearable-tech', 'sleep-tracking', 'premium', 'wellness-retreat-essential'],
-    image: 'https://images.unsplash.com/photo-1690994628236-9a3f780edc00?w=600&h=600&fit=crop&crop=center', // Replace with actual Oura ring image if possible
-    affiliateUrl: 'https://ouraring.com/',
-    brand: 'Oura',
-    insights: []
-  },
-  {
-    id: 23, // New Product
-    title: 'Everlane The Organic Cotton Crew Tee',
-    price: '$30.00',
-    rating: '4.6',
-    description: 'A classic, comfortable crew neck tee made from certified organic cotton.',
-    category: 'clothing',
-    tags: ['conscious-pick', 'sustainable-fashion', 'wardrobe-staple', 'organic', 'minimalist', 'sustainable-living-essential', 'sanctuary-essential'],
-    image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&h=600&fit=crop&crop=center',
-    affiliateUrl: 'https://www.everlane.com/products/mens-organic-cotton-crew-uniform-white',
-    brand: 'Everlane',
-    insights: []
-  },
-  {
-    id: 24, // New Product
-    title: 'Fellow Stagg EKG Electric Kettle',
-    price: '$195.00',
-    rating: '4.8',
-    description: 'Beautifully designed electric pour-over kettle with variable temperature control.',
-    category: 'kitchen',
-    tags: ['trendsetter-pick', 'optimizer-pick', 'premium-kitchen', 'coffee-lover', 'design-focused', 'sanctuary-essential', 'perfect-hosting-essential'],
-    image: 'https://images.unsplash.com/photo-1620674156628-918f7994a9dd?w=600&h=600&fit=crop&crop=center',
-    affiliateUrl: 'https://fellowproducts.com/products/stagg-ekg-electric-pour-over-kettle',
-    brand: 'Fellow',
-    insights: []
-  },
-  {
-    id: 25, // New Product
-    title: 'Veja V-10 Sneakers',
-    price: '$175.00',
-    rating: '4.5',
-    description: 'Sustainably made sneakers with a classic look, using ecological and recycled materials.',
-    category: 'shoes',
-    tags: ['conscious-pick', 'sustainable-fashion', 'ethical-brand', 'stylish-sneaker', 'trendsetter-pick', 'sustainable-living-essential'],
-    image: 'https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=600&h=600&fit=crop&crop=center',
-    affiliateUrl: 'https://www.veja-store.com/en_us/v-10-leather-white-natural-VXM021267.html',
-    brand: 'Veja',
-    insights: []
-  },
-  {
-    id: 26, // New product
-    title: 'ThinkPad X1 Carbon Gen 11',
-    price: '$1,749.00',
-    rating: '4.8',
-    description: 'Ultra-light and durable business laptop with robust security and performance features.',
-    category: 'laptop',
-    tags: ['optimizer-pick', 'business-laptop', 'premium', 'portable', 'security-focused', 'career-launch-essential'],
-    image: 'https://images.unsplash.com/photo-1515343480029-43cdfe6b6aae?w=600&h=600&fit=crop&crop=center', // Generic laptop image
-    affiliateUrl: 'https://www.lenovo.com/us/en/p/laptops/thinkpad/thinkpadx1/thinkpad-x1-carbon-gen-11/len101t0049',
-    brand: 'Lenovo',
-    insights: []
-  },
-  {
-    id: 27, // New product
-    title: 'Roost V3 Laptop Stand',
-    price: '$89.95',
-    rating: '4.9',
-    description: 'Ultra-portable and adjustable laptop stand for improved ergonomics.',
-    category: 'accessories',
-    tags: ['optimizer-pick', 'conscious-pick', 'ergonomic', 'portable', 'travel-essential', 'career-launch-essential'],
-    image: 'https://images.unsplash.com/photo-1593642702821-c8da67585055?w=600&h=600&fit=crop&crop=center', // Generic workspace image
-    affiliateUrl: 'https://www.therooststand.com/',
-    brand: 'Roost',
-    insights: []
-  },
-  {
-    id: 28, // New product
-    title: 'Premium Leather Briefcase by Satchel & Page',
-    price: '$475.00',
-    rating: '4.7',
-    description: 'Handcrafted full-grain leather briefcase for the discerning professional.',
-    category: 'accessories',
-    tags: ['optimizer-pick', 'premium', 'leather-goods', 'professional-style', 'durable', 'career-launch-essential'],
-    image: 'https://images.unsplash.com/photo-1584917865430-de3351a91a9f?w=600&h=600&fit=crop&crop=center', // Generic briefcase image
-    affiliateUrl: 'https://www.satchel-page.com/products/founder-briefcase',
-    brand: 'Satchel & Page',
-    insights: []
-  },
-  {
-    id: 29, // New student product
-    title: 'TI-84 Plus CE Graphing Calculator',
-    price: '$129.99',
-    rating: '4.8',
-    description: 'Essential graphing calculator for math and science students.',
-    category: 'electronics',
-    tags: ['student-pick', 'study-essential', 'math-tool', 'stem'],
-    image: 'https://images.unsplash.com/photo-1595993900939-8088865091ce?w=600&h=600&fit=crop&crop=center',
-    affiliateUrl: 'https://education.ti.com/en/products/calculators/graphing-calculators/ti-84-plus-ce',
-    brand: 'Texas Instruments',
-    studentReview: 'A must-have for any STEM major. Makes complex calculations easy.',
-    whyStudentsLove: 'Approved for most exams and lasts for years.',
-    insights: []
-  },
-  {
-    id: 30, // New Product - Instant Ramen
-    title: 'Instant Ramen Variety Pack (Bulk)',
-    price: '$24.99',
-    rating: '4.3',
-    description: 'Dorm room essential - quick, tasty, and budget-friendly meals for late-night study sessions.',
-    category: 'food',
-    tags: ['student-pick', 'budget-friendly', 'dorm-essential', 'quick-meal', 'comfort-food'],
-    image: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=600&h=600&fit=crop&crop=center',
-    affiliateUrl: 'https://www.amazon.com/dp/B07FQRPQSB', // Nongshim Shin Ramyun variety pack
-    brand: 'Nongshim & Others',
-    studentReview: 'Lifesaver during finals week when I have no time to cook.',
-    whyStudentsLove: 'Cheap, filling, and surprisingly delicious.',
-    insights: []
-  },
-  {
-    id: 31, // New Product - Blue Light Glasses
-    title: 'Blue Light Blocking Glasses (2-Pack)',
-    price: '$19.99',
-    rating: '4.4',
-    description: 'Protect your eyes during long screen time sessions, reduce eye strain and improve sleep.',
-    category: 'accessories',
-    tags: ['student-pick', 'health-gadget', 'study-aid', 'budget-friendly', 'eye-care'],
-    image: 'https://images.unsplash.com/photo-1574258495973-f010dfbb5371?w=600&h=600&fit=crop&crop=center',
-    affiliateUrl: 'https://www.amazon.com/dp/B08XQJK9XY', // Blue light blocking glasses 2-pack
-    brand: 'Various Brands',
-    studentReview: 'No more headaches after hours of coding and online lectures!',
-    whyStudentsLove: 'Affordable way to protect your eyes and look smart.',
-    insights: []
-  },
-  {
-    id: 32, // New product for new arrival
-    title: 'UPPAbaby Vista V2 Stroller System',
-    price: '$969.99',
-    rating: '4.8',
-    description: 'Premium stroller system that grows with your child from infant to toddler.',
-    category: 'baby',
-    tags: ['new-arrival-essential', 'premium-parenting', 'stroller-system', 'infant-care'],
-    image: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600&h=600&fit=crop&crop=center',
-    affiliateUrl: 'https://uppababy.com/vista/',
-    brand: 'UPPAbaby',
-    insights: []
-  },
-  {
-    id: 33, // New product for new arrival
-    title: 'SNOO Smart Sleeper Bassinet',
-    price: '$1,695.00',
-    rating: '4.9',
-    description: 'Revolutionary smart bassinet that helps babies sleep better and longer.',
-    category: 'baby',
-    tags: ['new-arrival-essential', 'smart-parenting', 'sleep-solution', 'premium-baby'],
-    image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=600&h=600&fit=crop&crop=center',
-    affiliateUrl: 'https://www.happiestbaby.com/products/snoo-smart-bassinet',
-    brand: 'Happiest Baby',
-    insights: []
-  },
-  {
-    id: 34, // New product for golden years
-    title: 'Bose SoundLink Revolve+ II',
-    price: '$329.00',
-    rating: '4.7',
-    description: 'Portable Bluetooth speaker with 360-degree sound, perfect for any activity.',
-    category: 'audio',
-    tags: ['golden-years-essential', 'portable-audio', 'senior-friendly', 'easy-to-use'],
-    image: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=600&h=600&fit=crop&crop=center',
-    affiliateUrl: 'https://www.bose.com/en_us/products/speakers/portable_speakers/soundlink_revolve_plus_ii.html',
-    brand: 'Bose',
-    insights: []
-  },
-  {
-    id: 35, // New product for golden years
-    title: 'Kindle Oasis (10th Gen)',
-    price: '$269.99',
-    rating: '4.6',
-    description: 'Premium e-reader with adjustable warm light, waterproof design, and page-turn buttons.',
-    category: 'electronics',
-    tags: ['golden-years-essential', 'reading-comfort', 'large-screen', 'senior-friendly'],
-    image: 'https://images.unsplash.com/photo-1544947950-fa07a98ba8ec?w=600&h=600&fit=crop&crop=center',
-    affiliateUrl: 'https://www.amazon.com/kindle-oasis/dp/B07L5GH2YP',
-    brand: 'Amazon',
-    insights: []
-  },
-  {
-    id: 36, // New product for gamer setup
-    title: 'ASUS ROG Swift PG279QM Gaming Monitor',
-    price: '$699.00',
-    rating: '4.8',
-    description: '27" 1440p 240Hz IPS gaming monitor with G-SYNC and HDR for competitive gaming.',
-    category: 'electronics',
-    tags: ['gamer-setup-essential', 'high-refresh', 'competitive-gaming', 'premium-display'],
-    image: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=600&h=600&fit=crop&crop=center',
-    affiliateUrl: 'https://rog.asus.com/monitors/27-to-31-5-inches/rog-swift-pg279qm/',
-    brand: 'ASUS',
-    insights: []
-  },
-  {
-    id: 37, // New product for gamer setup
-    title: 'SteelSeries Arctis Pro Wireless',
-    price: '$329.99',
-    rating: '4.6',
-    description: 'Premium wireless gaming headset with lossless 2.4GHz audio and Bluetooth.',
-    category: 'audio',
-    tags: ['gamer-setup-essential', 'wireless-gaming', 'premium-audio', 'competitive-edge'],
-    image: 'https://images.unsplash.com/photo-1484704849700-f032a568e944?w=600&h=600&fit=crop&crop=center',
-    affiliateUrl: 'https://steelseries.com/gaming-headsets/arctis-pro-wireless',
-    brand: 'SteelSeries',
-    insights: []
-  },
-  {
-    id: 38, // New product for hosting
-    title: 'Vitamix A3500 Ascent Series Blender',
-    price: '$549.95',
-    rating: '4.9',
-    description: 'Professional-grade blender perfect for entertaining - smoothies, soups, and cocktails.',
-    category: 'kitchen',
-    tags: ['perfect-hosting-essential', 'premium-kitchen', 'entertaining-tool', 'versatile-appliance'],
-    image: 'https://images.unsplash.com/photo-1570197788417-0e82375c9371?w=600&h=600&fit=crop&crop=center',
-    affiliateUrl: 'https://www.vitamix.com/us/en_us/shop/ascent-a3500',
-    brand: 'Vitamix',
-    insights: []
-  },
-  {
-    id: 39, // New product for hosting
-    title: 'Le Creuset Signature Cast Iron Dutch Oven',
-    price: '$449.95',
-    rating: '4.8',
-    description: 'Iconic French cookware perfect for hosting - from bread to braised dishes.',
-    category: 'kitchen',
-    tags: ['perfect-hosting-essential', 'premium-cookware', 'entertaining-staple', 'heirloom-quality'],
-    image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&h=600&fit=crop&crop=center',
-    affiliateUrl: 'https://www.lecreuset.com/signature-round-dutch-oven',
-    brand: 'Le Creuset',
-    insights: []
-  },
-  {
-    id: 40,
-    title: 'Dyson Purifier Hot+Cool HP07',
-    price: '$749.99',
-    rating: '4.1',
-    description: 'Purifies and heats the whole room evenly. Cools you with powerful airflow. App compatible.',
-    category: 'home',
-    tags: ['premium', 'air-purifier', 'heater', 'smart-home', 'health-tech', 'trendsetter-pick', 'optimizer-pick', 'sanctuary-essential', 'wellness-retreat-essential'],
-    image: 'https://images.unsplash.com/photo-1607460342465-134e77a0f5f4?w=600&h=600&fit=crop&crop=center', // Replaced potentially restricted Dyson image URL
-    affiliateUrl: 'https://www.dyson.com/air-treatment/air-purifier-heaters/purifier-hot-cool-hp07/black-nickel',
-    brand: 'Dyson',
-    insights: [],
-    optimizerInsight: 'Automatically senses and captures pollutants for healthier indoor air.',
-    trendsetterTip: 'The intelligent air purifier that doubles as premium home decor.',
-    whyBuyThis: '🌪️ CLEAN AIR REVOLUTION → HEPA H13 captures 99.97% of particles • Heats and cools year-round • App control from anywhere • Your sanctuary deserves pure air'
-  },
+  // ... other mock products
 ];
+
+// CORRECTED API Key Debug:
+// This should be the single source of truth for the apiKeyStatus.
+const apiKeyStatus = process.env.EXPO_PUBLIC_CLAUDE_API_KEY 
+  ? 'IS SET' 
+  : 'IS NOT SET in process.env';
 
 // Persona definitions
 const personas = [
@@ -2590,12 +2047,175 @@ export default function App() {
 
   const isSmallScreen = screenWidth < 768; // Define a breakpoint
 
+  // API Key Debug: Check if the key is available via process.env
+  const apiKeyStatus = process.env.EXPO_PUBLIC_CLAUDE_API_KEY 
+    ? 'IS SET' 
+    : 'IS NOT SET in process.env';
+
+  // कांस्टेंट定义
+  const APP_VERSION = "1.0.0-ultra-modern-mobile-scroll";
+  const IS_DEV_MODE = __DEV__; // true in Expo Go, false in standalone/production
+
+  // --- Constants & Initial Setup ---
+  const mockProducts = [
+    {
+      id: '1',
+      title: 'Dyson Supersonic™ Hair Dryer',
+      brand: 'Dyson',
+      priceRange: [399, 429],
+      category: 'haircare',
+      tags: ['premium', 'tech', 'beauty'],
+      images: [
+        'https://images.unsplash.com/photo-1620331317314-530796315638?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=60', // Placeholder if original fails
+        // ... other images
+      ],
+      rating: 4.9,
+      description: 'Fast drying. No extreme heat. Engineered for different hair types.',
+      whyBuyThis: 'Top-tier haircare tech. Protects hair while drying fast. Iconic. ✨',
+      affiliateUrl: 'https://www.dyson.com/hair-care/hair-dryers/supersonic'
+    },
+    // ... other mock products
+  ];
+
+  // --- Helper Functions ---
+  // ... (hexToRgba, shadeColor, openExternalLink etc. remain unchanged) ...
+
+  // ... (InsightBar, ProductPreviewOverlay, WebXRARViewer, VirtualTryOn, ProductCard, VisualSearch components remain unchanged) ...
+
+  // Placeholder function for fetching AI curated products
+  async function fetchAiCuratedProducts(selectedBrands, personaStyle, personaBudget, lookingFor) {
+    console.log("Fetching AI Curated Products with:", {
+      selectedBrands,
+      personaStyle,
+      personaBudget,
+      lookingFor
+    });
+
+    let prompt = `You are "Curator," an expert AI shopping assistant specializing in ultra-modern, minimalist, and high-quality tech, lifestyle, and design products. Your goal is to curate a personalized shopping bundle for a user.
+
+User Preferences:
+- Liked Brands: ${selectedBrands.length > 0 ? selectedBrands.join(', ') : 'None specified'}
+- Desired Style: ${personaStyle || 'Not specified'}
+- Budget Indication: ${personaBudget || 'Not specified'}
+- Specifically LookingFor: ${lookingFor || 'A general collection based on style and brands'}
+
+Based on these preferences, please generate a list of 3-5 unique product recommendations. For each product, provide:
+1.  title: A concise and appealing product title (e.g., "Minimalist Smart Desk Lamp").
+2.  brand: The brand of the product (e.g., "Luminoir"). If it's a conceptual product, invent a plausible brand name.
+3.  whyBuyThis: A short, compelling sales pitch (1-2 sentences, max 150 characters) highlighting its key benefit or unique selling proposition, using modern language and potentially an emoji if appropriate (e.g., "💡 Smart illumination meets sleek design. Control brightness and color temperature via app for the perfect ambiance.").
+4.  category: A relevant category (e.g., 'home', 'tech', 'audio', 'accessories', 'lifestyle', 'design').
+5.  price: An estimated price as a string (e.g., "$129.99").
+6.  image: A URL to a high-quality, relevant placeholder image (600x600px). You can use Unsplash URLs like 'https://images.unsplash.com/photo-XXXXXXXXXXXXX?w=600&h=600&fit=crop&crop=center'. Try to pick images that match the product concept.
+7.  affiliateUrl: A placeholder URL like 'https://example.com/product-link'.
+
+Return the response as a JSON array of objects. Example product object:
+{
+  "title": "Aura Smart Diffuser",
+  "brand": "SereneScents",
+  "whyBuyThis": "✨ Create a calming oasis. Ultrasonic tech meets app-controlled aromatherapy for ultimate relaxation.",
+  "category": "home",
+  "price": "$89.00",
+  "image": "https://images.unsplash.com/photo-1604275980648-363d53333884?w=600&h=600&fit=crop&crop=center",
+  "affiliateUrl": "https://example.com/aura-diffuser"
+}
+
+Do not include any introductory text or explanations outside of the JSON array itself. The output must be only the JSON array.
+`;
+
+    // Read API Key from environment variable
+    const CLAUDE_API_KEY = process.env.EXPO_PUBLIC_CLAUDE_API_KEY;
+    const API_URL = 'https://api.anthropic.com/v1/messages'; // Standard Claude Messages API endpoint
+
+    if (!CLAUDE_API_KEY) {
+      console.error("ERROR: EXPO_PUBLIC_CLAUDE_API_KEY is not set. Please ensure it is defined in your .env file for local development, or in Netlify environment variables for production.");
+      console.error("To fix for local development: Create a .env file in your project root with EXPO_PUBLIC_CLAUDE_API_KEY=your_actual_key_here and restart your development server.");
+      console.error("To fix for Netlify: Go to Site settings > Build & deploy > Environment, and add EXPO_PUBLIC_CLAUDE_API_KEY with your key, then redeploy.");
+      throw new Error("AI API key is missing. Please see console for setup instructions.");
+    }
+
+    console.log("---- ATTEMPTING ACTUAL LLM API CALL ----");
+    console.log("Prompt being sent (first 500 chars):", prompt.substring(0,500));
+
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': CLAUDE_API_KEY,
+          'anthropic-version': '2023-06-01' 
+        },
+        body: JSON.stringify({
+          model: "claude-3-sonnet-20240229", 
+          max_tokens: 2048, 
+          messages: [
+            { role: "user", content: prompt } 
+          ],
+          temperature: 0.7,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('LLM API Error Response:', errorData);
+        let detailedErrorMessage = 'Failed to get a valid response from AI.';
+        if (errorData && errorData.error && errorData.error.message) {
+          detailedErrorMessage = `AI Error: ${errorData.error.message}`;
+        } else if (errorData && errorData.detail) {
+          detailedErrorMessage = `AI Error: ${errorData.detail}`;
+        }
+        throw new Error(detailedErrorMessage);
+      }
+
+      const data = await response.json();
+      console.log("LLM API Success. Full response data:", data);
+      
+      if (data.content && data.content.length > 0 && data.content[0].text) {
+        const productJsonString = data.content[0].text;
+        console.log("LLM Response content (productJsonString):", productJsonString);
+        try {
+          let cleanedJsonString = productJsonString.trim();
+          if (cleanedJsonString.startsWith('```json')) {
+            cleanedJsonString = cleanedJsonString.substring(7);
+            if (cleanedJsonString.endsWith('```')) {
+              cleanedJsonString = cleanedJsonString.substring(0, cleanedJsonString.length - 3);
+            }
+          } else if (cleanedJsonString.startsWith('```')) {
+              cleanedJsonString = cleanedJsonString.substring(3);
+              if (cleanedJsonString.endsWith('```')) {
+                  cleanedJsonString = cleanedJsonString.substring(0, cleanedJsonString.length - 3);
+              }
+          }
+          
+          const generatedProducts = JSON.parse(cleanedJsonString.trim());
+          console.log("Parsed generated products:", generatedProducts);
+          return generatedProducts;
+        } catch (parseError) {
+          console.error("Error parsing JSON response from LLM:", parseError);
+          console.error("Raw LLM response string that failed to parse:", productJsonString);
+          throw new Error("AI returned an invalid JSON format. Check the console for the raw response. You may need to adjust the prompt or the AI model settings to ensure it *only* returns a valid JSON array.");
+        }
+      } else {
+        console.error("Unexpected response structure from LLM. 'data.content[0].text' is missing or invalid:", data);
+        throw new Error("AI returned an unexpected response structure. Check console for details.");
+      }
+
+    } catch (error) {
+      console.error('Error fetching AI curated products:', error);
+      if (error instanceof Error) {
+          throw error; 
+      } else {
+          throw new Error('An unknown error occurred while communicating with the AI.');
+      }
+    }
+  }
+
   return (
     <View style={styles.container}>
       {/* --- Debug: Display API Key in UI --- */}
       <View style={{padding: 10, backgroundColor: '#ffffcc', zIndex: 9999 }}>
         <Text style={{fontSize: 10, color: '#333', fontWeight: 'bold'}}>DEBUG PANEL:</Text>
         <Text style={{fontSize: 10, color: '#333'}}>{debugApiKeyDisplay}</Text>
+        <Text style={{ color: 'white', fontSize: 10 }}>EXPO_PUBLIC_CLAUDE_API_KEY {apiKeyStatus}</Text>
       </View>
       {/* --- End Debug --- */}
 
@@ -3651,6 +3271,15 @@ export default function App() {
           )}
         </View>
       ) : null}
+
+      {/* --- AI Debug Panel --- */}
+      {showDebugPanel && (
+        <View style={{ position: 'absolute', bottom: 10, left: 10, backgroundColor: 'rgba(0,0,0,0.7)', padding: 10, borderRadius: 5, zIndex: 9999 }}>
+          <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>DEBUG PANEL:</Text>
+          <Text style={{ color: 'white', fontSize: 10 }}>EXPO_PUBLIC_CLAUDE_API_KEY {apiKeyStatus}</Text>
+        </View>
+      )}
+      {/* --- End AI Debug Panel --- */}
     </View>
   );
 }
@@ -5910,13 +5539,13 @@ Do not include any introductory text or explanations outside of the JSON array i
 `;
 
   // Read API Key from environment variable
-  const CLAUDE_API_KEY = process.env.REACT_APP_CLAUDE_API_KEY;
+  const CLAUDE_API_KEY = process.env.EXPO_PUBLIC_CLAUDE_API_KEY;
   const API_URL = 'https://api.anthropic.com/v1/messages'; // Standard Claude Messages API endpoint
 
   if (!CLAUDE_API_KEY) {
-    console.error("ERROR: REACT_APP_CLAUDE_API_KEY is not set. Please ensure it is defined in your .env file for local development, or in Netlify environment variables for production.");
-    console.error("To fix for local development: Create a .env file in your project root with REACT_APP_CLAUDE_API_KEY=your_actual_key_here and restart your development server.");
-    console.error("To fix for Netlify: Go to Site settings > Build & deploy > Environment, and add REACT_APP_CLAUDE_API_KEY with your key, then redeploy.");
+    console.error("ERROR: EXPO_PUBLIC_CLAUDE_API_KEY is not set. Please ensure it is defined in your .env file for local development, or in Netlify environment variables for production.");
+    console.error("To fix for local development: Create a .env file in your project root with EXPO_PUBLIC_CLAUDE_API_KEY=your_actual_key_here and restart your development server.");
+    console.error("To fix for Netlify: Go to Site settings > Build & deploy > Environment, and add EXPO_PUBLIC_CLAUDE_API_KEY with your key, then redeploy.");
     throw new Error("AI API key is missing. Please see console for setup instructions.");
   }
 
