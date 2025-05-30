@@ -10,7 +10,7 @@
     "test": "jest --watchAll",
     "test:watch": "jest --watch",
     "build": "expo export:web",
-    "build:web": "expo export:web && cp public/_redirects web-build/",
+    "build:web": "npm install --legacy-peer-deps && expo export:web && cp public/_redirects web-build/",
     "predeploy": "npm run build:web",
     "deploy": "gh-pages -d web-build"
   },
