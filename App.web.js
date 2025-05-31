@@ -1170,6 +1170,7 @@ const VisualSearch = ({ visible, onClose, onSearch }) => {
   const [selectedObjects, setSelectedObjects] = useState([]);
   const [analyzeStage, setAnalyzeStage] = useState('initial'); // initial, analyzing, detected, searching
   const [error, setError] = useState(null);
+  const [isDragActive, setIsDragActive] = useState(false);
   const fileInputRef = useRef(null);
   
   // Reset state when visibility changes
@@ -1186,6 +1187,7 @@ const VisualSearch = ({ visible, onClose, onSearch }) => {
     setSelectedObjects([]);
     setAnalyzeStage('initial');
     setError(null);
+    setIsDragActive(false);
   };
   
   // Handle file selection for visual search
@@ -1448,30 +1450,73 @@ const VisualSearch = ({ visible, onClose, onSearch }) => {
         
         <View style={styles.visualSearchWorkspace}>
           {analyzeStage === 'initial' ? (
-            // Image selection UI
-            <View style={styles.visualSearchUploadArea}>
-              <Text style={styles.visualSearchInstructions}>
-                Upload a photo or take a screenshot to search for similar items.
+            // Image selection UI with drag & drop
+            <View 
+              style={[
+                styles.visualSearchUploadArea,
+                { 
+                  borderColor: isDragActive ? '#27ae60' : '#3498db',
+                  borderStyle: 'dashed',
+                  borderWidth: isDragActive ? 3 : 2,
+                  backgroundColor: isDragActive ? '#e8f5e8' : '#f8f9fa',
+                  minHeight: 300,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  transition: 'all 0.2s ease'
+                }
+              ]}
+              onDrop={(e) => {
+                e.preventDefault();
+                setIsDragActive(false);
+                const file = e.dataTransfer.files[0];
+                if (file && file.type.startsWith('image/')) {
+                  const event = { target: { files: [file] } };
+                  handleFileSelect(event);
+                } else {
+                  setError('Please drop an image file (PNG, JPG, etc.)');
+                }
+              }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsDragActive(true);
+              }}
+              onDragEnter={(e) => {
+                e.preventDefault();
+                setIsDragActive(true);
+              }}
+              onDragLeave={(e) => {
+                e.preventDefault();
+                setIsDragActive(false);
+              }}
+            >
+              <Text style={[styles.visualSearchInstructions, { fontSize: 18, textAlign: 'center', marginBottom: 20, color: isDragActive ? '#27ae60' : '#2c3e50' }]}>
+                {isDragActive ? '📥 Drop Image Here!' : '📸 Drag & Drop Screenshot Here'}{'\n'}
+                {!isDragActive && 'or'}
               </Text>
               
               <View style={styles.visualSearchButtonsRow}>
                 <TouchableOpacity 
-                  style={styles.visualSearchButton}
+                  style={[styles.visualSearchButton, { backgroundColor: '#3498db', paddingHorizontal: 20, paddingVertical: 12 }]}
                   onPress={selectImage}
                 >
-                  <Text style={styles.visualSearchButtonText}>Upload Photo</Text>
+                  <Text style={[styles.visualSearchButtonText, { color: 'white', fontWeight: 'bold' }]}>📁 Upload Photo</Text>
                 </TouchableOpacity>
                 
                 <TouchableOpacity 
-                  style={styles.visualSearchButton}
+                  style={[styles.visualSearchButton, { backgroundColor: '#e74c3c', paddingHorizontal: 20, paddingVertical: 12 }]}
                   onPress={takeScreenshot}
                 >
-                  <Text style={styles.visualSearchButtonText}>Take Screenshot</Text>
+                  <Text style={[styles.visualSearchButtonText, { color: 'white', fontWeight: 'bold' }]}>📷 Demo Image</Text>
                 </TouchableOpacity>
               </View>
               
+              <Text style={{ fontSize: 14, color: '#7f8c8d', textAlign: 'center', marginTop: 15 }}>
+                📱 Take a screenshot of any product & drop it here{'\n'}
+                🔍 Find similar products in our database instantly!
+              </Text>
+              
               {error && (
-                <Text style={styles.visualSearchError}>{error}</Text>
+                <Text style={[styles.visualSearchError, { color: '#e74c3c', marginTop: 10, textAlign: 'center' }]}>{error}</Text>
               )}
               
               <input
