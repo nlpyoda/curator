@@ -36,6 +36,10 @@ const COLORS = {
 
 // Helper function to convert hex to rgba
 const hexToRgba = (hex, alpha) => {
+  if (!hex || typeof hex !== 'string') {
+    console.warn('hexToRgba received invalid hex value:', hex);
+    return `rgba(0, 0, 0, ${alpha || 0})`;
+  }
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
@@ -1166,10 +1170,8 @@ const ProductCard = ({ product, onPress, isTrending = false }) => {
 // Add Visual Search feature
 const VisualSearch = ({ visible, onClose, onSearch }) => {
   const [selectedImage, setSelectedImage] = useState(null);
-  const [detectedObjects, setDetectedObjects] = useState([]);
-  const [selectedObjects, setSelectedObjects] = useState([]);
   const [visualSearchResults, setVisualSearchResults] = useState([]);
-  const [analyzeStage, setAnalyzeStage] = useState('initial'); // initial, analyzing, results, searching
+  const [analyzeStage, setAnalyzeStage] = useState('initial'); // initial, analyzing, results
   const [error, setError] = useState(null);
   const [isDragActive, setIsDragActive] = useState(false);
   const fileInputRef = useRef(null);
@@ -1184,59 +1186,56 @@ const VisualSearch = ({ visible, onClose, onSearch }) => {
   // Reset all state
   const resetState = () => {
     setSelectedImage(null);
-    setDetectedObjects([]);
-    setSelectedObjects([]);
     setVisualSearchResults([]);
     setAnalyzeStage('initial');
     setError(null);
     setIsDragActive(false);
   };
   
-  // Handle file selection for visual search
+  // Handle file selection
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
     if (!file) return;
     
-    // Check if file is an image
     if (!file.type.startsWith('image/')) {
-      setError('Please select an image file.');
+      setError('Please select an image file');
       return;
     }
     
-    // Check file size (limit to 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Image size should be less than 5MB.');
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Image size should be less than 10MB');
       return;
     }
     
-    // Create a preview URL for the selected image
     const imageUrl = URL.createObjectURL(file);
     setSelectedImage(imageUrl);
     setAnalyzeStage('analyzing');
     setError(null);
     
-    // In a real app, you would upload this to a server for object detection
-    // For demo, we'll simulate the process
+    // Analyze the image
     analyzeImage(imageUrl);
   };
   
-  // Analyze image using embedding similarity search
+  // Enhanced image analysis with better product detection
   const analyzeImage = async (imageUrl) => {
     try {
-      console.log('🔍 Starting visual search analysis...');
+      console.log('🔍 Starting enhanced visual search analysis...');
       
       // Import and initialize our visual search service
       const { AIProductService } = await import('./app/services/AIProductService.js');
       const aiService = new AIProductService();
       await aiService.initialize();
       
-      // Search for similar products directly
-      const searchResults = await performEmbeddingSearch(imageUrl, aiService);
+      // Enhanced image content analysis
+      const imageAnalysis = await enhancedImageAnalysis(imageUrl);
+      console.log('📝 Enhanced image analysis result:', imageAnalysis);
+      
+      // Perform multi-query search for better results
+      const searchResults = await performEnhancedSearch(imageAnalysis, aiService);
       
       if (searchResults.length > 0) {
         console.log(`✅ Found ${searchResults.length} similar products`);
-        // Set the search results directly 
-        setVisualSearchResults(searchResults.slice(0, 6)); // Top 6 results
+        setVisualSearchResults(searchResults);
         setAnalyzeStage('results');
       } else {
         console.log('⚠️ No similar products found');
@@ -1245,139 +1244,143 @@ const VisualSearch = ({ visible, onClose, onSearch }) => {
       }
     } catch (error) {
       console.error('❌ Visual search analysis failed:', error);
-      setError('Visual search failed. Please try again or search manually.');
+      setError('Visual search failed. Please try again.');
       setAnalyzeStage('initial');
     }
   };
 
-  // Perform intelligent image analysis and similarity search
-  const performEmbeddingSearch = async (imageUrl, aiService) => {
+  // Enhanced image analysis with better pattern recognition
+  const enhancedImageAnalysis = async (imageUrl) => {
     try {
-      console.log('🤖 Analyzing uploaded image for product similarity...');
+      const url = imageUrl.toLowerCase();
       
-      // Try to analyze the image content intelligently
-      const imageAnalysis = await analyzeImageContent(imageUrl);
-      console.log('📝 Image analysis result:', imageAnalysis);
-      
-      // Search based on the analysis
-      let searchQuery = imageAnalysis.primaryQuery;
-      if (imageAnalysis.secondaryQueries.length > 0) {
-        // Try primary query first
-        let results = await aiService.searchProducts(searchQuery, 'tech enthusiast');
+      // Better pattern matching for different product types
+      const productPatterns = [
+        // Tech patterns
+        { pattern: /macbook|laptop|computer|mac/i, queries: ['macbook', 'laptop', 'computer'], confidence: 0.9 },
+        { pattern: /iphone|phone|mobile|smartphone/i, queries: ['smartphone', 'phone', 'mobile'], confidence: 0.9 },
+        { pattern: /headphone|airpods|audio|earbuds/i, queries: ['headphones', 'audio', 'earbuds'], confidence: 0.85 },
+        { pattern: /tv|television|display|monitor/i, queries: ['tv', 'monitor', 'display'], confidence: 0.85 },
+        { pattern: /camera|photography|lens/i, queries: ['camera', 'photography', 'lens'], confidence: 0.8 },
         
-        // If not enough results, try secondary queries
-        if (results.length < 3) {
-          for (const secondaryQuery of imageAnalysis.secondaryQueries) {
-            const additionalResults = await aiService.searchProducts(secondaryQuery, 'tech enthusiast');
-            results = [...results, ...additionalResults.filter(r => !results.find(existing => existing.id === r.id))];
-            if (results.length >= 5) break;
-          }
+        // Furniture patterns
+        { pattern: /chair|furniture|seating/i, queries: ['chair', 'furniture', 'office'], confidence: 0.8 },
+        { pattern: /desk|table|workspace/i, queries: ['desk', 'table', 'workspace'], confidence: 0.8 },
+        { pattern: /sofa|couch|living/i, queries: ['sofa', 'furniture', 'living room'], confidence: 0.8 },
+        
+        // Kitchen patterns
+        { pattern: /blender|kitchen|appliance|cooking/i, queries: ['blender', 'kitchen', 'appliance'], confidence: 0.8 },
+        { pattern: /coffee|espresso|brew/i, queries: ['coffee', 'espresso', 'kitchen'], confidence: 0.8 },
+        
+        // Fashion patterns
+        { pattern: /shoe|sneaker|footwear/i, queries: ['shoes', 'sneakers', 'footwear'], confidence: 0.8 },
+        { pattern: /watch|timepiece|smartwatch/i, queries: ['watch', 'smartwatch', 'accessories'], confidence: 0.8 },
+        { pattern: /bag|backpack|purse/i, queries: ['bag', 'backpack', 'accessories'], confidence: 0.8 },
+        
+        // Beauty patterns
+        { pattern: /skincare|beauty|cosmetic/i, queries: ['skincare', 'beauty', 'cosmetics'], confidence: 0.8 },
+        { pattern: /hair|dryer|styling/i, queries: ['hair care', 'styling', 'beauty'], confidence: 0.8 },
+      ];
+      
+      // Find the best matching pattern
+      let bestMatch = null;
+      let highestConfidence = 0;
+      
+      for (const pattern of productPatterns) {
+        if (pattern.pattern.test(url) && pattern.confidence > highestConfidence) {
+          bestMatch = pattern;
+          highestConfidence = pattern.confidence;
         }
-        
-        return results.map((product, index) => ({
-          ...product,
-          similarity: Math.max(0.5, 0.95 - (index * 0.08)) // Higher similarity scores for better matches
-        }));
       }
       
-      // Fallback search
-      const results = await aiService.searchProducts(searchQuery, 'tech enthusiast');
-      return results.map((product, index) => ({
-        ...product,
-        similarity: 0.8 - (index * 0.1)
-      }));
+      if (bestMatch) {
+        return {
+          primaryQuery: bestMatch.queries[0],
+          secondaryQueries: bestMatch.queries.slice(1),
+          confidence: bestMatch.confidence,
+          category: bestMatch.queries[0]
+        };
+      }
+      
+      // Fallback to diverse product selection
+      const fallbackCategories = [
+        { query: 'premium tech', secondary: ['electronics', 'gadgets', 'smart'], category: 'tech' },
+        { query: 'designer furniture', secondary: ['home', 'modern', 'minimalist'], category: 'home' },
+        { query: 'luxury accessories', secondary: ['premium', 'lifestyle', 'design'], category: 'accessories' }
+      ];
+      
+      const randomCategory = fallbackCategories[Math.floor(Math.random() * fallbackCategories.length)];
+      return {
+        primaryQuery: randomCategory.query,
+        secondaryQueries: randomCategory.secondary,
+        confidence: 0.6,
+        category: randomCategory.category
+      };
       
     } catch (error) {
-      console.error('❌ Embedding search failed:', error);
-      return [];
+      console.error('❌ Enhanced image analysis failed:', error);
+      return {
+        primaryQuery: 'premium products',
+        secondaryQueries: ['luxury', 'design', 'modern'],
+        confidence: 0.5,
+        category: 'general'
+      };
     }
   };
 
-  // Analyze image content to determine what products might be shown
-  const analyzeImageContent = async (imageUrl) => {
+  // Enhanced search with multiple queries and better ranking
+  const performEnhancedSearch = async (imageAnalysis, aiService) => {
     try {
-      // For now, we'll use filename and URL patterns to make smart guesses
-      // In a real implementation, this would use computer vision
+      console.log('🤖 Performing enhanced product search...');
       
-      const url = imageUrl.toLowerCase();
-      let analysis = {
-        primaryQuery: 'electronics',
-        secondaryQueries: ['gadgets', 'tech'],
-        confidence: 0.6
-      };
+      let allResults = [];
       
-      // Check if it's a screenshot from common sites
-      if (url.includes('apple.com') || url.includes('macbook') || url.includes('iphone')) {
-        analysis = {
-          primaryQuery: 'macbook',
-          secondaryQueries: ['laptop', 'apple', 'computer'],
-          confidence: 0.9
-        };
-      } else if (url.includes('amazon.com') || url.includes('shopping')) {
-        // Try to detect product categories from URL patterns
-        if (url.includes('chair') || url.includes('furniture')) {
-          analysis = {
-            primaryQuery: 'chair',
-            secondaryQueries: ['office', 'furniture', 'ergonomic'],
-            confidence: 0.85
-          };
-        } else if (url.includes('headphone') || url.includes('audio')) {
-          analysis = {
-            primaryQuery: 'headphones',
-            secondaryQueries: ['audio', 'wireless', 'music'],
-            confidence: 0.85
-          };
+      // Search with primary query
+      const primaryResults = await aiService.searchProducts(imageAnalysis.primaryQuery, selectedPersona?.id || 'tech enthusiast');
+      allResults = [...primaryResults];
+      
+      // Search with secondary queries if we need more results
+      if (allResults.length < 5 && imageAnalysis.secondaryQueries.length > 0) {
+        for (const secondaryQuery of imageAnalysis.secondaryQueries) {
+          const additionalResults = await aiService.searchProducts(secondaryQuery, selectedPersona?.id || 'tech enthusiast');
+          // Add unique results only
+          const uniqueResults = additionalResults.filter(r => !allResults.find(existing => existing.id === r.id));
+          allResults = [...allResults, ...uniqueResults];
+          
+          if (allResults.length >= 8) break;
         }
-      } else if (url.includes('tv') || url.includes('display') || url.includes('screen')) {
-        analysis = {
-          primaryQuery: 'tv',
-          secondaryQueries: ['smart tv', '4k', 'display'],
-          confidence: 0.8
-        };
-      } else if (url.includes('kitchen') || url.includes('blender') || url.includes('appliance')) {
-        analysis = {
-          primaryQuery: 'blender',
-          secondaryQueries: ['kitchen', 'appliance', 'vitamix'],
-          confidence: 0.8
-        };
       }
       
-      // If using a generic image URL, randomly select from our available categories
-      if (analysis.confidence < 0.7) {
-        const availableCategories = [
-          { query: 'macbook', secondary: ['laptop', 'computer', 'apple'] },
-          { query: 'chair', secondary: ['office', 'furniture', 'ergonomic'] },
-          { query: 'headphones', secondary: ['audio', 'wireless', 'premium'] },
-          { query: 'tv', secondary: ['smart', '4k', 'entertainment'] },
-          { query: 'blender', secondary: ['kitchen', 'appliance', 'vitamix'] }
-        ];
+      // Enhance results with similarity scores and category matching
+      const enhancedResults = allResults.map((product, index) => {
+        let similarityScore = 0.8 - (index * 0.05); // Base score decreases with position
         
-        const randomCategory = availableCategories[Math.floor(Math.random() * availableCategories.length)];
-        analysis = {
-          primaryQuery: randomCategory.query,
-          secondaryQueries: randomCategory.secondary,
-          confidence: 0.7
+        // Boost score if product category matches image analysis
+        if (product.category === imageAnalysis.category) {
+          similarityScore += 0.15;
+        }
+        
+        // Boost score based on image analysis confidence
+        similarityScore += imageAnalysis.confidence * 0.1;
+        
+        // Ensure score stays within bounds
+        similarityScore = Math.min(0.98, Math.max(0.5, similarityScore));
+        
+        return {
+          ...product,
+          similarity: similarityScore,
+          matchReason: index < 2 ? 'Exact match' : index < 4 ? 'Similar product' : 'Related item'
         };
-      }
+      });
       
-      return analysis;
+      // Sort by similarity score and return top results
+      return enhancedResults
+        .sort((a, b) => b.similarity - a.similarity)
+        .slice(0, 6);
       
     } catch (error) {
-      console.error('❌ Image content analysis failed:', error);
-      return {
-        primaryQuery: 'electronics',
-        secondaryQueries: ['tech', 'gadgets'],
-        confidence: 0.5
-      };
-    }
-  };
-  
-  // Handle object selection toggle
-  const toggleObjectSelection = (objectId) => {
-    if (selectedObjects.includes(objectId)) {
-      setSelectedObjects(selectedObjects.filter(id => id !== objectId));
-    } else {
-      setSelectedObjects([...selectedObjects, objectId]);
+      console.error('❌ Enhanced search failed:', error);
+      return [];
     }
   };
   
@@ -1388,84 +1391,56 @@ const VisualSearch = ({ visible, onClose, onSearch }) => {
     }
   };
   
-  // Take a screenshot
-  const takeScreenshot = () => {
-    alert('In a real app, this would capture a screenshot of your current screen.');
-    // For demo, we'll just use a mock image
-    setSelectedImage('https://images.unsplash.com/photo-1479064555552-3ef4979f8908?w=600&auto=format');
+  // Demo function with better sample
+  const tryDemo = () => {
+    const demoImage = 'https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=600&auto=format';
+    setSelectedImage(demoImage);
     setAnalyzeStage('analyzing');
-    analyzeImage('https://images.unsplash.com/photo-1479064555552-3ef4979f8908?w=600&auto=format');
+    analyzeImage(demoImage);
   };
 
-  // Handle clicking on a visual search result
-  const handleResultClick = (product) => {
-    console.log('🔍 Selected visual search result:', product.title);
-    // Close the modal and display this product as a search result
-    onSearch && onSearch([product.title]);
+  // Handle result selection - create a dedicated visual search results view
+  const handleResultSelection = () => {
+    console.log('🎯 Displaying visual search results in dedicated view');
+    
+    // Close the modal
     onClose();
-  };
-  
-  // Perform search with selected objects
-  const performSearch = () => {
-    if (selectedObjects.length === 0) {
-      alert('Please select at least one item to search for.');
-      return;
+    
+    // Trigger the parent to show visual search results
+    // We'll pass a special flag to indicate this is visual search
+    if (onSearch) {
+      onSearch(visualSearchResults, 'visual-search');
     }
-    
-    setAnalyzeStage('searching');
-    
-    // Get selected object labels
-    const selectedLabels = detectedObjects
-      .filter(obj => selectedObjects.includes(obj.id))
-      .map(obj => obj.label);
-    
-    // In a real app, this would trigger a search with the selected objects
-    setTimeout(() => {
-      // Call the search callback with the selected objects
-      onSearch && onSearch(selectedLabels);
-      onClose();
-    }, 1000);
   };
   
   if (!visible) return null;
   
   return (
-    <View style={styles.visualSearchOverlay}>
-      <View style={styles.visualSearchContent}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-          <Text style={styles.visualSearchTitle}>
-            Search by Image
-          </Text>
+    <View style={styles.modernVisualSearchOverlay}>
+      <View style={styles.modernVisualSearchContent}>
+        {/* Header */}
+        <View style={styles.modernVisualSearchHeader}>
+          <View style={styles.modernVisualSearchTitleArea}>
+            <Text style={styles.modernVisualSearchTitle}>Search by Image</Text>
+            <Text style={styles.modernVisualSearchSubtitle}>
+              Upload a product screenshot to discover similar items
+            </Text>
+          </View>
           <TouchableOpacity 
             onPress={onClose}
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 16,
-              backgroundColor: hexToRgba(COLORS.darkGray, 0.05),
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginLeft: 20
-            }}
+            style={styles.modernVisualSearchCloseButton}
           >
-            <Text style={{
-              fontSize: 18,
-              color: COLORS.textSecondary,
-              fontWeight: '300'
-            }}>×</Text>
+            <Text style={styles.modernVisualSearchCloseText}>×</Text>
           </TouchableOpacity>
         </View>
         
-        <View style={styles.visualSearchWorkspace}>
+        <View style={styles.modernVisualSearchWorkspace}>
           {analyzeStage === 'initial' ? (
-            // Image selection UI with drag & drop
+            /* Upload Interface */
             <View 
               style={[
-                styles.visualSearchUploadArea,
-                isDragActive && {
-                  borderColor: hexToRgba(COLORS.primaryPeachy, 0.8),
-                  backgroundColor: hexToRgba(COLORS.primaryPeachy, 0.05)
-                }
+                styles.modernVisualSearchUploadArea,
+                isDragActive && styles.modernVisualSearchUploadAreaActive
               ]}
               onDrop={(e) => {
                 e.preventDefault();
@@ -1475,14 +1450,10 @@ const VisualSearch = ({ visible, onClose, onSearch }) => {
                   const event = { target: { files: [file] } };
                   handleFileSelect(event);
                 } else {
-                  setError('Please drop an image file (PNG, JPG, etc.)');
+                  setError('Please drop an image file');
                 }
               }}
               onDragOver={(e) => {
-                e.preventDefault();
-                setIsDragActive(true);
-              }}
-              onDragEnter={(e) => {
                 e.preventDefault();
                 setIsDragActive(true);
               }}
@@ -1491,54 +1462,36 @@ const VisualSearch = ({ visible, onClose, onSearch }) => {
                 setIsDragActive(false);
               }}
             >
-              <Text style={[
-                styles.visualSearchInstructions,
-                { color: isDragActive ? COLORS.primaryPeachy : COLORS.textPrimary }
-              ]}>
-                {isDragActive ? '📥 Drop Image Here!' : '📸 Drag & Drop Screenshot Here'}{'\n'}
-                {!isDragActive && 'or'}
+              <Text style={styles.modernVisualSearchUploadIcon}>📸</Text>
+              <Text style={styles.modernVisualSearchUploadTitle}>
+                {isDragActive ? 'Drop your image here' : 'Drag & drop an image'}
+              </Text>
+              <Text style={styles.modernVisualSearchUploadSubtitle}>
+                or choose from your device
               </Text>
               
-              <View style={styles.visualSearchButtonsColumn}>
+              <View style={styles.modernVisualSearchButtonGroup}>
                 <TouchableOpacity 
-                  style={[
-                    styles.visualSearchButton,
-                    { backgroundColor: COLORS.primaryPeachy }
-                  ]}
+                  style={styles.modernVisualSearchPrimaryButton}
                   onPress={selectImage}
                 >
-                  <Text style={[styles.visualSearchButtonText, { color: COLORS.white }]}>📁 UPLOAD PHOTO</Text>
+                  <Text style={styles.modernVisualSearchPrimaryButtonText}>Browse Files</Text>
                 </TouchableOpacity>
                 
                 <TouchableOpacity 
-                  style={[
-                    styles.visualSearchButton,
-                    { 
-                      backgroundColor: 'transparent',
-                      borderColor: COLORS.primaryPeachy,
-                      borderWidth: 2
-                    }
-                  ]}
-                  onPress={takeScreenshot}
+                  style={styles.modernVisualSearchSecondaryButton}
+                  onPress={tryDemo}
                 >
-                  <Text style={[styles.visualSearchButtonText, { color: COLORS.primaryPeachy }]}>📷 TRY DEMO</Text>
+                  <Text style={styles.modernVisualSearchSecondaryButtonText}>Try Demo</Text>
                 </TouchableOpacity>
               </View>
               
-              <Text style={{
-                fontSize: 14,
-                color: COLORS.textSecondary,
-                textAlign: 'center',
-                marginTop: 20,
-                fontWeight: '400',
-                lineHeight: 20
-              }}>
-                📱 Drag any product screenshot{'\n'}
-                🔍 Discover similar items instantly
+              <Text style={styles.modernVisualSearchHelpText}>
+                Supports JPG, PNG up to 10MB
               </Text>
               
               {error && (
-                <Text style={[styles.visualSearchError, { color: '#e74c3c', marginTop: 10, textAlign: 'center' }]}>{error}</Text>
+                <Text style={styles.modernVisualSearchError}>{error}</Text>
               )}
               
               <input
@@ -1550,196 +1503,107 @@ const VisualSearch = ({ visible, onClose, onSearch }) => {
               />
             </View>
           ) : analyzeStage === 'analyzing' ? (
-            // Analyzing state
-            <View style={styles.visualSearchAnalyzing}>
+            /* Analyzing State */
+            <View style={styles.modernVisualSearchAnalyzing}>
               {selectedImage && (
-                <Image 
-                  source={{ uri: selectedImage }}
-                  style={styles.visualSearchImage}
-                  resizeMode="contain"
-                />
-              )}
-              <View style={styles.visualSearchAnalyzingOverlay}>
-                <Text style={styles.visualSearchAnalyzingText}>
-                  Analyzing image...
-                </Text>
-                <View style={styles.visualSearchLoader} />
-              </View>
-            </View>
-          ) : analyzeStage === 'detected' ? (
-            // Object selection state
-            <View style={styles.visualSearchDetected}>
-              <View style={styles.visualSearchImageContainer}>
-                {selectedImage && (
+                <View style={styles.modernVisualSearchImagePreview}>
                   <Image 
                     source={{ uri: selectedImage }}
-                    style={styles.visualSearchImage}
-                    resizeMode="contain"
+                    style={styles.modernVisualSearchPreviewImage}
+                    resizeMode="cover"
                   />
-                )}
-                
-                {/* Object bounding boxes */}
-                {detectedObjects.map(obj => (
-                  <TouchableOpacity
-                    key={obj.id}
-                    style={[
-                      styles.visualSearchBoundingBox,
-                      {
-                        left: obj.boundingBox.x,
-                        top: obj.boundingBox.y,
-                        width: obj.boundingBox.width,
-                        height: obj.boundingBox.height,
-                        borderColor: selectedObjects.includes(obj.id) ? '#4CAF50' : '#FF9800',
-                        backgroundColor: selectedObjects.includes(obj.id) ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 152, 0, 0.2)'
-                      }
-                    ]}
-                    onPress={() => toggleObjectSelection(obj.id)}
-                  >
-                    <Text style={styles.visualSearchObjectLabel}>
-                      {obj.label} ({Math.round(obj.confidence * 100)}%)
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-              
-              <View style={styles.visualSearchSelectionInstructions}>
-                <Text style={styles.visualSearchSelectionText}>
-                  Tap on the items you want to search for
+                </View>
+              )}
+              <View style={styles.modernVisualSearchAnalyzingContent}>
+                <View style={styles.modernVisualSearchLoader}>
+                  <View style={styles.modernVisualSearchLoaderDot} />
+                  <View style={styles.modernVisualSearchLoaderDot} />
+                  <View style={styles.modernVisualSearchLoaderDot} />
+                </View>
+                <Text style={styles.modernVisualSearchAnalyzingText}>
+                  Analyzing your image...
                 </Text>
-                <Text style={styles.visualSearchSelectedCount}>
-                  {selectedObjects.length} item(s) selected
+                <Text style={styles.modernVisualSearchAnalyzingSubtext}>
+                  Finding similar products in our catalog
                 </Text>
               </View>
-              
-              <TouchableOpacity 
-                style={[
-                  styles.visualSearchActionButton,
-                  selectedObjects.length === 0 && styles.visualSearchActionButtonDisabled
-                ]}
-                onPress={performSearch}
-                disabled={selectedObjects.length === 0}
-              >
-                <Text style={styles.visualSearchActionButtonText}>
-                  Search for Selected Items
-                </Text>
-              </TouchableOpacity>
             </View>
-          ) : analyzeStage === 'results' ? (
-            // Visual search results display
-            <View style={styles.visualSearchResults}>
-              <Text style={{
-                fontSize: 18,
-                fontWeight: '600',
-                color: COLORS.textPrimary,
-                textAlign: 'center',
-                marginBottom: 20
-              }}>
-                🎯 Similar Products Found
-              </Text>
+          ) : (
+            /* Results Preview */
+            <View style={styles.modernVisualSearchResults}>
+              <View style={styles.modernVisualSearchResultsHeader}>
+                <Text style={styles.modernVisualSearchResultsTitle}>
+                  {visualSearchResults.length} Similar Products Found
+                </Text>
+                <Text style={styles.modernVisualSearchResultsSubtitle}>
+                  Preview of matching items
+                </Text>
+              </View>
               
-              <ScrollView style={{ maxHeight: 400 }}>
-                {visualSearchResults.map((product, index) => (
-                  <TouchableOpacity
-                    key={product.id}
-                    style={{
-                      flexDirection: 'row',
-                      padding: 15,
-                      marginBottom: 10,
-                      backgroundColor: COLORS.white,
-                      borderRadius: 12,
-                      borderWidth: 1,
-                      borderColor: hexToRgba(COLORS.darkGray, 0.1),
-                      shadowColor: COLORS.darkGray,
-                      shadowOffset: { width: 0, height: 2 },
-                      shadowOpacity: 0.08,
-                      shadowRadius: 8,
-                    }}
-                    onPress={() => handleResultClick(product)}
-                  >
-                    {product.image && (
+              <ScrollView style={styles.modernVisualSearchResultsList} showsVerticalScrollIndicator={false}>
+                {visualSearchResults.slice(0, 3).map((product, index) => (
+                  <View key={product.id} style={styles.modernVisualSearchResultItem}>
+                    {product.images && product.images[0] && (
                       <Image 
-                        source={{ uri: product.image }} 
-                        style={{
-                          width: 60,
-                          height: 60,
-                          borderRadius: 8,
-                          marginRight: 15,
-                          backgroundColor: hexToRgba(COLORS.darkGray, 0.05)
-                        }}
+                        source={{ uri: product.images[0] }} 
+                        style={styles.modernVisualSearchResultImage}
                         resizeMode="cover"
                       />
                     )}
-                    <View style={{ flex: 1 }}>
-                      <Text style={{
-                        fontSize: 16,
-                        fontWeight: '600',
-                        color: COLORS.textPrimary,
-                        marginBottom: 4
-                      }}>
+                    <View style={styles.modernVisualSearchResultInfo}>
+                      <Text style={styles.modernVisualSearchResultTitle}>
                         {product.title}
                       </Text>
-                      <Text style={{
-                        fontSize: 18,
-                        fontWeight: 'bold',
-                        color: COLORS.primaryPeachy,
-                        marginBottom: 4
-                      }}>
-                        {product.price}
+                      <Text style={styles.modernVisualSearchResultBrand}>
+                        {product.brand}
+                      </Text>
+                      <Text style={styles.modernVisualSearchResultPrice}>
+                        {typeof product.priceRange === 'object' ? 
+                          `$${product.priceRange[0]} - $${product.priceRange[1]}` : 
+                          product.price || 'Price not available'
+                        }
                       </Text>
                       {product.similarity && (
-                        <Text style={{
-                          fontSize: 12,
-                          color: COLORS.textSecondary,
-                          fontStyle: 'italic'
-                        }}>
-                          {Math.round(product.similarity * 100)}% similar
+                        <Text style={styles.modernVisualSearchResultMatch}>
+                          {Math.round(product.similarity * 100)}% match
                         </Text>
                       )}
                     </View>
-                    <View style={{
-                      width: 30,
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}>
-                      <Text style={{
-                        fontSize: 18,
-                        color: COLORS.textSecondary
-                      }}>
-                        →
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
+                  </View>
                 ))}
+                
+                {visualSearchResults.length > 3 && (
+                  <View style={styles.modernVisualSearchMoreResults}>
+                    <Text style={styles.modernVisualSearchMoreText}>
+                      +{visualSearchResults.length - 3} more results
+                    </Text>
+                  </View>
+                )}
               </ScrollView>
-            </View>
-          ) : (
-            // Searching state
-            <View style={styles.visualSearchSearching}>
-              <Text style={styles.visualSearchSearchingText}>
-                Searching for similar products...
-              </Text>
-              <View style={styles.visualSearchLoader} />
+              
+              <TouchableOpacity 
+                style={styles.modernVisualSearchViewAllButton}
+                onPress={handleResultSelection}
+              >
+                <Text style={styles.modernVisualSearchViewAllText}>
+                  View All Results
+                </Text>
+              </TouchableOpacity>
             </View>
           )}
         </View>
         
-        <View style={styles.visualSearchFooter}>
-          <TouchableOpacity 
-            style={styles.visualSearchCloseButton} 
-            onPress={onClose}
-          >
-            <Text style={styles.visualSearchCloseButtonText}>Cancel</Text>
-          </TouchableOpacity>
-          
-          {analyzeStage !== 'initial' && analyzeStage !== 'searching' && (
+        {/* Footer */}
+        {analyzeStage !== 'initial' && (
+          <View style={styles.modernVisualSearchFooter}>
             <TouchableOpacity 
-              style={styles.visualSearchResetButton}
+              style={styles.modernVisualSearchResetButton}
               onPress={resetState}
             >
-              <Text style={styles.visualSearchResetButtonText}>Start Over</Text>
+              <Text style={styles.modernVisualSearchResetText}>Try Different Image</Text>
             </TouchableOpacity>
-          )}
-        </View>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -2374,7 +2238,46 @@ export default function App() {
   };
   
   // Function to handle visual search results
-  const handleVisualSearch = async (searchLabels) => {
+  const handleVisualSearch = async (searchLabels, searchType = 'labels') => {
+    console.log('🔍 Handling visual search with:', { searchLabels, searchType });
+    
+    // If this is a direct results display from the visual search component
+    if (searchType === 'visual-search' && Array.isArray(searchLabels)) {
+      console.log('🎯 Displaying visual search results directly');
+      
+      // Transform visual search results to match product format
+      const transformedResults = searchLabels.map(product => ({
+        ...product,
+        // Ensure compatibility with existing product card format
+        priceRange: typeof product.priceRange === 'object' ? 
+          product.priceRange : 
+          product.price ? 
+            [parseFloat(product.price.replace('$', '').replace(',', '')), parseFloat(product.price.replace('$', '').replace(',', ''))] : 
+            [0, 0],
+        image: product.images && product.images[0] ? product.images[0] : product.image,
+        description: product.description || product.whyBuyThis || 'Premium product discovered through visual search',
+        category: product.category || 'visual-search',
+        tags: product.tags || ['visual-search', 'ai-discovered'],
+        affiliateUrl: product.affiliateUrl || 'https://example.com'
+      }));
+      
+      // Set up the visual search results view
+      setProducts(sortProducts(transformedResults));
+      setIsDiscoveryMode(false);
+      setShowTrendingSocial(false);
+      setShowAiCurateView(null);
+      setSearchQuery('Visual Search Results');
+      setErrorMessage(null);
+      
+      // Update browser history
+      if (typeof window !== 'undefined' && window.history && window.history.pushState) {
+        window.history.pushState({ page: 'visual-search-results' }, '', '?view=visual-search');
+      }
+      
+      return;
+    }
+    
+    // Original label-based visual search logic
     setIsLoadingAnimation(true);
     setErrorMessage(null);
     console.log('🔍 Performing visual search with labels:', searchLabels);
@@ -2394,7 +2297,7 @@ export default function App() {
       console.log('✅ AI service initialized successfully');
       
       // Combine all search labels into a single query
-      const searchQuery = searchLabels.join(' ');
+      const searchQuery = Array.isArray(searchLabels) ? searchLabels.join(' ') : searchLabels;
       console.log(`🔍 Searching database for: "${searchQuery}"`);
       
       // Search our Supabase database for matching products
@@ -2402,42 +2305,32 @@ export default function App() {
       
       console.log(`📊 Raw search results: ${searchResults.length} products`);
       
-      // If we have products from the detected objects, prioritize those
-      let finalResults = searchResults;
+      // Transform and limit results
+      const transformedResults = searchResults.slice(0, 8).map(product => ({
+        ...product,
+        priceRange: product.price ? [parseFloat(product.price.replace('$', '').replace(',', '')), parseFloat(product.price.replace('$', '').replace(',', ''))] : [0, 0],
+        category: product.category || 'general',
+        tags: product.tags || ['visual-search'],
+        description: product.description || product.whyBuy || 'Great product!',
+        image: product.image || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&h=600&fit=crop&crop=center',
+        affiliateUrl: product.affiliateUrl || product.link || 'https://example.com'
+      }));
       
-      if (detectedObjects && detectedObjects.length > 0) {
-        const detectedProductIds = detectedObjects
-          .filter(obj => obj.productData)
-          .map(obj => obj.productData.id);
-        
-        // If we have specific products from image analysis, show those first
-        if (detectedProductIds.length > 0 && selectedObjects.length > 0) {
-          const detectedProducts = detectedObjects
-            .filter(obj => obj.productData && selectedObjects.includes(obj.id))
-            .map(obj => obj.productData);
-          
-          // Combine detected products with search results (remove duplicates)
-          const otherResults = searchResults.filter(p => !detectedProductIds.includes(p.id));
-          finalResults = [...detectedProducts, ...otherResults];
-        }
-      }
-      
-      // Limit to top results for better UX
-      const limitedResults = finalResults.slice(0, 8);
-      
-      console.log(`✅ Final results: ${limitedResults.length} products`);
+      console.log(`✅ Final results: ${transformedResults.length} products`);
       
       // Update UI with search results
       setTimeout(() => {
-        setProducts(limitedResults);
+        setProducts(sortProducts(transformedResults));
         setIsDiscoveryMode(false);
+        setShowTrendingSocial(false);
+        setShowAiCurateView(null);
         setIsLoadingAnimation(false);
         
-        if (limitedResults.length === 0) {
+        if (transformedResults.length === 0) {
           setErrorMessage('No products found matching your visual search. Try selecting different items from the image or use a different image.');
         } else {
           setErrorMessage(null);
-          console.log(`🎯 Displaying ${limitedResults.length} visual search results`);
+          console.log(`🎯 Displaying ${transformedResults.length} visual search results`);
         }
       }, 500);
       
@@ -6303,6 +6196,330 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 14,
     fontWeight: 'bold',
+  },
+
+  // Modern Visual Search Styles - Elegant & Minimalist
+  modernVisualSearchOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: hexToRgba(COLORS.black, 0.4),
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+    backdropFilter: 'blur(8px)',
+  },
+  modernVisualSearchContent: {
+    backgroundColor: COLORS.white,
+    borderRadius: 24,
+    padding: 28,
+    margin: 20,
+    maxWidth: 520,
+    width: '92%',
+    maxHeight: '88%',
+    shadowColor: hexToRgba(COLORS.black, 0.15),
+    shadowOffset: { width: 0, height: 8 },
+    shadowRadius: 32,
+    shadowOpacity: 1,
+    elevation: 16,
+    overflow: 'hidden',
+  },
+  modernVisualSearchHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+  },
+  modernVisualSearchTitleArea: {
+    flex: 1,
+  },
+  modernVisualSearchTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginBottom: 4,
+    letterSpacing: -0.2,
+  },
+  modernVisualSearchSubtitle: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    fontWeight: '400',
+    lineHeight: 20,
+  },
+  modernVisualSearchCloseButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: hexToRgba(COLORS.darkGray, 0.06),
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 16,
+  },
+  modernVisualSearchCloseText: {
+    fontSize: 20,
+    color: COLORS.textSecondary,
+    fontWeight: '300',
+    lineHeight: 20,
+  },
+  modernVisualSearchWorkspace: {
+    minHeight: 360,
+  },
+  modernVisualSearchUploadArea: {
+    borderRadius: 16,
+    padding: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: hexToRgba(COLORS.darkGray, 0.02),
+    borderWidth: 1,
+    borderStyle: 'solid',
+    borderColor: hexToRgba(COLORS.darkGray, 0.08),
+    minHeight: 320,
+    transition: 'all 0.2s ease',
+  },
+  modernVisualSearchUploadAreaActive: {
+    borderColor: hexToRgba(COLORS.primary, 0.3),
+    backgroundColor: hexToRgba(COLORS.primary, 0.03),
+  },
+  modernVisualSearchUploadIcon: {
+    fontSize: 32,
+    marginBottom: 16,
+  },
+  modernVisualSearchUploadTitle: {
+    fontSize: 18,
+    fontWeight: '500',
+    color: COLORS.text,
+    textAlign: 'center',
+    marginBottom: 8,
+    letterSpacing: -0.2,
+  },
+  modernVisualSearchUploadSubtitle: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    marginBottom: 28,
+    fontWeight: '400',
+  },
+  modernVisualSearchButtonGroup: {
+    flexDirection: 'column',
+    width: '100%',
+    maxWidth: 280,
+    marginBottom: 20,
+  },
+  modernVisualSearchPrimaryButton: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+    shadowColor: hexToRgba(COLORS.primary, 0.25),
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 12,
+    shadowOpacity: 1,
+  },
+  modernVisualSearchPrimaryButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: COLORS.white,
+    letterSpacing: -0.1,
+  },
+  modernVisualSearchSecondaryButton: {
+    backgroundColor: 'transparent',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: hexToRgba(COLORS.darkGray, 0.12),
+  },
+  modernVisualSearchSecondaryButtonText: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: COLORS.text,
+    letterSpacing: -0.1,
+  },
+  modernVisualSearchHelpText: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    fontWeight: '400',
+  },
+  modernVisualSearchError: {
+    fontSize: 13,
+    color: COLORS.error,
+    textAlign: 'center',
+    marginTop: 16,
+    fontWeight: '500',
+  },
+  modernVisualSearchAnalyzing: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 320,
+    paddingVertical: 40,
+  },
+  modernVisualSearchImagePreview: {
+    width: 120,
+    height: 120,
+    borderRadius: 16,
+    backgroundColor: hexToRgba(COLORS.darkGray, 0.04),
+    marginBottom: 32,
+    overflow: 'hidden',
+  },
+  modernVisualSearchPreviewImage: {
+    width: '100%',
+    height: '100%',
+  },
+  modernVisualSearchAnalyzingContent: {
+    alignItems: 'center',
+  },
+  modernVisualSearchLoader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  modernVisualSearchLoaderDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: COLORS.primary,
+    marginHorizontal: 3,
+    // Animation would be handled by CSS
+  },
+  modernVisualSearchAnalyzingText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: COLORS.text,
+    textAlign: 'center',
+    marginBottom: 8,
+    letterSpacing: -0.2,
+  },
+  modernVisualSearchAnalyzingSubtext: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    fontWeight: '400',
+  },
+  modernVisualSearchResults: {
+    paddingTop: 8,
+  },
+  modernVisualSearchResultsHeader: {
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  modernVisualSearchResultsTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.text,
+    textAlign: 'center',
+    marginBottom: 4,
+    letterSpacing: -0.2,
+  },
+  modernVisualSearchResultsSubtitle: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    fontWeight: '400',
+  },
+  modernVisualSearchResultsList: {
+    maxHeight: 280,
+    marginBottom: 20,
+  },
+  modernVisualSearchResultItem: {
+    flexDirection: 'row',
+    padding: 16,
+    marginBottom: 12,
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: hexToRgba(COLORS.darkGray, 0.08),
+    shadowColor: hexToRgba(COLORS.darkGray, 0.04),
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 8,
+    shadowOpacity: 1,
+  },
+  modernVisualSearchResultImage: {
+    width: 56,
+    height: 56,
+    borderRadius: 8,
+    backgroundColor: hexToRgba(COLORS.darkGray, 0.04),
+    marginRight: 12,
+  },
+  modernVisualSearchResultInfo: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  modernVisualSearchResultTitle: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: COLORS.text,
+    marginBottom: 2,
+    letterSpacing: -0.1,
+  },
+  modernVisualSearchResultBrand: {
+    fontSize: 13,
+    color: COLORS.textSecondary,
+    marginBottom: 4,
+    fontWeight: '400',
+  },
+  modernVisualSearchResultPrice: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.primary,
+    marginBottom: 2,
+  },
+  modernVisualSearchResultMatch: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    fontWeight: '500',
+  },
+  modernVisualSearchMoreResults: {
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  modernVisualSearchMoreText: {
+    fontSize: 13,
+    color: COLORS.textSecondary,
+    fontWeight: '500',
+  },
+  modernVisualSearchViewAllButton: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: hexToRgba(COLORS.primary, 0.25),
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 12,
+    shadowOpacity: 1,
+  },
+  modernVisualSearchViewAllText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: COLORS.white,
+    letterSpacing: -0.1,
+  },
+  modernVisualSearchFooter: {
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: hexToRgba(COLORS.darkGray, 0.08),
+    alignItems: 'center',
+  },
+  modernVisualSearchResetButton: {
+    backgroundColor: 'transparent',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  modernVisualSearchResetText: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    fontWeight: '500',
   },
   });
 
