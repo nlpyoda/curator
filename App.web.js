@@ -5965,6 +5965,188 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: '500',
   },
+
+  // Visual Search Modal Styles
+  visualSearchOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  visualSearchContent: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 20,
+    margin: 20,
+    maxWidth: 600,
+    width: '90%',
+    maxHeight: '80%',
+  },
+  visualSearchTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#2c3e50',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  visualSearchWorkspace: {
+    minHeight: 400,
+  },
+  visualSearchUploadArea: {
+    borderRadius: 8,
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  visualSearchInstructions: {
+    fontSize: 16,
+    color: '#7f8c8d',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  visualSearchButtonsRow: {
+    flexDirection: 'row',
+    gap: 15,
+    marginBottom: 15,
+  },
+  visualSearchButton: {
+    borderRadius: 6,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+  },
+  visualSearchButtonText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  visualSearchError: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 10,
+  },
+  visualSearchAnalyzing: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 300,
+  },
+  visualSearchImage: {
+    width: 200,
+    height: 200,
+    borderRadius: 8,
+  },
+  visualSearchAnalyzingOverlay: {
+    position: 'absolute',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 8,
+    padding: 20,
+    alignItems: 'center',
+  },
+  visualSearchAnalyzingText: {
+    fontSize: 16,
+    color: '#2c3e50',
+    marginBottom: 10,
+  },
+  visualSearchLoader: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#3498db',
+  },
+  visualSearchDetected: {
+    alignItems: 'center',
+  },
+  visualSearchImageContainer: {
+    position: 'relative',
+    marginBottom: 20,
+  },
+  visualSearchBoundingBox: {
+    position: 'absolute',
+    borderWidth: 2,
+    borderRadius: 4,
+    padding: 5,
+  },
+  visualSearchObjectLabel: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: 'white',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 3,
+  },
+  visualSearchSelectionInstructions: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  visualSearchSelectionText: {
+    fontSize: 16,
+    color: '#2c3e50',
+    marginBottom: 5,
+  },
+  visualSearchSelectedCount: {
+    fontSize: 14,
+    color: '#7f8c8d',
+  },
+  visualSearchActionButton: {
+    backgroundColor: '#27ae60',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 6,
+  },
+  visualSearchActionButtonDisabled: {
+    backgroundColor: '#bdc3c7',
+  },
+  visualSearchActionButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  visualSearchSearching: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 200,
+  },
+  visualSearchSearchingText: {
+    fontSize: 18,
+    color: '#2c3e50',
+    marginBottom: 20,
+  },
+  visualSearchFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 20,
+    paddingTop: 15,
+    borderTopWidth: 1,
+    borderTopColor: '#ecf0f1',
+  },
+  visualSearchCloseButton: {
+    backgroundColor: '#e74c3c',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  visualSearchCloseButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  visualSearchResetButton: {
+    backgroundColor: '#3498db',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  visualSearchResetButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
   });
 
 // Add electric buzzing CSS animations
