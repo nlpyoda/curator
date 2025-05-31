@@ -1,6 +1,7 @@
 // AIProductService for React Native
 import { MOCK_PRODUCTS } from './mockData.js';
 import { DatabaseService } from './DatabaseService.js';
+import { SupabaseService } from './SupabaseService.js';
 
 export class AIProductService {
   constructor() {
@@ -8,36 +9,64 @@ export class AIProductService {
     this.initialized = false;
     this.MOCK_PRODUCTS = MOCK_PRODUCTS; // Store reference to mock data
     this.databaseService = null;
+    this.supabaseService = null;
     this.databaseAvailable = false;
+    this.supabaseAvailable = false;
+    this.activeService = 'mock'; // 'supabase', 'prisma', or 'mock'
   }
 
   async initialize() {
     try {
-      // Try to initialize database service
+      console.log('Initializing AI Product Service...');
+      
+      // Try Supabase first (best for production)
+      try {
+        this.supabaseService = new SupabaseService();
+        const supabaseSuccess = await this.supabaseService.initialize();
+        
+        if (supabaseSuccess) {
+          const productCount = await this.supabaseService.getProductCount();
+          if (productCount > 0) {
+            this.supabaseAvailable = true;
+            this.useMockData = false;
+            this.activeService = 'supabase';
+            console.log(`✅ AI Product Service initialized with Supabase (${productCount} products)`);
+            this.initialized = true;
+            return;
+          }
+        }
+      } catch (supabaseError) {
+        console.log('Supabase not available:', supabaseError.message);
+      }
+
+      // Try Prisma database (local development)
       try {
         this.databaseService = new DatabaseService();
         await this.databaseService.initialize();
         
-        // Test database connection by checking if we have any products
         const testProducts = await this.databaseService.prisma.product.findMany({ take: 1 });
         if (testProducts.length > 0) {
           this.databaseAvailable = true;
           this.useMockData = false;
-          console.log('AI Product Service initialized with database');
-        } else {
-          console.log('Database is empty, using mock data');
+          this.activeService = 'prisma';
+          console.log('✅ AI Product Service initialized with Prisma database');
+          this.initialized = true;
+          return;
         }
       } catch (dbError) {
-        console.log('Database not available, using mock data:', dbError.message);
-        this.databaseAvailable = false;
-        this.useMockData = true;
+        console.log('Prisma database not available:', dbError.message);
       }
-      
-      this.initialized = true;
-    } catch (error) {
-      console.error('Failed to initialize AI service:', error);
+
       // Fallback to mock data
       this.useMockData = true;
+      this.activeService = 'mock';
+      console.log('✅ AI Product Service initialized with mock data');
+      this.initialized = true;
+      
+    } catch (error) {
+      console.error('Failed to initialize AI service:', error);
+      this.useMockData = true;
+      this.activeService = 'mock';
       this.initialized = true;
     }
   }
@@ -124,15 +153,23 @@ export class AIProductService {
   }
 
   async searchProducts(query, persona) {
-    console.log(`Searching for: ${query} with persona: ${persona}`);
+    console.log(`Searching for: ${query} with persona: ${persona} (using ${this.activeService})`);
     
-    // Try database first if available
+    // Try Supabase first if available
+    if (this.supabaseAvailable && this.supabaseService) {
+      try {
+        return await this.supabaseService.searchProducts(query, persona);
+      } catch (supabaseError) {
+        console.log('Supabase search failed, falling back:', supabaseError.message);
+      }
+    }
+    
+    // Try Prisma database if available
     if (this.databaseAvailable && this.databaseService) {
       try {
         return await this.searchProductsFromDatabase(query, persona);
       } catch (dbError) {
-        console.log('Database search failed, falling back to mock data:', dbError.message);
-        // Fall through to mock data search
+        console.log('Prisma search failed, falling back to mock data:', dbError.message);
       }
     }
     
@@ -340,15 +377,26 @@ export class AIProductService {
   }
 
   async cleanup() {
-    // Clean up database connection if available
+    // Clean up services
+    if (this.supabaseService) {
+      try {
+        await this.supabaseService.cleanup();
+      } catch (error) {
+        console.error('Error cleaning up Supabase service:', error);
+      }
+    }
+    
     if (this.databaseService) {
       try {
         await this.databaseService.cleanup();
       } catch (error) {
-        console.error('Error cleaning up database service:', error);
+        console.error('Error cleaning up Prisma service:', error);
       }
     }
+    
     this.initialized = false;
+    this.supabaseAvailable = false;
     this.databaseAvailable = false;
+    this.activeService = 'mock';
   }
 } 
