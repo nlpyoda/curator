@@ -1168,7 +1168,8 @@ const VisualSearch = ({ visible, onClose, onSearch }) => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [detectedObjects, setDetectedObjects] = useState([]);
   const [selectedObjects, setSelectedObjects] = useState([]);
-  const [analyzeStage, setAnalyzeStage] = useState('initial'); // initial, analyzing, detected, searching
+  const [visualSearchResults, setVisualSearchResults] = useState([]);
+  const [analyzeStage, setAnalyzeStage] = useState('initial'); // initial, analyzing, results, searching
   const [error, setError] = useState(null);
   const [isDragActive, setIsDragActive] = useState(false);
   const fileInputRef = useRef(null);
@@ -1185,6 +1186,7 @@ const VisualSearch = ({ visible, onClose, onSearch }) => {
     setSelectedImage(null);
     setDetectedObjects([]);
     setSelectedObjects([]);
+    setVisualSearchResults([]);
     setAnalyzeStage('initial');
     setError(null);
     setIsDragActive(false);
@@ -1228,45 +1230,23 @@ const VisualSearch = ({ visible, onClose, onSearch }) => {
       const aiService = new AIProductService();
       await aiService.initialize();
       
-      // For now, use a simplified approach - generate embedding for the image context
-      // and search for similar products directly
+      // Search for similar products directly
       const searchResults = await performEmbeddingSearch(imageUrl, aiService);
       
       if (searchResults.length > 0) {
-        // Convert search results to mock objects for UI compatibility
-        const detectedObjects = searchResults.slice(0, 4).map((product, index) => ({
-          id: product.id,
-          label: product.title.split(' ').slice(0, 2).join(' '), // First 2 words as label
-          confidence: product.similarity || (0.9 - index * 0.05), // Decreasing confidence
-          boundingBox: { 
-            x: 120 + index * 60, 
-            y: 80 + index * 80, 
-            width: 200, 
-            height: 120 
-          },
-          productData: product // Store full product data
-        }));
-        
-        setDetectedObjects(detectedObjects);
-        setAnalyzeStage('detected');
+        console.log(`✅ Found ${searchResults.length} similar products`);
+        // Set the search results directly 
+        setVisualSearchResults(searchResults.slice(0, 6)); // Top 6 results
+        setAnalyzeStage('results');
       } else {
-        // Fallback to generic categories if no specific products found
-        const genericObjects = [
-          { id: 'tech', label: 'Electronics', confidence: 0.8, boundingBox: { x: 120, y: 80, width: 200, height: 150 } },
-          { id: 'furniture', label: 'Furniture', confidence: 0.75, boundingBox: { x: 150, y: 250, width: 180, height: 120 } },
-          { id: 'lifestyle', label: 'Lifestyle', confidence: 0.7, boundingBox: { x: 180, y: 390, width: 160, height: 100 } }
-        ];
-        setDetectedObjects(genericObjects);
-        setAnalyzeStage('detected');
+        console.log('⚠️ No similar products found');
+        setError('No similar products found. Try a different image or search manually.');
+        setAnalyzeStage('initial');
       }
     } catch (error) {
       console.error('❌ Visual search analysis failed:', error);
-      // Fallback to generic detection
-      const fallbackObjects = [
-        { id: 'general', label: 'Product Search', confidence: 0.8, boundingBox: { x: 150, y: 200, width: 200, height: 150 } }
-      ];
-      setDetectedObjects(fallbackObjects);
-      setAnalyzeStage('detected');
+      setError('Visual search failed. Please try again or search manually.');
+      setAnalyzeStage('initial');
     }
   };
 
@@ -1416,6 +1396,14 @@ const VisualSearch = ({ visible, onClose, onSearch }) => {
     setAnalyzeStage('analyzing');
     analyzeImage('https://images.unsplash.com/photo-1479064555552-3ef4979f8908?w=600&auto=format');
   };
+
+  // Handle clicking on a visual search result
+  const handleResultClick = (product) => {
+    console.log('🔍 Selected visual search result:', product.title);
+    // Close the modal and display this product as a search result
+    onSearch && onSearch([product.title]);
+    onClose();
+  };
   
   // Perform search with selected objects
   const performSearch = () => {
@@ -1444,9 +1432,29 @@ const VisualSearch = ({ visible, onClose, onSearch }) => {
   return (
     <View style={styles.visualSearchOverlay}>
       <View style={styles.visualSearchContent}>
-        <Text style={styles.visualSearchTitle}>
-          Visual Search
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+          <Text style={styles.visualSearchTitle}>
+            Search by Image
+          </Text>
+          <TouchableOpacity 
+            onPress={onClose}
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 16,
+              backgroundColor: hexToRgba(COLORS.darkGray, 0.05),
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginLeft: 20
+            }}
+          >
+            <Text style={{
+              fontSize: 18,
+              color: COLORS.textSecondary,
+              fontWeight: '300'
+            }}>×</Text>
+          </TouchableOpacity>
+        </View>
         
         <View style={styles.visualSearchWorkspace}>
           {analyzeStage === 'initial' ? (
@@ -1454,13 +1462,9 @@ const VisualSearch = ({ visible, onClose, onSearch }) => {
             <View 
               style={[
                 styles.visualSearchUploadArea,
-                { 
-                  borderColor: isDragActive ? 'rgba(0, 255, 255, 0.8)' : 'rgba(0, 255, 255, 0.4)',
-                  backgroundColor: isDragActive ? 'rgba(0, 255, 255, 0.05)' : '#FAFAFA',
-                  boxShadow: isDragActive ? '0 0 40px rgba(0, 255, 255, 0.3), inset 0 0 30px rgba(0, 255, 255, 0.1)' : '0 0 20px rgba(0, 0, 0, 0.05)',
-                  borderWidth: isDragActive ? 4 : 3,
-                  transform: isDragActive ? 'scale(1.02)' : 'scale(1)',
-                  transition: 'all 0.3s ease'
+                isDragActive && {
+                  borderColor: hexToRgba(COLORS.primaryPeachy, 0.8),
+                  backgroundColor: hexToRgba(COLORS.primaryPeachy, 0.05)
                 }
               ]}
               onDrop={(e) => {
@@ -1487,46 +1491,50 @@ const VisualSearch = ({ visible, onClose, onSearch }) => {
                 setIsDragActive(false);
               }}
             >
-              <Text style={[styles.visualSearchInstructions, { fontSize: 18, textAlign: 'center', marginBottom: 20, color: isDragActive ? '#27ae60' : '#2c3e50' }]}>
+              <Text style={[
+                styles.visualSearchInstructions,
+                { color: isDragActive ? COLORS.primaryPeachy : COLORS.textPrimary }
+              ]}>
                 {isDragActive ? '📥 Drop Image Here!' : '📸 Drag & Drop Screenshot Here'}{'\n'}
                 {!isDragActive && 'or'}
               </Text>
               
-              <View style={styles.visualSearchButtonsRow}>
+              <View style={styles.visualSearchButtonsColumn}>
                 <TouchableOpacity 
                   style={[
-                    styles.visualSearchButton, 
-                    { 
-                      backgroundColor: '#FFFFFF',
-                      borderColor: 'rgba(0, 255, 255, 0.6)',
-                      borderWidth: 2,
-                      boxShadow: '0 0 20px rgba(0, 255, 255, 0.3)'
-                    }
+                    styles.visualSearchButton,
+                    { backgroundColor: COLORS.primaryPeachy }
                   ]}
                   onPress={selectImage}
                 >
-                  <Text style={[styles.visualSearchButtonText, { color: '#1A1A1A' }]}>📁 UPLOAD PHOTO</Text>
+                  <Text style={[styles.visualSearchButtonText, { color: COLORS.white }]}>📁 UPLOAD PHOTO</Text>
                 </TouchableOpacity>
                 
                 <TouchableOpacity 
                   style={[
-                    styles.visualSearchButton, 
+                    styles.visualSearchButton,
                     { 
-                      backgroundColor: 'rgba(0, 255, 255, 0.1)',
-                      borderColor: 'rgba(0, 255, 255, 0.8)',
-                      borderWidth: 2,
-                      boxShadow: '0 0 25px rgba(0, 255, 255, 0.4)'
+                      backgroundColor: 'transparent',
+                      borderColor: COLORS.primaryPeachy,
+                      borderWidth: 2
                     }
                   ]}
                   onPress={takeScreenshot}
                 >
-                  <Text style={[styles.visualSearchButtonText, { color: '#1A1A1A' }]}>📷 TRY DEMO</Text>
+                  <Text style={[styles.visualSearchButtonText, { color: COLORS.primaryPeachy }]}>📷 TRY DEMO</Text>
                 </TouchableOpacity>
               </View>
               
-              <Text style={{ fontSize: 16, color: '#666666', textAlign: 'center', marginTop: 20, fontWeight: '500', letterSpacing: 0.3 }}>
-                📱 DRAG ANY PRODUCT SCREENSHOT{'\n'}
-                🔍 DISCOVER SIMILAR ITEMS INSTANTLY
+              <Text style={{
+                fontSize: 14,
+                color: COLORS.textSecondary,
+                textAlign: 'center',
+                marginTop: 20,
+                fontWeight: '400',
+                lineHeight: 20
+              }}>
+                📱 Drag any product screenshot{'\n'}
+                🔍 Discover similar items instantly
               </Text>
               
               {error && (
@@ -1615,6 +1623,94 @@ const VisualSearch = ({ visible, onClose, onSearch }) => {
                   Search for Selected Items
                 </Text>
               </TouchableOpacity>
+            </View>
+          ) : analyzeStage === 'results' ? (
+            // Visual search results display
+            <View style={styles.visualSearchResults}>
+              <Text style={{
+                fontSize: 18,
+                fontWeight: '600',
+                color: COLORS.textPrimary,
+                textAlign: 'center',
+                marginBottom: 20
+              }}>
+                🎯 Similar Products Found
+              </Text>
+              
+              <ScrollView style={{ maxHeight: 400 }}>
+                {visualSearchResults.map((product, index) => (
+                  <TouchableOpacity
+                    key={product.id}
+                    style={{
+                      flexDirection: 'row',
+                      padding: 15,
+                      marginBottom: 10,
+                      backgroundColor: COLORS.white,
+                      borderRadius: 12,
+                      borderWidth: 1,
+                      borderColor: hexToRgba(COLORS.darkGray, 0.1),
+                      shadowColor: COLORS.darkGray,
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.08,
+                      shadowRadius: 8,
+                    }}
+                    onPress={() => handleResultClick(product)}
+                  >
+                    {product.image && (
+                      <Image 
+                        source={{ uri: product.image }} 
+                        style={{
+                          width: 60,
+                          height: 60,
+                          borderRadius: 8,
+                          marginRight: 15,
+                          backgroundColor: hexToRgba(COLORS.darkGray, 0.05)
+                        }}
+                        resizeMode="cover"
+                      />
+                    )}
+                    <View style={{ flex: 1 }}>
+                      <Text style={{
+                        fontSize: 16,
+                        fontWeight: '600',
+                        color: COLORS.textPrimary,
+                        marginBottom: 4
+                      }}>
+                        {product.title}
+                      </Text>
+                      <Text style={{
+                        fontSize: 18,
+                        fontWeight: 'bold',
+                        color: COLORS.primaryPeachy,
+                        marginBottom: 4
+                      }}>
+                        {product.price}
+                      </Text>
+                      {product.similarity && (
+                        <Text style={{
+                          fontSize: 12,
+                          color: COLORS.textSecondary,
+                          fontStyle: 'italic'
+                        }}>
+                          {Math.round(product.similarity * 100)}% similar
+                        </Text>
+                      )}
+                    </View>
+                    <View style={{
+                      width: 30,
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <Text style={{
+                        fontSize: 18,
+                        color: COLORS.textSecondary
+                      }}>
+                        →
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
             </View>
           ) : (
             // Searching state
@@ -6004,85 +6100,85 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
-  // Visual Search Modal Styles - Ultra Modern Electric Neon Theme
+  // Visual Search Modal Styles - Refined Minimalist Theme
   visualSearchOverlay: {
     position: 'fixed',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.95)',
+    backgroundColor: hexToRgba(COLORS.darkGray, 0.6),
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1000,
-    backdropFilter: 'blur(10px)',
+    // backdropFilter: 'blur(2px)', // Subtle blur
   },
   visualSearchContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderRadius: 20,
-    padding: 30,
+    padding: 32,
     margin: 20,
-    maxWidth: 700,
+    maxWidth: 550,
     width: '90%',
-    maxHeight: '85%',
-    borderColor: 'rgba(0, 255, 255, 0.3)',
-    borderWidth: 1,
-    boxShadow: '0 0 50px rgba(0, 255, 255, 0.3), inset 0 0 20px rgba(0, 255, 255, 0.1)',
+    maxHeight: '90%',
+    shadowColor: hexToRgba(COLORS.darkGray, 0.08),
+    shadowOffset: { width: 0, height: 10 },
+    shadowRadius: 30,
+    shadowOpacity: 1,
+    elevation: 10,
     overflow: 'hidden',
   },
   visualSearchTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#1A1A1A',
+    fontSize: 22,
+    fontWeight: '600',
+    color: COLORS.text,
     textAlign: 'center',
-    marginBottom: 25,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
+    marginBottom: 24,
+    letterSpacing: 0,
+    textTransform: 'none',
   },
   visualSearchWorkspace: {
     minHeight: 400,
   },
   visualSearchUploadArea: {
-    borderRadius: 16,
-    padding: 40,
+    borderRadius: 12,
+    padding: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FAFAFA',
-    borderWidth: 3,
+    backgroundColor: hexToRgba(COLORS.primaryPeachy, 0.1),
+    borderWidth: 2,
     borderStyle: 'dashed',
-    borderColor: 'rgba(0, 255, 255, 0.4)',
-    minHeight: 350,
+    borderColor: COLORS.borderLight,
+    minHeight: 300,
     position: 'relative',
     overflow: 'hidden',
   },
   visualSearchInstructions: {
-    fontSize: 20,
-    color: '#1A1A1A',
+    fontSize: 16,
+    color: COLORS.text,
     textAlign: 'center',
-    marginBottom: 25,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
-  visualSearchButtonsRow: {
-    flexDirection: 'row',
-    gap: 20,
     marginBottom: 20,
-    alignItems: 'center',
+    fontWeight: '500',
+    letterSpacing: 0,
+  },
+  visualSearchButtonsColumn: {
+    flexDirection: 'column',
+    marginBottom: 16,
+    alignItems: 'stretch',
   },
   visualSearchButton: {
-    borderRadius: 12,
-    paddingHorizontal: 25,
-    paddingVertical: 15,
-    minWidth: 160,
+    borderRadius: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
-    boxShadow: '0 8px 20px rgba(0, 0, 0, 0.1)',
+    justifyContent: 'center',
+    marginBottom: 12,
+    minHeight: 48,
   },
   visualSearchButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 0.5,
+    fontSize: 15,
+    fontWeight: '600',
+    letterSpacing: 0,
   },
   visualSearchError: {
     fontSize: 14,
