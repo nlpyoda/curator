@@ -4,6 +4,8 @@
 
 [build.environment]
   NODE_VERSION = "18"
+  # Database will be available via environment variables
+  # Set DATABASE_URL in Netlify dashboard > Site settings > Environment variables
 
 [[redirects]]
   from = "/*"
