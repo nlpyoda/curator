@@ -1455,14 +1455,12 @@ const VisualSearch = ({ visible, onClose, onSearch }) => {
               style={[
                 styles.visualSearchUploadArea,
                 { 
-                  borderColor: isDragActive ? '#27ae60' : '#3498db',
-                  borderStyle: 'dashed',
-                  borderWidth: isDragActive ? 3 : 2,
-                  backgroundColor: isDragActive ? '#e8f5e8' : '#f8f9fa',
-                  minHeight: 300,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  transition: 'all 0.2s ease'
+                  borderColor: isDragActive ? 'rgba(0, 255, 255, 0.8)' : 'rgba(0, 255, 255, 0.4)',
+                  backgroundColor: isDragActive ? 'rgba(0, 255, 255, 0.05)' : '#FAFAFA',
+                  boxShadow: isDragActive ? '0 0 40px rgba(0, 255, 255, 0.3), inset 0 0 30px rgba(0, 255, 255, 0.1)' : '0 0 20px rgba(0, 0, 0, 0.05)',
+                  borderWidth: isDragActive ? 4 : 3,
+                  transform: isDragActive ? 'scale(1.02)' : 'scale(1)',
+                  transition: 'all 0.3s ease'
                 }
               ]}
               onDrop={(e) => {
@@ -1496,23 +1494,39 @@ const VisualSearch = ({ visible, onClose, onSearch }) => {
               
               <View style={styles.visualSearchButtonsRow}>
                 <TouchableOpacity 
-                  style={[styles.visualSearchButton, { backgroundColor: '#3498db', paddingHorizontal: 20, paddingVertical: 12 }]}
+                  style={[
+                    styles.visualSearchButton, 
+                    { 
+                      backgroundColor: '#FFFFFF',
+                      borderColor: 'rgba(0, 255, 255, 0.6)',
+                      borderWidth: 2,
+                      boxShadow: '0 0 20px rgba(0, 255, 255, 0.3)'
+                    }
+                  ]}
                   onPress={selectImage}
                 >
-                  <Text style={[styles.visualSearchButtonText, { color: 'white', fontWeight: 'bold' }]}>📁 Upload Photo</Text>
+                  <Text style={[styles.visualSearchButtonText, { color: '#1A1A1A' }]}>📁 UPLOAD PHOTO</Text>
                 </TouchableOpacity>
                 
                 <TouchableOpacity 
-                  style={[styles.visualSearchButton, { backgroundColor: '#e74c3c', paddingHorizontal: 20, paddingVertical: 12 }]}
+                  style={[
+                    styles.visualSearchButton, 
+                    { 
+                      backgroundColor: 'rgba(0, 255, 255, 0.1)',
+                      borderColor: 'rgba(0, 255, 255, 0.8)',
+                      borderWidth: 2,
+                      boxShadow: '0 0 25px rgba(0, 255, 255, 0.4)'
+                    }
+                  ]}
                   onPress={takeScreenshot}
                 >
-                  <Text style={[styles.visualSearchButtonText, { color: 'white', fontWeight: 'bold' }]}>📷 Demo Image</Text>
+                  <Text style={[styles.visualSearchButtonText, { color: '#1A1A1A' }]}>📷 TRY DEMO</Text>
                 </TouchableOpacity>
               </View>
               
-              <Text style={{ fontSize: 14, color: '#7f8c8d', textAlign: 'center', marginTop: 15 }}>
-                📱 Take a screenshot of any product & drop it here{'\n'}
-                🔍 Find similar products in our database instantly!
+              <Text style={{ fontSize: 16, color: '#666666', textAlign: 'center', marginTop: 20, fontWeight: '500', letterSpacing: 0.3 }}>
+                📱 DRAG ANY PRODUCT SCREENSHOT{'\n'}
+                🔍 DISCOVER SIMILAR ITEMS INSTANTLY
               </Text>
               
               {error && (
@@ -2266,13 +2280,22 @@ export default function App() {
   // Function to handle visual search results
   const handleVisualSearch = async (searchLabels) => {
     setIsLoadingAnimation(true);
+    setErrorMessage(null);
     console.log('🔍 Performing visual search with labels:', searchLabels);
     
     try {
       // Import and initialize our AI service
       const { AIProductService } = await import('./app/services/AIProductService.js');
       const aiService = new AIProductService();
-      await aiService.initialize();
+      
+      console.log('🔧 Initializing AI service...');
+      const initialized = await aiService.initialize();
+      
+      if (!initialized) {
+        throw new Error('Failed to initialize AI service');
+      }
+      
+      console.log('✅ AI service initialized successfully');
       
       // Combine all search labels into a single query
       const searchQuery = searchLabels.join(' ');
@@ -2281,28 +2304,32 @@ export default function App() {
       // Search our Supabase database for matching products
       const searchResults = await aiService.searchProducts(searchQuery, selectedPersona?.id || 'tech enthusiast');
       
-      // If we have products from the detected objects, prioritize those
-      const detectedProductIds = detectedObjects
-        .filter(obj => obj.productData)
-        .map(obj => obj.productData.id);
+      console.log(`📊 Raw search results: ${searchResults.length} products`);
       
+      // If we have products from the detected objects, prioritize those
       let finalResults = searchResults;
       
-      // If we have specific products from image analysis, show those first
-      if (detectedProductIds.length > 0) {
-        const detectedProducts = detectedObjects
-          .filter(obj => obj.productData && selectedObjects.includes(obj.id))
-          .map(obj => obj.productData);
+      if (detectedObjects && detectedObjects.length > 0) {
+        const detectedProductIds = detectedObjects
+          .filter(obj => obj.productData)
+          .map(obj => obj.productData.id);
         
-        // Combine detected products with search results (remove duplicates)
-        const otherResults = searchResults.filter(p => !detectedProductIds.includes(p.id));
-        finalResults = [...detectedProducts, ...otherResults];
+        // If we have specific products from image analysis, show those first
+        if (detectedProductIds.length > 0 && selectedObjects.length > 0) {
+          const detectedProducts = detectedObjects
+            .filter(obj => obj.productData && selectedObjects.includes(obj.id))
+            .map(obj => obj.productData);
+          
+          // Combine detected products with search results (remove duplicates)
+          const otherResults = searchResults.filter(p => !detectedProductIds.includes(p.id));
+          finalResults = [...detectedProducts, ...otherResults];
+        }
       }
       
       // Limit to top results for better UX
-      const limitedResults = finalResults.slice(0, 6);
+      const limitedResults = finalResults.slice(0, 8);
       
-      console.log(`✅ Found ${limitedResults.length} products from visual search`);
+      console.log(`✅ Final results: ${limitedResults.length} products`);
       
       // Update UI with search results
       setTimeout(() => {
@@ -2311,22 +2338,33 @@ export default function App() {
         setIsLoadingAnimation(false);
         
         if (limitedResults.length === 0) {
-          setErrorMessage('No products found matching your visual search. Try another image or select different items.');
+          setErrorMessage('No products found matching your visual search. Try selecting different items from the image or use a different image.');
         } else {
           setErrorMessage(null);
+          console.log(`🎯 Displaying ${limitedResults.length} visual search results`);
         }
-      }, 800);
+      }, 500);
       
     } catch (error) {
       console.error('❌ Visual search failed:', error);
+      console.error('Error details:', error.stack);
       
-      // Fallback to basic search if visual search fails
+      // More specific error handling
+      let errorMsg = 'Visual search encountered an error. ';
+      if (error.message.includes('initialize')) {
+        errorMsg += 'Database connection failed. Please try again.';
+      } else if (error.message.includes('network') || error.message.includes('fetch')) {
+        errorMsg += 'Network error. Please check your connection.';
+      } else {
+        errorMsg += 'Please try again or use text search.';
+      }
+      
       setTimeout(() => {
         setProducts([]);
         setIsDiscoveryMode(false);
         setIsLoadingAnimation(false);
-        setErrorMessage('Visual search encountered an error. Please try again or use text search.');
-      }, 1000);
+        setErrorMessage(errorMsg);
+      }, 500);
     }
   };
   
@@ -5966,62 +6004,85 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
-  // Visual Search Modal Styles
+  // Visual Search Modal Styles - Ultra Modern Electric Neon Theme
   visualSearchOverlay: {
     position: 'fixed',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    backgroundColor: 'rgba(0, 0, 0, 0.95)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1000,
+    backdropFilter: 'blur(10px)',
   },
   visualSearchContent: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 20,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 30,
     margin: 20,
-    maxWidth: 600,
+    maxWidth: 700,
     width: '90%',
-    maxHeight: '80%',
+    maxHeight: '85%',
+    borderColor: 'rgba(0, 255, 255, 0.3)',
+    borderWidth: 1,
+    boxShadow: '0 0 50px rgba(0, 255, 255, 0.3), inset 0 0 20px rgba(0, 255, 255, 0.1)',
+    overflow: 'hidden',
   },
   visualSearchTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#2c3e50',
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#1A1A1A',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 25,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
   visualSearchWorkspace: {
     minHeight: 400,
   },
   visualSearchUploadArea: {
-    borderRadius: 8,
-    padding: 20,
+    borderRadius: 16,
+    padding: 40,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#FAFAFA',
+    borderWidth: 3,
+    borderStyle: 'dashed',
+    borderColor: 'rgba(0, 255, 255, 0.4)',
+    minHeight: 350,
+    position: 'relative',
+    overflow: 'hidden',
   },
   visualSearchInstructions: {
-    fontSize: 16,
-    color: '#7f8c8d',
+    fontSize: 20,
+    color: '#1A1A1A',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 25,
+    fontWeight: '600',
+    letterSpacing: 0.5,
   },
   visualSearchButtonsRow: {
     flexDirection: 'row',
-    gap: 15,
-    marginBottom: 15,
+    gap: 20,
+    marginBottom: 20,
+    alignItems: 'center',
   },
   visualSearchButton: {
-    borderRadius: 6,
-    paddingHorizontal: 15,
-    paddingVertical: 10,
+    borderRadius: 12,
+    paddingHorizontal: 25,
+    paddingVertical: 15,
+    minWidth: 160,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'transparent',
+    boxShadow: '0 8px 20px rgba(0, 0, 0, 0.1)',
   },
   visualSearchButtonText: {
-    fontSize: 14,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   visualSearchError: {
     fontSize: 14,
