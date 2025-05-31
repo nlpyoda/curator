@@ -85,6 +85,7 @@ export class SupabaseService {
           description: product.description,
           features: product.features,
           whyBuy: product.whyBuy,
+          image: product.image || '', // Add image support
           reviews: {
             amazon: product.amazonReviewSummary || '',
             instagram: product.instagramReviewSummary || '',
@@ -161,6 +162,7 @@ export class SupabaseService {
         description: product.description,
         features: product.features,
         whyBuy: product.whyBuy,
+        image: product.image || '', // Add image support
         reviews: {
           amazon: product.amazonReviewSummary || '',
           instagram: product.instagramReviewSummary || '',
@@ -235,6 +237,155 @@ export class SupabaseService {
     } catch (error) {
       console.error('Error getting product count:', error);
       return 0;
+    }
+  }
+
+  async updateProduct(productId, updates) {
+    if (!this.initialized) {
+      throw new Error('Supabase service not initialized');
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .from('Product')
+        .update(updates)
+        .eq('id', productId)
+        .select();
+      
+      if (error) {
+        throw error;
+      }
+      
+      return data[0];
+      
+    } catch (error) {
+      console.error('Error updating product in Supabase:', error);
+      throw error;
+    }
+  }
+
+  async searchProductsByImageSimilarity(queryEmbedding, threshold = 0.7, limit = 10) {
+    if (!this.initialized) {
+      throw new Error('Supabase service not initialized');
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .rpc('search_products_by_image_similarity', {
+          query_embedding: queryEmbedding,
+          match_threshold: threshold,
+          match_count: limit
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      return data.map(product => ({
+        ...product,
+        similarity: product.similarity || 0
+      }));
+    } catch (error) {
+      console.error('Error in image similarity search:', error);
+      throw error;
+    }
+  }
+
+  async searchProductsMultimodal(textQuery = '', imageEmbedding = null, options = {}) {
+    if (!this.initialized) {
+      throw new Error('Supabase service not initialized');
+    }
+
+    const {
+      textWeight = 0.6,
+      imageWeight = 0.4,
+      limit = 10
+    } = options;
+
+    try {
+      const { data, error } = await this.supabase
+        .rpc('search_products_multimodal', {
+          text_query: textQuery,
+          image_embedding: imageEmbedding,
+          text_weight: textWeight,
+          image_weight: imageWeight,
+          match_count: limit
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      return data.map(product => ({
+        id: product.id,
+        title: product.title,
+        price: product.price,
+        link: product.link,
+        image: product.image || '',
+        description: product.description,
+        similarity: product.combined_score || 0,
+        source: 'Supabase'
+      }));
+    } catch (error) {
+      console.error('Error in multimodal search:', error);
+      // Fallback to regular text search
+      if (textQuery) {
+        return await this.searchProducts(textQuery, null, limit);
+      }
+      throw error;
+    }
+  }
+
+  async updateProductEmbedding(productId, embedding, metadata = {}) {
+    if (!this.initialized) {
+      throw new Error('Supabase service not initialized');
+    }
+
+    try {
+      const updateData = {
+        image_embedding: embedding,
+        embedding_model: metadata.model || 'clip-vit-base-patch32',
+        embedding_created_at: new Date().toISOString()
+      };
+
+      const { data, error } = await this.supabase
+        .from('Product')
+        .update(updateData)
+        .eq('id', productId)
+        .select();
+
+      if (error) {
+        throw error;
+      }
+
+      return data[0];
+    } catch (error) {
+      console.error('Error updating product embedding:', error);
+      throw error;
+    }
+  }
+
+  async getProductsWithoutEmbeddings(limit = 50) {
+    if (!this.initialized) {
+      throw new Error('Supabase service not initialized');
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .from('Product')
+        .select('id, title, description, image')
+        .is('image_embedding', null)
+        .not('image', 'is', null)
+        .limit(limit);
+
+      if (error) {
+        throw error;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error fetching products without embeddings:', error);
+      throw error;
     }
   }
 

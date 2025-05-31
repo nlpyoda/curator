@@ -1,7 +1,9 @@
 // AIProductService for React Native
 import { MOCK_PRODUCTS } from './mockData.js';
-import { DatabaseService } from './DatabaseService.js';
-import { SupabaseService } from './SupabaseService.js';
+// Import DatabaseService only if needed to avoid OpenAI dependency issues
+// import { DatabaseService } from './DatabaseService.js';
+// Import SupabaseService dynamically to avoid build issues
+// import { SupabaseService } from './SupabaseService.js';
 
 export class AIProductService {
   constructor() {
@@ -21,6 +23,7 @@ export class AIProductService {
       
       // Try Supabase first (best for production)
       try {
+        const { SupabaseService } = await import('./SupabaseService.js');
         this.supabaseService = new SupabaseService();
         const supabaseSuccess = await this.supabaseService.initialize();
         
@@ -39,23 +42,8 @@ export class AIProductService {
         console.log('Supabase not available:', supabaseError.message);
       }
 
-      // Try Prisma database (local development)
-      try {
-        this.databaseService = new DatabaseService();
-        await this.databaseService.initialize();
-        
-        const testProducts = await this.databaseService.prisma.product.findMany({ take: 1 });
-        if (testProducts.length > 0) {
-          this.databaseAvailable = true;
-          this.useMockData = false;
-          this.activeService = 'prisma';
-          console.log('✅ AI Product Service initialized with Prisma database');
-          this.initialized = true;
-          return;
-        }
-      } catch (dbError) {
-        console.log('Prisma database not available:', dbError.message);
-      }
+      // Skip Prisma for simplicity - using Supabase + Mock only
+      console.log('⏩ Skipping Prisma database (using Supabase + Mock only)');
 
       // Fallback to mock data
       this.useMockData = true;
