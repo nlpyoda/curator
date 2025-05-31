@@ -1168,7 +1168,7 @@ const ProductCard = ({ product, onPress, isTrending = false }) => {
 };
 
 // Add Visual Search feature
-const VisualSearch = ({ visible, onClose, onSearch }) => {
+const VisualSearchPanel = ({ visible, onClose, onSearch }) => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [visualSearchResults, setVisualSearchResults] = useState([]);
   const [analyzeStage, setAnalyzeStage] = useState('initial'); // initial, analyzing, results
@@ -1416,32 +1416,35 @@ const VisualSearch = ({ visible, onClose, onSearch }) => {
   if (!visible) return null;
   
   return (
-    <View style={styles.modernVisualSearchOverlay}>
-      <View style={styles.modernVisualSearchContent}>
+    <View style={styles.rightSidePanel}>
+      <TouchableOpacity style={styles.panelBackdrop} onPress={onClose} />
+      <View style={styles.rightPanelContent}>
         {/* Header */}
-        <View style={styles.modernVisualSearchHeader}>
-          <View style={styles.modernVisualSearchTitleArea}>
-            <Text style={styles.modernVisualSearchTitle}>Search by Image</Text>
-            <Text style={styles.modernVisualSearchSubtitle}>
-              Upload a product screenshot to discover similar items
-            </Text>
-          </View>
-          <TouchableOpacity 
-            onPress={onClose}
-            style={styles.modernVisualSearchCloseButton}
-          >
-            <Text style={styles.modernVisualSearchCloseText}>×</Text>
+        <View style={styles.rightPanelHeader}>
+          <Text style={styles.rightPanelTitle}>Search by Image</Text>
+          <TouchableOpacity style={styles.closeRightPanel} onPress={onClose}>
+            <Text style={styles.closeRightPanelText}>×</Text>
           </TouchableOpacity>
         </View>
         
-        <View style={styles.modernVisualSearchWorkspace}>
+        <Text style={styles.rightPanelSubtitle}>
+          Upload a product screenshot to discover similar items
+        </Text>
+        
+        <View style={{ marginTop: 30 }}>
           {analyzeStage === 'initial' ? (
             /* Upload Interface */
             <View 
-              style={[
-                styles.modernVisualSearchUploadArea,
-                isDragActive && styles.modernVisualSearchUploadAreaActive
-              ]}
+              style={{
+                borderWidth: 2,
+                borderColor: isDragActive ? COLORS.primaryPeachy : COLORS.borderLight,
+                borderStyle: 'dashed',
+                borderRadius: 12,
+                padding: 30,
+                alignItems: 'center',
+                backgroundColor: isDragActive ? hexToRgba(COLORS.primaryPeachy, 0.05) : COLORS.lightGray,
+                marginBottom: 20
+              }}
               onDrop={(e) => {
                 e.preventDefault();
                 setIsDragActive(false);
@@ -1462,36 +1465,80 @@ const VisualSearch = ({ visible, onClose, onSearch }) => {
                 setIsDragActive(false);
               }}
             >
-              <Text style={styles.modernVisualSearchUploadIcon}>📸</Text>
-              <Text style={styles.modernVisualSearchUploadTitle}>
+              <Text style={{ fontSize: 32, marginBottom: 12 }}>📸</Text>
+              <Text style={{
+                fontSize: 16,
+                fontWeight: '600',
+                color: COLORS.text,
+                textAlign: 'center',
+                marginBottom: 8
+              }}>
                 {isDragActive ? 'Drop your image here' : 'Drag & drop an image'}
               </Text>
-              <Text style={styles.modernVisualSearchUploadSubtitle}>
+              <Text style={{
+                fontSize: 14,
+                color: COLORS.textSecondary,
+                textAlign: 'center',
+                marginBottom: 20
+              }}>
                 or choose from your device
               </Text>
               
-              <View style={styles.modernVisualSearchButtonGroup}>
+              <View style={{ width: '100%' }}>
                 <TouchableOpacity 
-                  style={styles.modernVisualSearchPrimaryButton}
+                  style={{
+                    backgroundColor: COLORS.primaryPeachy,
+                    paddingVertical: 12,
+                    paddingHorizontal: 20,
+                    borderRadius: 8,
+                    marginBottom: 10,
+                    alignItems: 'center'
+                  }}
                   onPress={selectImage}
                 >
-                  <Text style={styles.modernVisualSearchPrimaryButtonText}>Browse Files</Text>
+                  <Text style={{
+                    color: COLORS.white,
+                    fontSize: 14,
+                    fontWeight: '600'
+                  }}>Browse Files</Text>
                 </TouchableOpacity>
                 
                 <TouchableOpacity 
-                  style={styles.modernVisualSearchSecondaryButton}
+                  style={{
+                    backgroundColor: 'transparent',
+                    borderWidth: 1,
+                    borderColor: COLORS.primaryPeachy,
+                    paddingVertical: 12,
+                    paddingHorizontal: 20,
+                    borderRadius: 8,
+                    alignItems: 'center'
+                  }}
                   onPress={tryDemo}
                 >
-                  <Text style={styles.modernVisualSearchSecondaryButtonText}>Try Demo</Text>
+                  <Text style={{
+                    color: COLORS.primaryPeachy,
+                    fontSize: 14,
+                    fontWeight: '600'
+                  }}>Try Demo</Text>
                 </TouchableOpacity>
               </View>
               
-              <Text style={styles.modernVisualSearchHelpText}>
+              <Text style={{
+                fontSize: 12,
+                color: COLORS.textSecondary,
+                textAlign: 'center',
+                marginTop: 12
+              }}>
                 Supports JPG, PNG up to 10MB
               </Text>
               
               {error && (
-                <Text style={styles.modernVisualSearchError}>{error}</Text>
+                <Text style={{
+                  fontSize: 14,
+                  color: COLORS.error,
+                  textAlign: 'center',
+                  marginTop: 10
+                }}>{error}</Text>
               )}
               
               <input
@@ -1504,105 +1551,163 @@ const VisualSearch = ({ visible, onClose, onSearch }) => {
             </View>
           ) : analyzeStage === 'analyzing' ? (
             /* Analyzing State */
-            <View style={styles.modernVisualSearchAnalyzing}>
+            <View style={{ alignItems: 'center', paddingVertical: 40 }}>
               {selectedImage && (
-                <View style={styles.modernVisualSearchImagePreview}>
-                  <Image 
-                    source={{ uri: selectedImage }}
-                    style={styles.modernVisualSearchPreviewImage}
-                    resizeMode="cover"
-                  />
-                </View>
+                <Image 
+                  source={{ uri: selectedImage }}
+                  style={{
+                    width: 120,
+                    height: 120,
+                    borderRadius: 12,
+                    marginBottom: 20
+                  }}
+                  resizeMode="cover"
+                />
               )}
-              <View style={styles.modernVisualSearchAnalyzingContent}>
-                <View style={styles.modernVisualSearchLoader}>
-                  <View style={styles.modernVisualSearchLoaderDot} />
-                  <View style={styles.modernVisualSearchLoaderDot} />
-                  <View style={styles.modernVisualSearchLoaderDot} />
-                </View>
-                <Text style={styles.modernVisualSearchAnalyzingText}>
-                  Analyzing your image...
-                </Text>
-                <Text style={styles.modernVisualSearchAnalyzingSubtext}>
-                  Finding similar products in our catalog
-                </Text>
-              </View>
+              <Text style={{
+                fontSize: 16,
+                fontWeight: '600',
+                color: COLORS.text,
+                textAlign: 'center',
+                marginBottom: 8
+              }}>
+                Analyzing your image...
+              </Text>
+              <Text style={{
+                fontSize: 14,
+                color: COLORS.textSecondary,
+                textAlign: 'center'
+              }}>
+                Finding similar products in our catalog
+              </Text>
             </View>
           ) : (
             /* Results Preview */
-            <View style={styles.modernVisualSearchResults}>
-              <View style={styles.modernVisualSearchResultsHeader}>
-                <Text style={styles.modernVisualSearchResultsTitle}>
-                  {visualSearchResults.length} Similar Products Found
-                </Text>
-                <Text style={styles.modernVisualSearchResultsSubtitle}>
-                  Preview of matching items
-                </Text>
-              </View>
+            <View style={{ marginTop: 20 }}>
+              <Text style={{
+                fontSize: 16,
+                fontWeight: '600',
+                color: COLORS.text,
+                marginBottom: 8
+              }}>
+                {visualSearchResults.length} Similar Products Found
+              </Text>
+              <Text style={{
+                fontSize: 14,
+                color: COLORS.textSecondary,
+                marginBottom: 20
+              }}>
+                Preview of matching items
+              </Text>
               
-              <ScrollView style={styles.modernVisualSearchResultsList} showsVerticalScrollIndicator={false}>
+              <ScrollView style={{ maxHeight: 300 }} showsVerticalScrollIndicator={false}>
                 {visualSearchResults.slice(0, 3).map((product, index) => (
-                  <View key={product.id} style={styles.modernVisualSearchResultItem}>
-                    {product.images && product.images[0] && (
+                  <TouchableOpacity 
+                    key={product.id} 
+                    style={{
+                      flexDirection: 'row',
+                      padding: 12,
+                      marginBottom: 12,
+                      backgroundColor: COLORS.white,
+                      borderRadius: 8,
+                      borderWidth: 1,
+                      borderColor: COLORS.borderLight
+                    }}
+                    onPress={() => handleResultClick(product)}
+                  >
+                    {product.image && (
                       <Image 
-                        source={{ uri: product.images[0] }} 
-                        style={styles.modernVisualSearchResultImage}
+                        source={{ uri: product.image }} 
+                        style={{
+                          width: 50,
+                          height: 50,
+                          borderRadius: 6,
+                          marginRight: 12
+                        }}
                         resizeMode="cover"
                       />
                     )}
-                    <View style={styles.modernVisualSearchResultInfo}>
-                      <Text style={styles.modernVisualSearchResultTitle}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{
+                        fontSize: 14,
+                        fontWeight: '600',
+                        color: COLORS.text,
+                        marginBottom: 4
+                      }}>
                         {product.title}
                       </Text>
-                      <Text style={styles.modernVisualSearchResultBrand}>
-                        {product.brand}
-                      </Text>
-                      <Text style={styles.modernVisualSearchResultPrice}>
-                        {typeof product.priceRange === 'object' ? 
-                          `$${product.priceRange[0]} - $${product.priceRange[1]}` : 
-                          product.price || 'Price not available'
-                        }
+                      <Text style={{
+                        fontSize: 14,
+                        fontWeight: 'bold',
+                        color: COLORS.primaryPeachy,
+                        marginBottom: 2
+                      }}>
+                        {product.price}
                       </Text>
                       {product.similarity && (
-                        <Text style={styles.modernVisualSearchResultMatch}>
+                        <Text style={{
+                          fontSize: 12,
+                          color: COLORS.textSecondary
+                        }}>
                           {Math.round(product.similarity * 100)}% match
                         </Text>
                       )}
                     </View>
-                  </View>
+                  </TouchableOpacity>
                 ))}
-                
-                {visualSearchResults.length > 3 && (
-                  <View style={styles.modernVisualSearchMoreResults}>
-                    <Text style={styles.modernVisualSearchMoreText}>
-                      +{visualSearchResults.length - 3} more results
-                    </Text>
-                  </View>
-                )}
               </ScrollView>
               
-              <TouchableOpacity 
-                style={styles.modernVisualSearchViewAllButton}
-                onPress={handleResultSelection}
-              >
-                <Text style={styles.modernVisualSearchViewAllText}>
-                  View All Results
-                </Text>
-              </TouchableOpacity>
+              {visualSearchResults.length > 0 && (
+                <TouchableOpacity 
+                  style={{
+                    backgroundColor: COLORS.primaryPeachy,
+                    paddingVertical: 12,
+                    paddingHorizontal: 20,
+                    borderRadius: 8,
+                    marginTop: 20,
+                    alignItems: 'center'
+                  }}
+                  onPress={() => {
+                    // Show all results in main area
+                    if (visualSearchResults.length > 0) {
+                      const query = visualSearchResults[0].title.split(' ').slice(0, 2).join(' ');
+                      onSearch && onSearch([query]);
+                      onClose();
+                    }
+                  }}
+                >
+                  <Text style={{
+                    color: COLORS.white,
+                    fontSize: 14,
+                    fontWeight: '600'
+                  }}>View All {visualSearchResults.length} Results</Text>
+                </TouchableOpacity>
+                )}
             </View>
           )}
         </View>
         
-        {/* Footer */}
+        {/* Reset Button */}
         {analyzeStage !== 'initial' && (
-          <View style={styles.modernVisualSearchFooter}>
-            <TouchableOpacity 
-              style={styles.modernVisualSearchResetButton}
+          <TouchableOpacity 
+            style={{
+              backgroundColor: 'transparent',
+              borderWidth: 1,
+              borderColor: COLORS.borderLight,
+              paddingVertical: 10,
+              paddingHorizontal: 16,
+              borderRadius: 6,
+              marginTop: 20,
+              alignItems: 'center'
+            }}
               onPress={resetState}
-            >
-              <Text style={styles.modernVisualSearchResetText}>Try Different Image</Text>
-            </TouchableOpacity>
-          </View>
+          >
+            <Text style={{
+              fontSize: 14,
+              color: COLORS.textSecondary,
+              fontWeight: '500'
+            }}>Try Different Image</Text>
+          </TouchableOpacity>
         )}
       </View>
     </View>
@@ -3293,8 +3398,8 @@ Do not include any introductory text or explanations outside of the JSON array i
         )}
       </ScrollView>
       
-      {/* Visual Search Modal */}
-      <VisualSearch 
+      {/* Visual Search Panel */}
+      <VisualSearchPanel 
         visible={showVisualSearch}
         onClose={() => setShowVisualSearch(false)}
         onSearch={handleVisualSearch}
