@@ -1758,17 +1758,79 @@ export default function App() {
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiErrorMessage, setAiErrorMessage] = useState(null);
   
-  // Comprehensive brand list for AI Curation brand selection
-  const availableBrands = [
-    'Apple', 'Samsung', 'Sony', 'Microsoft', 'Google', 'Dell', 'HP', 'Lenovo',
-    'ASUS', 'Acer', 'LG', 'Xiaomi', 'OnePlus', 'Nintendo', 'Tesla', 'BMW',
-    'Nike', 'Adidas', 'Puma', 'Under Armour', 'Lululemon', 'Patagonia',
-    'North Face', 'REI', 'Canon', 'Nikon', 'GoPro', 'DJI', 'Bose',
-    'JBL', 'Beats', 'Sennheiser', 'Audio-Technica', 'Dyson', 'Shark',
-    'iRobot', 'Nest', 'Ring', 'Philips', 'IKEA', 'West Elm', 'CB2',
-    'Pottery Barn', 'Williams Sonoma', 'All-Clad', 'Le Creuset', 'KitchenAid',
-    'Cuisinart', 'Breville', 'Nespresso', 'Keurig', 'Vitamix', 'Instant Pot'
-  ].sort();
+  // State for brand personas (loaded from Supabase)
+  const [brandPersonas, setBrandPersonas] = useState({});
+  
+  // Fallback brand personas data (used if Supabase fails to load)
+  const fallbackBrandPersonas = {
+    'Apple': {
+      persona: 'Tech Minimalist Pioneer',
+      description: 'Clean design meets cutting-edge innovation',
+      keywords: ['minimalist', 'premium', 'innovative', 'sleek', 'intuitive'],
+      values: ['design', 'simplicity', 'innovation', 'premium quality'],
+      demographics: ['professionals', 'creatives', 'tech enthusiasts']
+    },
+    'Patagonia': {
+      persona: 'Sustainable Adventure Innovator', 
+      description: 'Environmental responsibility meets outdoor performance',
+      keywords: ['sustainable', 'outdoor', 'ethical', 'durable', 'adventure'],
+      values: ['sustainability', 'environmental responsibility', 'adventure', 'quality'],
+      demographics: ['outdoor enthusiasts', 'eco-conscious', 'millennials']
+    },
+    'Nike': {
+      persona: 'Performance Lifestyle Champion',
+      description: 'Athletic excellence inspiring everyday achievement',
+      keywords: ['performance', 'athletic', 'motivational', 'innovative', 'lifestyle'],
+      values: ['excellence', 'innovation', 'inspiration', 'performance'],
+      demographics: ['athletes', 'fitness enthusiasts', 'lifestyle conscious']
+    },
+    'Dyson': {
+      persona: 'Engineering Excellence Disruptor',
+      description: 'Revolutionary engineering transforming home experiences',
+      keywords: ['innovative', 'engineering', 'premium', 'efficient', 'modern'],
+      values: ['innovation', 'engineering excellence', 'efficiency', 'design'],
+      demographics: ['tech adopters', 'design conscious', 'premium shoppers']
+    },
+    'Lululemon': {
+      persona: 'Mindful Wellness Curator',
+      description: 'Conscious living through premium athletic lifestyle',
+      keywords: ['wellness', 'mindful', 'premium', 'community', 'lifestyle'],
+      values: ['wellness', 'mindfulness', 'community', 'quality', 'lifestyle'],
+      demographics: ['wellness enthusiasts', 'yoga practitioners', 'mindful consumers']
+    },
+    'Bose': {
+      persona: 'Audio Perfectionist Innovator',
+      description: 'Obsessive audio engineering for pure listening experiences',
+      keywords: ['audio excellence', 'engineering', 'premium', 'immersive', 'precision'],
+      values: ['audio quality', 'innovation', 'craftsmanship', 'experience'],
+      demographics: ['audiophiles', 'music lovers', 'professionals']
+    },
+    'Sony': {
+      persona: 'Creative Technology Enabler',
+      description: 'Empowering creativity through advanced technology',
+      keywords: ['creative', 'innovative', 'professional', 'entertainment', 'quality'],
+      values: ['creativity', 'innovation', 'entertainment', 'professional quality'],
+      demographics: ['creatives', 'professionals', 'entertainment enthusiasts']
+    },
+    'Samsung': {
+      persona: 'Smart Innovation Pioneer',
+      description: 'Intelligent technology enhancing connected lifestyles',
+      keywords: ['smart', 'connected', 'innovative', 'versatile', 'advanced'],
+      values: ['innovation', 'connectivity', 'intelligence', 'versatility'],
+      demographics: ['tech enthusiasts', 'early adopters', 'connected consumers']
+    }
+  };
+
+  // Generate available brands list from persona data, plus additional brands
+  const additionalBrands = [
+    'Microsoft', 'Google', 'Dell', 'HP', 'Lenovo', 'ASUS', 'Acer', 'LG',
+    'Adidas', 'Under Armour', 'North Face', 'REI', 'Canon', 'Nikon', 'GoPro',
+    'JBL', 'Beats', 'Sennheiser', 'Shark', 'iRobot', 'KitchenAid', 'Vitamix'
+  ];
+  
+  // Use loaded brandPersonas state, fallback to hardcoded if empty
+  const activeBrandPersonas = Object.keys(brandPersonas).length > 0 ? brandPersonas : fallbackBrandPersonas;
+  const availableBrands = [...Object.keys(activeBrandPersonas), ...additionalBrands].sort();
   
   // Animation values
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -1787,6 +1849,35 @@ export default function App() {
   useEffect(() => {
     // Start with all products for discovery
     setProducts(sortProducts([...mockProducts]));
+  }, []);
+  
+  // Load brand personas from Supabase on mount
+  useEffect(() => {
+    const loadBrandPersonas = async () => {
+      try {
+        console.log('🏢 Loading brand personas from Supabase...');
+        const { AIProductService } = await import('./app/services/AIProductService.js');
+        const aiService = new AIProductService();
+        await aiService.initialize();
+        
+        // Get Supabase service instance
+        const supabaseService = aiService.services.find(s => s.constructor.name === 'SupabaseService');
+        if (supabaseService && supabaseService.initialized) {
+          const personas = await supabaseService.getBrandPersonas();
+          console.log('✅ Brand personas loaded from Supabase:', Object.keys(personas).length, 'brands');
+          setBrandPersonas(personas);
+        } else {
+          console.log('⚠️ Supabase not available, using fallback brand personas');
+          setBrandPersonas(fallbackBrandPersonas);
+        }
+      } catch (error) {
+        console.log('❌ Error loading brand personas from Supabase:', error.message);
+        console.log('📋 Using fallback brand personas');
+        setBrandPersonas(fallbackBrandPersonas);
+      }
+    };
+    
+    loadBrandPersonas();
   }, []);
   
   // Apply personalization when persona or life moment changes
@@ -2519,13 +2610,37 @@ export default function App() {
       lookingFor
     });
 
+    // Extract brand personas for selected brands
+    const selectedBrandPersonas = selectedBrands
+      .filter(brand => activeBrandPersonas[brand])
+      .map(brand => ({
+        brand,
+        ...activeBrandPersonas[brand]
+      }));
+
+    // Build brand persona context for the AI prompt
+    let brandPersonaContext = '';
+    if (selectedBrandPersonas.length > 0) {
+      brandPersonaContext = `
+
+Brand Personas (use these to influence product recommendations):
+${selectedBrandPersonas.map(bp => 
+  `- ${bp.brand}: ${bp.persona} - ${bp.description}
+    Keywords: ${bp.keywords.join(', ')}
+    Values: ${bp.values.join(', ')}
+    Target: ${bp.demographics.join(', ')}`
+).join('\n')}
+
+IMPORTANT: Use the brand personas above to guide your product selection. Choose products that align with these brand personalities, values, and target demographics. If suggesting products from these brands, ensure they embody the brand's persona characteristics.`;
+    }
+
     let prompt = `You are "Curator," an expert AI shopping assistant specializing in ultra-modern, minimalist, and high-quality tech, lifestyle, and design products. Your goal is to curate a personalized shopping bundle for a user.
 
 User Preferences:
 - Liked Brands: ${selectedBrands.length > 0 ? selectedBrands.join(', ') : 'None specified'}
 - Desired Style: ${personaStyle || 'Not specified'}
 - Budget Indication: ${personaBudget || 'Not specified'}
-- Specifically LookingFor: ${lookingFor || 'A general collection based on style and brands'}
+- Specifically LookingFor: ${lookingFor || 'A general collection based on style and brands'}${brandPersonaContext}
 
 Based on these preferences, please generate a list of 3-5 unique product recommendations. For each product, provide:
 1.  title: A concise and appealing product title (e.g., "Minimalist Smart Desk Lamp").
@@ -3486,25 +3601,46 @@ Do not include any introductory text or explanations outside of the JSON array i
           {/* Form elements will go here */}
           <ScrollView style={styles.aiFormScrollView}>
             <Text style={styles.aiFormSectionTitle}>Your Favorite Brands (select up to 5)</Text>
+            <Text style={styles.aiFormSectionSubtitle}>
+              Choose brands that align with your values and style. Each brand has a unique personality that influences your curated selection.
+            </Text>
             <View style={styles.aiBrandSelectionContainer}>
-              {availableBrands.map(brand => (
-                <TouchableOpacity
-                  key={brand}
-                  style={[
-                    styles.aiBrandChip,
-                    aiSelectedBrands.includes(brand) && styles.aiBrandChipSelected
-                  ]}
-                  onPress={() => {
-                    if (aiSelectedBrands.includes(brand)) {
-                      setAiSelectedBrands(aiSelectedBrands.filter(b => b !== brand));
-                    } else {
-                      if (aiSelectedBrands.length < 5) {
-                        setAiSelectedBrands([...aiSelectedBrands, brand]);
+              {availableBrands.map(brand => {
+                const brandPersona = activeBrandPersonas[brand];
+                const isSelected = aiSelectedBrands.includes(brand);
+                
+                return (
+                  <TouchableOpacity
+                    key={brand}
+                    style={[
+                      styles.aiBrandChip,
+                      brandPersona && styles.aiBrandChipWithPersona,
+                      isSelected && styles.aiBrandChipSelected
+                    ]}
+                    onPress={() => {
+                      if (isSelected) {
+                        setAiSelectedBrands(aiSelectedBrands.filter(b => b !== brand));
+                      } else {
+                        if (aiSelectedBrands.length < 5) {
+                          setAiSelectedBrands([...aiSelectedBrands, brand]);
+                        }
                       }
-                    }
-                  }}
-                >
-                  <Text style={styles.aiBrandChipText}>{brand}</Text>
+                    }}
+                  >
+                    <Text style={[
+                      styles.aiBrandChipText,
+                      isSelected && styles.aiBrandChipTextSelected
+                    ]}>
+                      {brand}
+                    </Text>
+                    {brandPersona && (
+                      <Text style={[
+                        styles.aiBrandPersonaText,
+                        isSelected && styles.aiBrandPersonaTextSelected
+                      ]}>
+                        {brandPersona.persona}
+                      </Text>
+                    )}
                 </TouchableOpacity>
               ))}
             </View>
@@ -5853,6 +5989,35 @@ const styles = StyleSheet.create({
     color: '#00DDDD',
     fontWeight: '600',
     textShadow: '0 0 8px rgba(0, 255, 255, 0.6)',
+  },
+
+  aiBrandChipWithPersona: {
+    paddingVertical: 16,
+    minHeight: 80,
+    alignItems: 'flex-start',
+    justifyContent: 'flex-start',
+  },
+
+  aiBrandPersonaText: {
+    fontSize: 12,
+    fontWeight: '400',
+    color: COLORS.textSecondary,
+    marginTop: 4,
+    fontStyle: 'italic',
+    lineHeight: 16,
+  },
+
+  aiBrandPersonaTextSelected: {
+    color: 'rgba(0, 221, 221, 0.8)',
+    fontWeight: '500',
+  },
+
+  aiFormSectionSubtitle: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    marginBottom: 20,
+    lineHeight: 20,
+    fontStyle: 'italic',
   },
 
   aiPersonaStyleContainer: {

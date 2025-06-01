@@ -389,6 +389,72 @@ export class SupabaseService {
     }
   }
 
+  async getBrandPersonas() {
+    if (!this.initialized) {
+      throw new Error('Supabase service not initialized');
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .from('brand_personas')
+        .select('*')
+        .order('brand_name');
+
+      if (error) {
+        throw error;
+      }
+
+      // Transform to the expected format
+      const brandPersonas = {};
+      data.forEach(row => {
+        brandPersonas[row.brand_name] = {
+          persona: row.persona,
+          description: row.description,
+          keywords: row.keywords,
+          values: row.values,
+          demographics: row.demographics
+        };
+      });
+
+      return brandPersonas;
+    } catch (error) {
+      console.error('Error fetching brand personas:', error);
+      throw error;
+    }
+  }
+
+  async addBrandPersona(brandPersonaData) {
+    if (!this.initialized) {
+      throw new Error('Supabase service not initialized');
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .from('brand_personas')
+        .upsert({
+          brand_name: brandPersonaData.brandName,
+          persona: brandPersonaData.persona,
+          description: brandPersonaData.description,
+          keywords: brandPersonaData.keywords,
+          values: brandPersonaData.values,
+          demographics: brandPersonaData.demographics
+        }, {
+          onConflict: 'brand_name'
+        })
+        .select();
+
+      if (error) {
+        throw error;
+      }
+
+      console.log('Brand persona added to Supabase:', data[0]?.brand_name);
+      return data[0];
+    } catch (error) {
+      console.error('Error adding brand persona to Supabase:', error);
+      throw error;
+    }
+  }
+
   async cleanup() {
     // Supabase client doesn't need explicit cleanup
     this.initialized = false;
