@@ -100,6 +100,38 @@ exports.handler = async (event, context) => {
           },
           {
             id: '4',
+            title: 'Apple AirPods Pro (2nd generation)',
+            price: '$249.99',
+            link: 'https://apple.com/airpods-pro',
+            whyBuy: 'Industry-leading noise cancellation with seamless Apple integration. Perfect for daily use.',
+            category: 'audio'
+          },
+          {
+            id: '5',
+            title: 'Bose QuietComfort Ultra Headphones',
+            price: '$429.99',
+            link: 'https://bose.com/headphones',
+            whyBuy: 'World-class noise cancellation and premium comfort for immersive listening experiences.',
+            category: 'audio'
+          },
+          {
+            id: '6',
+            title: 'Apple AirPods Max',
+            price: '$549.99',
+            link: 'https://apple.com/airpods-max',
+            whyBuy: 'Premium over-ear headphones with spatial audio and exceptional build quality.',
+            category: 'audio'
+          },
+          {
+            id: '7',
+            title: 'Bose SoundLink Revolve+ II',
+            price: '$329.99',
+            link: 'https://bose.com/speakers',
+            whyBuy: '360-degree sound with water-resistant design. Perfect for outdoor adventures.',
+            category: 'audio'
+          },
+          {
+            id: '8',
             title: 'Microsoft Surface Laptop 5',
             price: '$1,299.99',
             link: 'https://microsoft.com/surface',
@@ -107,7 +139,7 @@ exports.handler = async (event, context) => {
             category: 'laptops'
           },
           {
-            id: '5',
+            id: '9',
             title: 'Dell XPS 13',
             price: '$999.99',
             link: 'https://dell.com/xps',
@@ -116,20 +148,43 @@ exports.handler = async (event, context) => {
           }
         ];
         
-        // Filter products based on user preferences
-        let curatedProducts = MOCK_PRODUCTS.filter(product => {
-          // Filter by selected brands if provided
-          if (selectedBrands && selectedBrands.length > 0) {
-            const productBrand = product.title.split(' ')[0]; // Simple brand extraction
+        // Filter products based on user preferences with priority system
+        let curatedProducts = [];
+        
+        // Priority 1: Products that match both brand AND what user is looking for
+        if (selectedBrands && selectedBrands.length > 0 && lookingFor) {
+          curatedProducts = MOCK_PRODUCTS.filter(product => {
+            const productBrand = product.title.split(' ')[0];
+            const matchesBrand = selectedBrands.some(brand => 
+              productBrand.toLowerCase().includes(brand.toLowerCase()) ||
+              product.title.toLowerCase().includes(brand.toLowerCase())
+            );
+            const matchesLookingFor = product.title.toLowerCase().includes(lookingFor.toLowerCase()) ||
+                                    product.category.toLowerCase().includes(lookingFor.toLowerCase());
+            return matchesBrand && matchesLookingFor;
+          });
+        }
+        
+        // Priority 2: Products that match what user is looking for (any brand)
+        if (curatedProducts.length === 0 && lookingFor) {
+          curatedProducts = MOCK_PRODUCTS.filter(product => {
+            return product.title.toLowerCase().includes(lookingFor.toLowerCase()) ||
+                   product.category.toLowerCase().includes(lookingFor.toLowerCase());
+          });
+        }
+        
+        // Priority 3: Products that match selected brands
+        if (curatedProducts.length === 0 && selectedBrands && selectedBrands.length > 0) {
+          curatedProducts = MOCK_PRODUCTS.filter(product => {
+            const productBrand = product.title.split(' ')[0];
             return selectedBrands.some(brand => 
               productBrand.toLowerCase().includes(brand.toLowerCase()) ||
               product.title.toLowerCase().includes(brand.toLowerCase())
             );
-          }
-          return true;
-        });
+          });
+        }
 
-        // If no brand matches, get products that match the persona style
+        // Priority 4: Fallback to persona style matching
         if (curatedProducts.length === 0) {
           curatedProducts = MOCK_PRODUCTS.filter(product => {
             if (personaStyle && personaStyle.includes('tech')) {
@@ -152,7 +207,8 @@ exports.handler = async (event, context) => {
           affiliateUrl: product.link || "https://example.com"
         }));
 
-        console.log(`Returning ${aiFormattedProducts.length} curated products from database`);
+        console.log(`✅ MOCK FALLBACK: Returning ${aiFormattedProducts.length} curated products for brands: [${selectedBrands?.join(', ')}], looking for: "${lookingFor}"`);
+        console.log('Mock products returned:', aiFormattedProducts.map(p => p.title));
         return aiFormattedProducts;
         
       } catch (dbError) {
@@ -193,7 +249,12 @@ exports.handler = async (event, context) => {
 
     // Try Claude API first if key looks valid
     if (!CLAUDE_API_KEY || CLAUDE_API_KEY.length < 30) {
-      console.log('API key invalid or missing, using product database fallback');
+      console.log('❌ CLAUDE API KEY INVALID/MISSING - Using mock fallback');
+      console.log('Key status:', {
+        hasKey: !!CLAUDE_API_KEY,
+        keyLength: CLAUDE_API_KEY ? CLAUDE_API_KEY.length : 0,
+        reason: !CLAUDE_API_KEY ? 'No key found' : 'Key too short'
+      });
       const mockProducts = getMockProducts();
       return {
         statusCode: 200,
@@ -249,20 +310,23 @@ exports.handler = async (event, context) => {
     }
 
     const data = await response.json();
-    console.log('AI API call successful, response length:', JSON.stringify(data).length);
+    console.log('✅ CLAUDE API SUCCESS - Response length:', JSON.stringify(data).length);
 
     // Extract the AI response content
     const aiResponse = data.content[0].text;
+    console.log('Raw AI response preview:', aiResponse.substring(0, 200) + '...');
     
     // Try to parse the JSON response from the AI
     let products;
     try {
       // The AI should return a JSON array of products
       products = JSON.parse(aiResponse);
+      console.log(`✅ CLAUDE AI PRODUCTS: Returning ${products.length} AI-generated products`);
+      console.log('AI products returned:', products.map(p => p.title));
     } catch (parseError) {
-      console.error('Failed to parse AI response as JSON:', parseError);
-      console.log('AI Response:', aiResponse);
-      console.log('Falling back to mock products due to parsing error');
+      console.error('❌ Failed to parse AI response as JSON:', parseError);
+      console.log('Raw AI Response:', aiResponse);
+      console.log('🔄 Falling back to mock products due to parsing error');
       
       // Return mock products if AI parsing fails
       const mockProducts = getMockProducts();
