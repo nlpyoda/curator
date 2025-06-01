@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Animated, Image, PanResponder, Vibration, Easing, Platform, useWindowDimensions } from 'react-native';
 
-// --- Debug: Log API Key at module level ---
-console.log('[DEBUG] EXPO_PUBLIC_CLAUDE_API_KEY at module level:', process.env.EXPO_PUBLIC_CLAUDE_API_KEY);
-// --- End Debug ---
 
 // For trendy, minimalist color palette
 const COLORS = {
@@ -92,12 +89,6 @@ const mockProducts = [
   // ... other mock products
 ];
 
-// CORRECTED API Key Debug:
-// This should be the single source of truth for the apiKeyStatus.
-const claudeApiKey = process.env.EXPO_PUBLIC_CLAUDE_API_KEY || process.env.REACT_APP_CLAUDE_API_KEY;
-const apiKeyStatus = claudeApiKey 
-  ? 'IS SET' 
-  : 'IS NOT SET in process.env';
 
 // Persona definitions
 const personas = [
@@ -1765,8 +1756,7 @@ export default function App() {
   const [aiLookingFor, setAiLookingFor] = useState('');
   const [aiGeneratedProducts, setAiGeneratedProducts] = useState([]);
   const [isAiLoading, setIsAiLoading] = useState(false);
-  const [aiErrorMessage, setAiErrorMessage] = useState(null); // New state for AI errors
-  const [showDebugPanel, setShowDebugPanel] = useState(false); // Debug panel state
+  const [aiErrorMessage, setAiErrorMessage] = useState(null);
   
   // Comprehensive brand list for AI Curation brand selection
   const availableBrands = [
@@ -2486,25 +2476,9 @@ export default function App() {
     }
   };
   
-  // --- Debug: Display API Key in UI ---
-  const [debugApiKeyDisplay, setDebugApiKeyDisplay] = useState('Checking...');
-  useEffect(() => {
-    const envKey = process.env.EXPO_PUBLIC_CLAUDE_API_KEY || process.env.REACT_APP_CLAUDE_API_KEY;
-    if (envKey) {
-      const keySource = process.env.EXPO_PUBLIC_CLAUDE_API_KEY ? 'EXPO_PUBLIC' : 'REACT_APP';
-      setDebugApiKeyDisplay(`Key (${keySource}) starts with: ${envKey.substring(0, 5)}...`);
-    } else {
-      setDebugApiKeyDisplay('Using fallback key (env vars not available)');
-    }
-  }, []);
-  // --- End Debug ---
 
   const isSmallScreen = screenWidth < 768; // Define a breakpoint
 
-  // API Key Debug: Check if the key is available via process.env
-  const apiKeyStatus = process.env.EXPO_PUBLIC_CLAUDE_API_KEY 
-    ? 'IS SET' 
-    : 'IS NOT SET in process.env';
 
   // कांस्टेंट定义
   const APP_VERSION = "1.0.0-ultra-modern-mobile-scroll";
@@ -2636,13 +2610,6 @@ Do not include any introductory text or explanations outside of the JSON array i
 
   return (
     <View style={styles.container}>
-      {/* --- Debug: Display API Key in UI --- */}
-      <View style={{padding: 10, backgroundColor: '#ffffcc', zIndex: 9999 }}>
-        <Text style={{fontSize: 10, color: '#333', fontWeight: 'bold'}}>DEBUG PANEL:</Text>
-        <Text style={{fontSize: 10, color: '#333'}}>{debugApiKeyDisplay}</Text>
-        <Text style={{ color: 'white', fontSize: 10 }}>EXPO_PUBLIC_CLAUDE_API_KEY {apiKeyStatus}</Text>
-      </View>
-      {/* --- End Debug --- */}
 
       {/* Content */}
       <ScrollView 
@@ -3754,14 +3721,6 @@ Do not include any introductory text or explanations outside of the JSON array i
         </View>
       ) : null}
 
-      {/* --- AI Debug Panel --- */}
-      {showDebugPanel && (
-        <View style={{ position: 'absolute', bottom: 10, left: 10, backgroundColor: 'rgba(0,0,0,0.7)', padding: 10, borderRadius: 5, zIndex: 9999 }}>
-          <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>DEBUG PANEL:</Text>
-          <Text style={{ color: 'white', fontSize: 10 }}>EXPO_PUBLIC_CLAUDE_API_KEY {apiKeyStatus}</Text>
-        </View>
-      )}
-      {/* --- End AI Debug Panel --- */}
     </View>
   );
 }
