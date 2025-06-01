@@ -17,6 +17,11 @@ export class SupabaseService {
                          process.env.SUPABASE_KEY || 
                          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1Ympqanh6eXdweXhpcWN4bmZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2NTIwODQsImV4cCI6MjA2NDIyODA4NH0.ba0c3uKsmhs9BosnuqLJFUYyjDYZQGxNDZE-qWA5v-4';
       
+      console.log('🔑 Supabase Key Environment Check:');
+      console.log('- EXPO_PUBLIC_SUPABASE_KEY available:', !!process.env.EXPO_PUBLIC_SUPABASE_KEY);
+      console.log('- SUPABASE_KEY available:', !!process.env.SUPABASE_KEY);
+      console.log('- Using key length:', supabaseKey?.length || 0);
+      
       if (!supabaseKey) {
         throw new Error('Supabase key not found in environment variables');
       }
@@ -60,6 +65,7 @@ export class SupabaseService {
 
     try {
       const normalizedQuery = query.toLowerCase().trim();
+      console.log(`🔍 Supabase Search: "${normalizedQuery}" with persona: "${persona}" limit: ${limit}`);
       
       // Search products using Supabase query
       let queryBuilder = this.supabase
@@ -68,7 +74,14 @@ export class SupabaseService {
         .or(`title.ilike.%${normalizedQuery}%,description.ilike.%${normalizedQuery}%,features.ilike.%${normalizedQuery}%`)
         .limit(limit);
 
+      console.log('📡 Executing Supabase query...');
       const { data: products, error } = await queryBuilder;
+      
+      console.log('📊 Supabase query result:', { 
+        productsCount: products?.length || 0, 
+        hasError: !!error,
+        errorMessage: error?.message 
+      });
       
       if (error) {
         throw error;
@@ -451,6 +464,53 @@ export class SupabaseService {
       return data[0];
     } catch (error) {
       console.error('Error adding brand persona to Supabase:', error);
+      throw error;
+    }
+  }
+
+  async deleteProduct(productId) {
+    if (!this.initialized) {
+      throw new Error('Supabase service not initialized');
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .from('Product')
+        .delete()
+        .eq('id', productId)
+        .select();
+      
+      if (error) {
+        throw error;
+      }
+      
+      return data[0];
+      
+    } catch (error) {
+      console.error('Error deleting product from Supabase:', error);
+      throw error;
+    }
+  }
+
+  async deleteAllProducts() {
+    if (!this.initialized) {
+      throw new Error('Supabase service not initialized');
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .from('Product')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all products
+      
+      if (error) {
+        throw error;
+      }
+      
+      return data;
+      
+    } catch (error) {
+      console.error('Error deleting all products from Supabase:', error);
       throw error;
     }
   }

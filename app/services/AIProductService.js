@@ -141,15 +141,22 @@ export class AIProductService {
   }
 
   async searchProducts(query, persona) {
-    console.log(`Searching for: ${query} with persona: ${persona} (using ${this.activeService})`);
+    console.log(`🔍 AIProductService.searchProducts: "${query}" with persona: "${persona}" (using ${this.activeService})`);
+    console.log(`🔧 Service status: supabaseAvailable=${this.supabaseAvailable}, initialized=${this.initialized}`);
     
     // Try Supabase first if available
     if (this.supabaseAvailable && this.supabaseService) {
       try {
-        return await this.supabaseService.searchProducts(query, persona);
+        console.log('🔄 Attempting Supabase search...');
+        const results = await this.supabaseService.searchProducts(query, persona);
+        console.log(`✅ Supabase search successful: ${results.length} results`);
+        return results;
       } catch (supabaseError) {
-        console.log('Supabase search failed, falling back:', supabaseError.message);
+        console.error('❌ Supabase search failed:', supabaseError);
+        console.log('🔄 Falling back to mock data...');
       }
+    } else {
+      console.log(`⚠️ Supabase not available: supabaseAvailable=${this.supabaseAvailable}, supabaseService=${!!this.supabaseService}`);
     }
     
     // Try Prisma database if available
@@ -281,7 +288,7 @@ export class AIProductService {
             );
           }
           
-          console.log(`Query: "${normalizedQuery}", matching against ${allProducts.length} products`);
+          console.log(`📝 Mock Search Query: "${normalizedQuery}", matching against ${allProducts.length} products`);
           
           // Improved search matching - look for partial matches in title, description and features
           let filteredProducts = allProducts.filter(product => {
@@ -298,7 +305,7 @@ export class AIProductService {
                    ));
           });
           
-          console.log(`First filter found ${filteredProducts.length} products`);
+          console.log(`📊 First filter found ${filteredProducts.length} products`);
           
           // If we don't have enough matches with strict criteria, relax the search to ensure we get results
           if (filteredProducts.length < 5) {
@@ -311,14 +318,16 @@ export class AIProductService {
               );
             });
             
-            console.log(`Relaxed filter found ${filteredProducts.length} products`);
+            console.log(`📊 Relaxed filter found ${filteredProducts.length} products`);
           }
           
           // If still not enough results, just show all products
           if (filteredProducts.length < 3) {
-            console.log('Not enough matches, showing all products');
+            console.log('📊 Not enough matches, showing all products');
             filteredProducts = allProducts;
           }
+          
+          console.log(`📊 Final filter: ${filteredProducts.length} products`)
           
           // Calculate match scores based on persona
           const results = filteredProducts.map(product => {

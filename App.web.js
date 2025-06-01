@@ -7225,5 +7225,3 @@ Do not include any introductory text or explanations outside of the JSON array i
   }
 }
 
-// Initialize products on component mount
-// ... existing code ...
