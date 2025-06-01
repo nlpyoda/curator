@@ -1860,10 +1860,9 @@ export default function App() {
         const aiService = new AIProductService();
         await aiService.initialize();
         
-        // Get Supabase service instance
-        const supabaseService = aiService.services.find(s => s.constructor.name === 'SupabaseService');
-        if (supabaseService && supabaseService.initialized) {
-          const personas = await supabaseService.getBrandPersonas();
+        // Get Supabase service instance directly
+        if (aiService.supabaseService && aiService.supabaseService.initialized) {
+          const personas = await aiService.supabaseService.getBrandPersonas();
           console.log('✅ Brand personas loaded from Supabase:', Object.keys(personas).length, 'brands');
           setBrandPersonas(personas);
         } else {

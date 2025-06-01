@@ -159,8 +159,11 @@ exports.handler = async (event, context) => {
               productBrand.toLowerCase().includes(brand.toLowerCase()) ||
               product.title.toLowerCase().includes(brand.toLowerCase())
             );
-            const matchesLookingFor = product.title.toLowerCase().includes(lookingFor.toLowerCase()) ||
-                                    product.category.toLowerCase().includes(lookingFor.toLowerCase());
+            const lookingForWords = lookingFor.toLowerCase().split(' ');
+            const matchesLookingFor = lookingForWords.some(word => 
+              product.title.toLowerCase().includes(word) ||
+              product.category.toLowerCase().includes(word)
+            );
             return matchesBrand && matchesLookingFor;
           });
         }
@@ -168,8 +171,11 @@ exports.handler = async (event, context) => {
         // Priority 2: Products that match what user is looking for (any brand)
         if (curatedProducts.length === 0 && lookingFor) {
           curatedProducts = MOCK_PRODUCTS.filter(product => {
-            return product.title.toLowerCase().includes(lookingFor.toLowerCase()) ||
-                   product.category.toLowerCase().includes(lookingFor.toLowerCase());
+            const lookingForWords = lookingFor.toLowerCase().split(' ');
+            return lookingForWords.some(word => 
+              product.title.toLowerCase().includes(word) ||
+              product.category.toLowerCase().includes(word)
+            );
           });
         }
         
