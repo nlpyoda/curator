@@ -1408,6 +1408,21 @@ const VisualSearchPanel = ({ visible, onClose, onSearch }) => {
     analyzeImage(demoImage);
   };
 
+  // Handle clicking on a visual search result - use simple approach
+  const handleResultClick = (product) => {
+    console.log('🔍 Selected visual search result:', product.title);
+    // Extract search terms from product title
+    const searchTerms = product.title.split(' ').slice(0, 2).join(' '); // First 2 words
+    
+    // Use the onSearch prop which now properly routes to regular search for single terms
+    if (onSearch) {
+      onSearch([searchTerms]); // This will now use handleSearch instead of handleVisualSearch
+    }
+    
+    // Close the panel
+    onClose();
+  };
+
   // Handle result selection - create a dedicated visual search results view
   const handleResultSelection = () => {
     console.log('🎯 Displaying visual search results in dedicated view');
@@ -3411,7 +3426,16 @@ Do not include any introductory text or explanations outside of the JSON array i
       <VisualSearchPanel 
         visible={showVisualSearch}
         onClose={() => setShowVisualSearch(false)}
-        onSearch={handleVisualSearch}
+        onSearch={(searchTerms) => {
+          // Use regular search instead of complex visual search for clicked results
+          if (Array.isArray(searchTerms) && searchTerms.length === 1) {
+            // This is a clicked result - use regular search
+            handleSearch(searchTerms[0], true);
+          } else {
+            // This is the complex visual search results display
+            handleVisualSearch(searchTerms, 'visual-search');
+          }
+        }}
       />
       
       {/* Persona Selection Panel */}
