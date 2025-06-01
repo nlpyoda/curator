@@ -3333,6 +3333,10 @@ Do not include any introductory text or explanations outside of the JSON array i
                             style={styles.productImage}
                             resizeMode="cover"
                           />
+                          {/* NEW Badge */}
+                          <View style={styles.newBadge}>
+                            <Text style={styles.newBadgeText}>NEW</Text>
+                          </View>
                           <TouchableOpacity style={styles.favoriteButton}>
                             <Text style={styles.favoriteIcon}>♡</Text>
                           </TouchableOpacity>
@@ -4501,18 +4505,36 @@ const styles = StyleSheet.create({
   productImage: {
     width: '100%',
     height: '100%',
-    borderRadius: 8,
+    borderRadius: 12,
+    resizeMode: 'contain',
+  },
+  productTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: COLORS.text,
+    marginBottom: 8,
+    lineHeight: 34,
+    textAlign: 'left',
+  },
+  productDescription: {
+    fontSize: 16,
+    color: COLORS.textSecondary,
+    marginBottom: 16,
+    lineHeight: 22,
   },
   price: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: '600',
-    color: COLORS.accent1,
-    marginBottom: 5,
+    color: COLORS.text,
+    marginBottom: 20,
   },
   brandText: {
     fontSize: 14,
-    color: COLORS.midGray,
+    color: COLORS.textSecondary,
     marginBottom: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    fontWeight: '500',
   },
   modernProductGrid: {
     paddingHorizontal: 40,
@@ -4581,16 +4603,18 @@ const styles = StyleSheet.create({
   modernProductCard: {
     width: '48%',
     backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    marginBottom: 20,
+    borderRadius: 20,
+    marginBottom: 30,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
+    elevation: 6,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#E8E8E8',
+    borderColor: '#F0F0F0',
+    padding: 24,
+    minHeight: 520,
   },
   modernProductCardSmallScreen: { // New style for small screens
     width: '98%', 
@@ -4613,9 +4637,14 @@ const styles = StyleSheet.create({
     width: '98%',
   },
   productImageContainer: {
-    height: 200,
+    height: 280,
     position: 'relative',
-    backgroundColor: '#F8F8F8',
+    backgroundColor: '#FAFAFA',
+    borderRadius: 16,
+    marginBottom: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
   },
   favoriteButton: {
     position: 'absolute',
@@ -4649,9 +4678,12 @@ const styles = StyleSheet.create({
     padding: 15,
   },
   brandName: {
-    fontSize: 14,
-    color: '#666666',
-    marginBottom: 5,
+    fontSize: 12,
+    color: COLORS.primaryPeachy,
+    marginBottom: 8,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
   trendingStatsText: {
     fontSize: 12,
@@ -4676,10 +4708,11 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   productName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1A1A1A',
-    marginBottom: 10,
+    fontSize: 28,
+    fontWeight: '700',
+    color: COLORS.text,
+    marginBottom: 16,
+    lineHeight: 34,
   },
   priceRow: {
     flexDirection: 'row',
@@ -4688,9 +4721,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   currentPrice: {
-    fontSize: 14,
+    fontSize: 20,
     fontWeight: '600',
-    color: COLORS.accent1,
+    color: COLORS.text,
   },
   rating: {
     fontSize: 12,
@@ -4934,37 +4967,53 @@ const styles = StyleSheet.create({
   productCardButtonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 16, // Add some space above the buttons
-    gap: 10, // Space between the two buttons
+    marginTop: 24,
+    gap: 12,
   },
-  minimalistButtonShared: { // Base style for both buttons
-    flex: 1, // Allow buttons to share space
-    paddingVertical: 10,
+  newBadge: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    backgroundColor: COLORS.primaryPeachy,
     paddingHorizontal: 12,
-    borderRadius: 8,
-    borderWidth: 1,
+    paddingVertical: 6,
+    borderRadius: 6,
+    zIndex: 10,
+  },
+  newBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: COLORS.white,
+    letterSpacing: 0.5,
+  },
+  minimalistButtonShared: {
+    flex: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 40, // Ensure a decent tap target height
+    minHeight: 48,
   },
-  minimalistButtonPrimary: { // For "Shop on Brand Website"
-    backgroundColor: '#FFFFFF',
-    borderColor: '#6366F1', // Primary neon accent
+  minimalistButtonPrimary: {
+    backgroundColor: '#007AFF',
+    borderWidth: 0,
   },
-  minimalistButtonSecondary: { // For "Shop with Curator Agent"
-    backgroundColor: '#F7F7FA', // Very light neutral
-    borderColor: '#DCDCE0', // Softer neutral border
+  minimalistButtonSecondary: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#D1D1D6',
   },
-  buttonTextShared: { // Base text style for both buttons
-    fontSize: 13,
+  buttonTextShared: {
+    fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
   },
   buttonTextPrimary: {
-    color: '#6366F1', // Primary neon accent
+    color: '#FFFFFF',
   },
   buttonTextSecondary: {
-    color: '#2C2C38', // Clear, dark text
+    color: '#007AFF',
   },
   cardActions: {
     flexDirection: 'row',
