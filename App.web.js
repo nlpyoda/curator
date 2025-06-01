@@ -3641,8 +3641,9 @@ Do not include any introductory text or explanations outside of the JSON array i
                         {brandPersona.persona}
                       </Text>
                     )}
-                </TouchableOpacity>
-              ))}
+                  </TouchableOpacity>
+                );
+              })}
             </View>
 
             <Text style={styles.aiFormSectionTitle}>Your Personal Style</Text>
