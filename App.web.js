@@ -2678,7 +2678,7 @@ Do not include any introductory text or explanations outside of the JSON array i
         style={styles.content}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: true }
+          { useNativeDriver: false }
         )}
         scrollEventThrottle={16}
       >
@@ -3277,7 +3277,7 @@ Do not include any introductory text or explanations outside of the JSON array i
                       <>
                         <View style={styles.studentImageContainer}> {/* Using studentImageContainer which mirrors productImageContainer */}
                           <Image
-                            source={{ uri: product.image }}
+                            source={{ uri: product.image || product.link || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&h=600&fit=crop' }}
                             style={styles.productImage} // Reusing common productImage style
                             resizeMode="cover"
                           />
@@ -3358,7 +3358,7 @@ Do not include any introductory text or explanations outside of the JSON array i
                       <>
                         <View style={styles.productImageContainer}>
                           <Image
-                            source={{ uri: product.image }}
+                            source={{ uri: product.image || product.link || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&h=600&fit=crop' }}
                             style={styles.productImage}
                             resizeMode="cover"
                           />
