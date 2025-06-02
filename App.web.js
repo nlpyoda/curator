@@ -513,50 +513,6 @@ const trendRadarData = [
 ];
 
 // Product categories for visual entry points
-const productCategories = [
-  {
-    id: 'tech',
-    name: 'Technology',
-    image: 'https://images.unsplash.com/photo-1518717758536-85ae29035b6d?w=600&h=600&fit=crop',
-    color: '#6366F1',
-    description: 'innovation meets intentional design'
-  },
-  {
-    id: 'audio',
-    name: 'Audio',
-    image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&h=600&fit=crop',
-    color: '#8B5CF6',
-    description: 'sound engineered for the discerning ear'
-  },
-  {
-    id: 'home',
-    name: 'Home & Living',
-    image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=600&h=600&fit=crop',
-    color: '#06B6D4',
-    description: 'spaces that nurture the soul'
-  },
-  {
-    id: 'travel',
-    name: 'Travel',
-    image: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600&h=600&fit=crop',
-    color: '#10B981',
-    description: 'wanderlust essentials for the mindful explorer'
-  },
-  {
-    id: 'fitness',
-    name: 'Fitness',
-    image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&h=600&fit=crop',
-    color: '#F59E0B',
-    description: 'wellness tools for the devoted practitioner'
-  },
-  {
-    id: 'beauty',
-    name: 'Beauty',
-    image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=600&h=600&fit=crop',
-    color: '#EF4444',
-    description: 'ritual essentials for authentic self-care'
-  },
-];
 
 // InsightBar component for visualizing product metrics
 const InsightBar = ({ label, value, color }) => {
@@ -3129,60 +3085,6 @@ Do not include any introductory text or explanations outside of the JSON array i
                 );
               })()}
             </View>
-            
-            {/* Ultra-Modern Categories */}
-            <View style={[styles.ultraModernCategoryContainer, isSmallScreen && styles.ultraModernSectionContainerMarginSmallScreen]}>
-              <View style={styles.ultraModernSectionHeader}>
-                <View style={styles.sectionHeaderLeft}>
-                  <Text style={styles.ultraModernSectionLabel}>BROWSE</Text>
-                  <Text style={styles.ultraModernSectionTitle}>Shop by Category</Text>
-                  <Text style={styles.ultraModernSectionSubtitle}>
-                    explore our curated world of intentional products
-                  </Text>
-                </View>
-              </View>
-              
-              <View style={[styles.ultraModernCategoryGrid, isSmallScreen && styles.ultraModernCategoryGridSmallScreen]}>
-                {productCategories.map((category) => (
-                  <TouchableOpacity
-                    key={category.id}
-                    style={[styles.ultraModernCategoryItem, isSmallScreen && styles.ultraModernCategoryItemSmallScreen]}
-                    onPress={() => {
-                      // When a category is clicked, filter products by category name
-                      setIsLoadingAnimation(true);
-                      setIsDiscoveryMode(false);
-                      setShowTrendingSocial(false);
-                      setShowAiCurateView(null); // Reset AI view
-
-                      if (typeof window !== 'undefined' && window.history && window.history.pushState) {
-                        window.history.pushState({ page: 'products', category: category.name }, '', `?category=${encodeURIComponent(category.name)}`);
-                      }
-
-                      setTimeout(() => {
-                        const categoryProducts = mockProducts.filter(product => 
-                          product.category.toLowerCase().includes(category.id.toLowerCase()) ||
-                          product.tags.some(tag => tag.toLowerCase().includes(category.id.toLowerCase()))
-                        );
-                        setProducts(sortProducts(categoryProducts.length > 0 ? categoryProducts : mockProducts));
-                        setIsLoadingAnimation(false);
-                      }, 800);
-                    }}
-                  >
-                    <View style={styles.ultraModernCategoryIcon}>
-                      <Image 
-                        source={{ uri: category.image }}
-                        style={styles.ultraModernCategoryImage}
-                        resizeMode="cover"
-                      />
-                    </View>
-                    <Text style={[styles.ultraModernCategoryName, isSmallScreen && styles.ultraModernCategoryNameSmallScreen]}>{category.name}</Text>
-                    <Text style={[styles.ultraModernCategoryDescription, isSmallScreen && styles.ultraModernCategoryDescriptionSmallScreen]}>
-                      {category.description}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
           </View>
         ) : products.length === 0 ? (
           <View style={styles.emptyContainer}>
@@ -5505,72 +5407,6 @@ const styles = StyleSheet.create({
     maxWidth: 480,
     fontStyle: 'italic',
   },
-  ultraModernCategoryContainer: {
-    marginBottom: 120,
-    backgroundColor: 'transparent',
-    borderRadius: 0,
-    padding: 40,
-    paddingTop: 60,
-    shadowColor: 'transparent',
-  },
-  ultraModernCategoryGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(3, 1fr)', // 3 columns for better spacing
-    gap: '32px',
-    marginTop: 0,
-    ...(Platform.OS !== 'web' ? {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      justifyContent: 'space-between',
-      // No gap property for React Native, margin on items will handle it
-    } : {}),
-  },
-  ultraModernCategoryItem: {
-    width: Platform.OS === 'web' ? 'auto' : '31%', // Responsive width
-    aspectRatio: '4/5', // Elegant proportions
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20, // More sophisticated rounded corners
-    overflow: 'hidden',
-    borderWidth: 0,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 24,
-    elevation: 8,
-    position: 'relative',
-    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', // Smooth hover effect
-    cursor: 'pointer',
-    marginBottom: Platform.OS === 'web' ? 0 : 20, // Add margin for RN flexbox grid
-  },
-  ultraModernCategoryIcon: {
-    height: '60%', // Image takes up 60% of card
-    position: 'relative',
-    backgroundColor: '#F8F8F8',
-  },
-  ultraModernCategoryImage: {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
-    filter: 'contrast(1.1) saturate(1.2)', // Enhanced image quality
-  },
-  ultraModernCategoryName: {
-    fontSize: 18,
-    fontWeight: '500',
-    color: '#1A1A1A',
-    letterSpacing: -0.3,
-    padding: 24,
-    paddingBottom: 8,
-  },
-  ultraModernCategoryDescription: {
-    fontSize: 14,
-    color: '#666666',
-    fontStyle: 'italic',
-    lineHeight: 20,
-    paddingLeft: 24,
-    paddingRight: 24,
-    paddingBottom: 24,
-    fontFamily: Platform.OS === 'web' ? '"Playfair Display", Georgia, serif' : 'System',
-  },
   ultraModernTrendRadarContainer: {
     marginBottom: 120,
     backgroundColor: 'transparent',
@@ -5801,26 +5637,6 @@ const styles = StyleSheet.create({
   ultraModernMoodContentSmallScreen: { // New style for mood content area on small screens
     padding: 16, // Reduced padding from 24px
     height: 'auto', // More flexible height
-  },
-  ultraModernCategoryGridSmallScreen: {
-    gridTemplateColumns: 'repeat(2, 1fr)', // 2 columns for small screens
-    gap: '20px', // Slightly smaller gap for smaller screens
-    ...(Platform.OS !== 'web' && {
-      // On React Native, if using flexbox for this grid on small screens:
-      // No specific changes needed if the base ultraModernCategoryGrid already handles RN row wrapping well.
-      // If category cards have fixed widths, might adjust justifyContent or rely on margins.
-    }),
-  },
-  ultraModernCategoryNameSmallScreen: {
-    fontSize: 18, // Increased from 16px
-    paddingBottom: 2, // Reduced padding
-    paddingHorizontal: 8, // Added horizontal padding adjustment
-  },
-  ultraModernCategoryDescriptionSmallScreen: {
-    fontSize: 15, // Increased from 13px
-    lineHeight: 20, // Adjusted line height
-    paddingHorizontal: 8, // Added horizontal padding adjustment
-    paddingBottom: 12, // Reduced bottom padding
   },
   ultraModernBundleCardSmallScreen: { // Around line 5626
     // width is handled dynamically inline (screenWidth * 0.75)
