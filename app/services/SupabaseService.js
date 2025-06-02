@@ -68,24 +68,31 @@ export class SupabaseService {
         .from('Product')
         .select('*');
       
-      // First try to search by persona/lifemoment tags if the persona suggests it
-      if (persona && (persona.includes('student') || persona.includes('trendsetter') || persona.includes('optimizer') || persona.includes('conscious'))) {
-        // Extract persona name
+      // Check if this is a direct tag search (persona-X or lifemoment-X)
+      if (normalizedQuery.startsWith('persona-') || normalizedQuery.startsWith('lifemoment-')) {
+        console.log(`🏷️ Direct tag search: ${normalizedQuery}`);
+        queryBuilder = queryBuilder.contains('tags', [normalizedQuery]);
+      } 
+      // Check if persona parameter matches known personas or life moments
+      else if (persona) {
         const personaNames = ['student', 'trendsetter', 'optimizer', 'conscious'];
-        const matchedPersona = personaNames.find(p => persona.includes(p));
-        
-        if (matchedPersona) {
-          console.log(`🎭 Searching by persona tag: persona-${matchedPersona}`);
-          queryBuilder = queryBuilder.contains('tags', [`persona-${matchedPersona}`]);
-        }
-      } else if (persona && (persona.includes('sanctuary') || persona.includes('new-arrival') || persona.includes('career-launch'))) {
-        // Extract life moment name
         const lifeMoments = ['sanctuary', 'new-arrival', 'career-launch', 'golden-years', 'gamer-setup', 'sustainable-living', 'wellness-retreat', 'perfect-hosting'];
-        const matchedMoment = lifeMoments.find(m => persona.includes(m));
         
-        if (matchedMoment) {
-          console.log(`🏖️ Searching by life moment tag: lifemoment-${matchedMoment}`);
-          queryBuilder = queryBuilder.contains('tags', [`lifemoment-${matchedMoment}`]);
+        if (personaNames.includes(persona)) {
+          console.log(`🎭 Searching by persona tag: persona-${persona}`);
+          queryBuilder = queryBuilder.contains('tags', [`persona-${persona}`]);
+        } else if (lifeMoments.includes(persona)) {
+          console.log(`🏖️ Searching by life moment tag: lifemoment-${persona}`);
+          queryBuilder = queryBuilder.contains('tags', [`lifemoment-${persona}`]);
+        } else {
+          // Fallback to keyword search
+          const queryTerms = normalizedQuery.split(' ').filter(term => term.length > 2);
+          if (queryTerms.length > 0) {
+            const orConditions = queryTerms.map(term => 
+              `title.ilike.%${term}%,description.ilike.%${term}%,features.ilike.%${term}%,category.ilike.%${term}%`
+            ).join(',');
+            queryBuilder = queryBuilder.or(orConditions);
+          }
         }
       } else {
         // Fallback to keyword search

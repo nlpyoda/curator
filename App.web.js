@@ -2196,26 +2196,9 @@ export default function App() {
         const personaId = persona.id;
         console.log(`🎭 Searching for persona: ${personaId}`);
         
-        // Define persona-specific search queries
-        let searchQuery = '';
-        let personaStyle = '';
-        
-        if (personaId === 'student') {
-          searchQuery = 'laptop computer tech phone budget affordable';
-          personaStyle = 'budget conscious student value focused affordable';
-        } else if (personaId === 'trendsetter') {
-          searchQuery = 'premium fashion beauty luxury tech modern design';
-          personaStyle = 'fashion forward trendsetter luxury premium style conscious';
-        } else if (personaId === 'optimizer') {
-          searchQuery = 'laptop computer business office pro performance';
-          personaStyle = 'performance focused professional productivity optimizer business';
-        } else if (personaId === 'conscious') {
-          searchQuery = 'organic natural eco sustainable green';
-          personaStyle = 'eco conscious sustainable ethical minimalist responsible';
-        } else {
-          searchQuery = `${personaId} products`;
-          personaStyle = `${personaId} lifestyle focused`;
-        }
+        // Use persona tag-based search
+        const searchQuery = `persona-${personaId}`;
+        const personaStyle = personaId; // Just pass the persona ID so SupabaseService can match it
         
         console.log(`🔍 Searching for persona ${personaId} with query: "${searchQuery}"`);
         const searchResults = await aiService.searchProducts(searchQuery, personaStyle);
@@ -2320,8 +2303,8 @@ export default function App() {
         console.log(`🏖️ Searching for life moment: ${momentId}`);
         
         // Use the moment ID directly as the persona parameter so the search can find the right tags
-        const searchQuery = momentId;
-        const momentStyle = `lifemoment ${momentId}`;
+        const searchQuery = `lifemoment-${momentId}`;
+        const momentStyle = momentId; // Just pass the moment ID so SupabaseService can match it
         
         console.log(`🔍 Searching for life moment ${momentId} with query: "${searchQuery}"`);
         const searchResults = await aiService.searchProducts(searchQuery, momentStyle);
