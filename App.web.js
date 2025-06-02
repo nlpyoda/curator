@@ -33,8 +33,8 @@ const COLORS = {
 
 // Helper function to convert hex to rgba
 const hexToRgba = (hex, alpha) => {
-  if (!hex || typeof hex !== 'string') {
-    console.warn('hexToRgba received invalid hex value:', hex);
+  if (!hex || typeof hex !== 'string' || !hex.startsWith('#')) {
+    // Silently return a default color instead of logging warnings
     return `rgba(0, 0, 0, ${alpha || 0})`;
   }
   const r = parseInt(hex.slice(1, 3), 16);
@@ -487,7 +487,7 @@ const trendRadarData = [
     id: 2,
     title: 'Dyson Air Purifier',
     category: 'HOME',
-    image: 'https://dyson-h.assetsadobe2.com/is/image/content/dam/dyson/products/air-treatment/purifiers/hp07/dyson-purifier-hot-cool-hp07-black-nickel-hero-01.png?wid=600&hei=600&fmt=png-alpha', // Official Dyson product image
+    image: 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=600&h=600&fit=crop&crop=center', // Dyson air purifier
     trendChange: '↗ 16%',
     isViral: false,
     brandUrl: 'https://www.dyson.com/air-treatment/air-purifier-heaters/purifier-hot-cool-hp07/black-nickel'
@@ -2179,246 +2179,211 @@ export default function App() {
   };
   
   // Handle persona selection
-  const handlePersonaSelect = (persona) => {
+  const handlePersonaSelect = async (persona) => {
     setSelectedPersona(persona);
-    setShowPersonaPanel(false); // Assuming this closes a panel
+    setShowPersonaPanel(false);
     setIsLoadingAnimation(true);
     setErrorMessage(null);
+    setIsDiscoveryMode(false);
 
-    setTimeout(() => {
-      let filteredProducts = [];
-      const personaId = persona.id;
-
-      console.log(`[DEBUG] Filtering for persona: ${personaId}`);
-
-      // Initial filter based on specific "-pick" tags for all personas
-      if (personaId === 'student') {
-        console.log('[DEBUG Student] Attempting primary filter for student-pick...');
-        filteredProducts = mockProducts.filter(p => p.tags.includes('student-pick'));
-        console.log(`[DEBUG Student] After primary \'student-pick\' filter, found ${filteredProducts.length} products. Titles:`, filteredProducts.map(p => p.id + ": " + p.title));
-      } else if (personaId === 'trendsetter') {
-        filteredProducts = mockProducts.filter(p => p.tags.includes('trendsetter-pick'));
-        console.log(`[DEBUG Trendsetter] After primary \'trendsetter-pick\' filter, found ${filteredProducts.length} products.`);
-      } else if (personaId === 'optimizer') {
-        filteredProducts = mockProducts.filter(p => p.tags.includes('optimizer-pick'));
-        console.log(`[DEBUG Optimizer] After primary \'optimizer-pick\' filter, found ${filteredProducts.length} products.`);
-      } else if (personaId === 'conscious') {
-        filteredProducts = mockProducts.filter(p => p.tags.includes('conscious-pick'));
-        console.log(`[DEBUG Conscious] After primary \'conscious-pick\' filter, found ${filteredProducts.length} products.`);
-      } else {
-        // Fallback for any persona that might not have a specific "-pick" logic above (should not happen with current personas)
-        console.log(`[DEBUG ${personaId}] No specific -pick logic. Applying general tag/category filter for ${personaId}.`);
-        filteredProducts = mockProducts.filter(p => 
-          (p.tags.includes(personaId)) || 
-          (p.category.toLowerCase().includes(personaId))
-        );
-      }
-      
-      console.log(`[DEBUG ${personaId}] After initial specific pick/filter, found ${filteredProducts.length} products.`);
-      if (filteredProducts.length > 0) {
-         console.log(`[DEBUG ${personaId}] Titles after initial pick: `, filteredProducts.map(p => p.title));
-      }
-
-      // Fallback logic if initial filter yields less than 5 products
-      if (filteredProducts.length < 5 && mockProducts.length > 0) {
-        console.log(`[DEBUG ${personaId}] Initial filter yielded < 5 products (${filteredProducts.length}). Attempting broader filter.`);
+    const searchPersonaProducts = async () => {
+      try {
+        // Use AI service for database search based on persona
+        const { AIProductService } = await import('./app/services/AIProductService.js');
+        const aiService = new AIProductService();
+        await aiService.initialize();
         
-        let broaderFilter = [];
-        const originalPickCount = filteredProducts.length; // Store how many items the specific pick found
-        const specificPicksHadItems = originalPickCount > 0;
-
+        const personaId = persona.id;
+        console.log(`🎭 Searching for persona: ${personaId}`);
+        
+        // Define persona-specific search queries
+        let searchQuery = '';
+        let personaStyle = '';
+        
         if (personaId === 'student') {
-            console.log('[DEBUG Student] Applying broader student filter...');
-            const studentBroadTags = ['budget-friendly', 'study-essential', 'campus-essential', 'portable', 'value-deal'];
-            broaderFilter = mockProducts.filter(p => {
-                const hasBroadTag = studentBroadTags.some(tag => p.tags.includes(tag));
-                const isRelevantCategory = ['laptop', 'accessories', 'electronics', 'subscription', 'food'].includes(p.category);
-                return hasBroadTag || isRelevantCategory;
-            });
-            console.log(`[DEBUG Student] After broader student filter, found ${broaderFilter.length} products. Titles:`, broaderFilter.map(p=>p.id + ": " + p.title));
+          searchQuery = 'laptop computer tech phone budget affordable';
+          personaStyle = 'budget conscious student value focused affordable';
+        } else if (personaId === 'trendsetter') {
+          searchQuery = 'premium fashion beauty luxury tech modern design';
+          personaStyle = 'fashion forward trendsetter luxury premium style conscious';
+        } else if (personaId === 'optimizer') {
+          searchQuery = 'laptop computer business office pro performance';
+          personaStyle = 'performance focused professional productivity optimizer business';
+        } else if (personaId === 'conscious') {
+          searchQuery = 'organic natural eco sustainable green';
+          personaStyle = 'eco conscious sustainable ethical minimalist responsible';
         } else {
-            // Broader filter logic for other personas (trendsetter, optimizer, conscious)
-            console.log(`[DEBUG ${personaId}] Applying broader filter for non-student persona ${personaId}...`);
-            const personaTags = { 
-                trendsetter: ['premium', 'innovative', 'stylish-travel', 'beauty-tech', 'camera-excellence', 'luxury-travel', 'design-focused', 'wearable-tech', 'fashionable-function'],
-                optimizer: ['pro', 'performance', 'ergonomic', 'office-essential', 'productivity-tool', 'tech-essential', 'business-laptop', 'audio-excellence'],
-                conscious: ['sustainable', 'eco-friendly', 'organic', 'minimalist', 'durable-design', 'ethical-brand', 'sustainable-fashion', 'health-conscious'],
-            };
-            broaderFilter = mockProducts.filter(p => {
-                return personaTags[personaId]?.some(tag => p.tags.includes(tag)) || 
-                       p.category.toLowerCase().includes(personaId);
-            });
-            console.log(`[DEBUG ${personaId}] Broader filter for ${personaId} found ${broaderFilter.length} products.`);
-             if (broaderFilter.length > 0) {
-                console.log(`[DEBUG ${personaId}] Titles from broader filter: `, broaderFilter.map(p => p.title));
-            }
+          searchQuery = `${personaId} products`;
+          personaStyle = `${personaId} lifestyle focused`;
         }
-
-        if (broaderFilter.length >= 5) {
-            console.log(`[DEBUG ${personaId}] Broader filter successful (${broaderFilter.length} products). Using broader set.`);
-            filteredProducts = broaderFilter;
+        
+        console.log(`🔍 Searching for persona ${personaId} with query: "${searchQuery}"`);
+        const searchResults = await aiService.searchProducts(searchQuery, personaStyle);
+        
+        if (searchResults.length > 0) {
+          // Transform results to match expected format
+          const transformedResults = searchResults.map(product => ({
+            ...product,
+            priceRange: product.price ? [parseFloat(product.price.replace('$', '').replace(',', '')), parseFloat(product.price.replace('$', '').replace(',', ''))] : [0, 0],
+            category: product.category || 'general',
+            tags: product.tags || [],
+            description: product.description || product.whyBuy || 'Great product!',
+            image: product.image || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&h=600&fit=crop&crop=center',
+            affiliateUrl: product.affiliateUrl || product.link || 'https://example.com'
+          }));
+          
+          setProducts(sortProducts(transformedResults));
+          console.log(`✅ Found ${transformedResults.length} products for ${personaId} persona`);
+          setErrorMessage(null);
         } else {
-            console.log(`[DEBUG ${personaId}] Broader filter also yielded < 5 products (${broaderFilter.length}).`);
-            // If specific picks originally had items, and broader search didn't get 5, prefer the original specific picks.
-            // This prevents a good specific small set from being overridden by an even smaller (or empty) broad set.
-            if (specificPicksHadItems) {
-                console.log(`[DEBUG ${personaId}] Broader filter insufficient. Reverting to original specific -pick items (${originalPickCount} products) because they existed.`);
-                // Re-fetch the original picks to ensure `filteredProducts` is correctly set
-                 if (personaId === 'student') {
-                    filteredProducts = mockProducts.filter(p => p.tags.includes('student-pick'));
-                 } else if (personaId === 'trendsetter') {
-                    filteredProducts = mockProducts.filter(p => p.tags.includes('trendsetter-pick'));
-                 } else if (personaId === 'optimizer') {
-                    filteredProducts = mockProducts.filter(p => p.tags.includes('optimizer-pick'));
-                 } else if (personaId === 'conscious') {
-                    filteredProducts = mockProducts.filter(p => p.tags.includes('conscious-pick'));
-                 }
-                 // If, after all this, filteredProducts is still empty (e.g. no -pick and no broad results)
-                 // then the critical fallback below will catch it.
-            } else {
-                // If specific picks had NO items, and broader also failed to get 5, then we check broaderFilter.
-                // If broaderFilter has *any* items, use them. Otherwise, it'll go to critical fallback.
-                if(broaderFilter.length > 0){
-                    console.log(`[DEBUG ${personaId}] Original picks were empty, broader filter has ${broaderFilter.length}. Using broader filter results.`);
-                    filteredProducts = broaderFilter;
-                } else {
-                    console.log(`[DEBUG ${personaId}] Original picks were empty, and broader filter was also empty. Will proceed to critical fallback if necessary.`);
-                    // `filteredProducts` remains empty here, will be caught by critical fallback if mockProducts has items.
-                }
-            }
+          // Fallback to mock data if no results
+          console.log(`⚠️ No database results for ${personaId}, using mock data`);
+          let filteredProducts = [];
+          
+          if (personaId === 'student') {
+            filteredProducts = mockProducts.filter(p => p.tags.includes('student-pick'));
+          } else if (personaId === 'trendsetter') {
+            filteredProducts = mockProducts.filter(p => p.tags.includes('trendsetter-pick'));
+          } else if (personaId === 'optimizer') {
+            filteredProducts = mockProducts.filter(p => p.tags.includes('optimizer-pick'));
+          } else if (personaId === 'conscious') {
+            filteredProducts = mockProducts.filter(p => p.tags.includes('conscious-pick'));
+          } else {
+            filteredProducts = mockProducts.filter(p => 
+              (p.tags.includes(personaId)) || 
+              (p.category.toLowerCase().includes(personaId))
+            );
+          }
+          
+          setProducts(sortProducts(filteredProducts.length > 0 ? filteredProducts : mockProducts.slice(0, 8)));
+          if (filteredProducts.length === 0) {
+            setErrorMessage(`No products found for ${persona.name}. Showing popular items instead.`);
+          } else {
+            setErrorMessage(null);
+          }
+        }
+        
+        setIsLoadingAnimation(false);
+        await aiService.cleanup();
+        
+      } catch (error) {
+        console.error('❌ Persona search failed:', error);
+        // Fallback to mock data
+        let filteredProducts = [];
+        
+        if (personaId === 'student') {
+          filteredProducts = mockProducts.filter(p => p.tags.includes('student-pick'));
+        } else if (personaId === 'trendsetter') {
+          filteredProducts = mockProducts.filter(p => p.tags.includes('trendsetter-pick'));
+        } else if (personaId === 'optimizer') {
+          filteredProducts = mockProducts.filter(p => p.tags.includes('optimizer-pick'));
+        } else if (personaId === 'conscious') {
+          filteredProducts = mockProducts.filter(p => p.tags.includes('conscious-pick'));
+        } else {
+          filteredProducts = mockProducts.filter(p => 
+            (p.tags.includes(personaId)) || 
+            (p.category.toLowerCase().includes(personaId))
+          );
+        }
+        
+        setProducts(sortProducts(filteredProducts.length > 0 ? filteredProducts : mockProducts.slice(0, 8)));
+        setIsLoadingAnimation(false);
+        setIsDiscoveryMode(false);
+        
+        if (filteredProducts.length === 0) {
+          setErrorMessage(`No products found for ${persona.name}. Showing popular items instead.`);
+        } else {
+          setErrorMessage(null);
         }
       }
-      
-      console.log(`[DEBUG ${personaId}] After all primary and secondary filtering, product count: ${filteredProducts.length}.`);
+    };
 
-      // CRITICAL FALLBACK: If all filtering attempts for a persona result in zero products, show all products.
-      if (filteredProducts.length === 0 && mockProducts.length > 0) {
-          console.warn(`[DEBUG ${personaId}] CRITICAL FALLBACK: All filtering resulted in zero products. Showing all ${mockProducts.length} available products instead for ${personaId}.`);
-          filteredProducts = [...mockProducts];
-      }
-
-      console.log(`[DEBUG ${personaId}] FINAL products to be set before sorting for ${personaId}: ${filteredProducts.length} items.`);
-      if (filteredProducts.length > 0) {
-        console.log(`[DEBUG ${personaId}] Final Titles before sorting:`, filteredProducts.map(p => p.title));
-      } else {
-        console.log(`[DEBUG ${personaId}] No products to display for ${personaId} after all filtering.`);
-      }
-
-      setProducts(sortProducts(filteredProducts)); 
-      setIsLoadingAnimation(false);
-      setIsDiscoveryMode(false);
-      
-      if (filteredProducts.length === 0 && mockProducts.length > 0) { // This message might now be redundant due to the critical fallback above but kept for safety.
-        setErrorMessage(`No products specifically matched "${persona.name}". We're showing all available products instead.`);
-         console.log(`[UI HINT] Setting error message for ${personaId} as no specific products found, but showing all due to fallback.`);
-      } else if (filteredProducts.length === 0 && mockProducts.length === 0) {
-        setErrorMessage(`No products available in the store at the moment.`);
-        console.log(`[UI HINT] Setting error message as no products in store.`);
-      } else {
-        setErrorMessage(null); // Clear any previous error messages if products are found
-      }
-
-    }, 1000);
+    await searchPersonaProducts();
   };
   
   // Handle life moment selection
-  const handleLifeMomentSelect = (moment) => {
+  const handleLifeMomentSelect = async (moment, pushHistory = true) => {
     setSelectedLifeMoment(moment);
     setShowLifeMomentPanel(false);
     setIsLoadingAnimation(true);
     setErrorMessage(null);
+    setIsDiscoveryMode(false);
 
-    setTimeout(() => {
-      let filteredProducts = [];
-      const momentId = moment.id;
-
-      console.log(`Filtering for life moment: ${momentId}`);
-
-      // Primary filter using specific life moment tags
-      if (momentId === 'new-arrival') {
-        filteredProducts = mockProducts.filter(p => p.tags.includes('new-arrival-essential'));
-      } else if (momentId === 'career-launch') {
-        filteredProducts = mockProducts.filter(p => p.tags.includes('career-launch-essential'));
-      } else if (momentId === 'sanctuary') {
-        filteredProducts = mockProducts.filter(p => p.tags.includes('sanctuary-essential'));
-      } else if (momentId === 'golden-years') {
-        filteredProducts = mockProducts.filter(p => p.tags.includes('golden-years-essential'));
-      } else if (momentId === 'gamer-setup') {
-        filteredProducts = mockProducts.filter(p => p.tags.includes('gamer-setup-essential'));
-      } else if (momentId === 'sustainable-living') {
-        filteredProducts = mockProducts.filter(p => p.tags.includes('sustainable-living-essential'));
-      } else if (momentId === 'wellness-retreat') {
-        filteredProducts = mockProducts.filter(p => p.tags.includes('wellness-retreat-essential'));
-      } else if (momentId === 'perfect-hosting') {
-        filteredProducts = mockProducts.filter(p => p.tags.includes('perfect-hosting-essential'));
-      } else {
-        // Fallback for any other moment or if no specific picks are defined
-        filteredProducts = mockProducts.filter(p => 
-          (p.tags.includes(momentId)) || // General tag match
-          (p.category.toLowerCase().includes(momentId)) // General category match
-        );
-      }
-
-      console.log(`Initial filtered products for ${momentId}:`, filteredProducts.length);
-
-      // Ensure a minimum number of products, or show all if specific filter is too narrow
-      if (filteredProducts.length < 4 && mockProducts.length > 0) {
-        console.log(`Not enough specific products for ${momentId}, broadening search.`);
-        // If specific picks are too few, try a broader filter based on general tags or categories
-        let broaderFilter = mockProducts.filter(p => {
-          const momentTags = { // Define some broader tags for each moment if specific picks are < 4
-            'new-arrival': ['baby', 'infant-care', 'parenting', 'premium-parenting', 'smart-parenting'],
-            'career-launch': ['pro', 'performance', 'premium', 'office-essential', 'productivity-tool', 'business-laptop'],
-            'sanctuary': ['home-comfort', 'premium-comfort', 'design-focused', 'premium-kitchen', 'ergonomic'],
-            'golden-years': ['senior-friendly', 'easy-to-use', 'reading-comfort', 'portable-audio', 'large-screen'],
-            'gamer-setup': ['gaming', 'performance', 'tech-essential', 'high-refresh', 'competitive-gaming'],
-            'sustainable-living': ['sustainable', 'eco-friendly', 'organic', 'minimalist', 'ethical-brand'],
-            'wellness-retreat': ['health-tech', 'wellness', 'comfort-wear', 'self-care', 'relaxation'],
-            'perfect-hosting': ['kitchen', 'entertaining', 'premium-kitchen', 'quality-brew', 'versatile-appliance']
-          };
-          return momentTags[momentId]?.some(tag => p.tags.includes(tag)) || 
-                 p.category.toLowerCase().includes(momentId) ||
-                 (momentId === 'new-arrival' && p.category === 'baby') ||
-                 (momentId === 'sanctuary' && (p.category === 'kitchen' || p.category === 'furniture')) ||
-                 (momentId === 'gamer-setup' && (p.category === 'electronics' || p.category === 'audio')) ||
-                 (momentId === 'perfect-hosting' && p.category === 'kitchen');
-        });
-
-        if (broaderFilter.length >= 4) {
-          filteredProducts = broaderFilter;
-        } else if (mockProducts.filter(p => p.tags.includes(momentId + "-essential")).length > 0 && filteredProducts.length === 0) {
-          // If there *are* -essential items but they were somehow filtered out, re-add them
-          filteredProducts = mockProducts.filter(p => p.tags.includes(momentId + "-essential"));
+    const searchLifeMomentProducts = async () => {
+      try {
+        // Use AI service for database search based on life moment
+        const { AIProductService } = await import('./app/services/AIProductService.js');
+        const aiService = new AIProductService();
+        await aiService.initialize();
+        
+        const momentId = moment.id;
+        console.log(`🏖️ Searching for life moment: ${momentId}`);
+        
+        // Use the moment ID directly as the persona parameter so the search can find the right tags
+        const searchQuery = momentId;
+        const momentStyle = `lifemoment ${momentId}`;
+        
+        console.log(`🔍 Searching for life moment ${momentId} with query: "${searchQuery}"`);
+        const searchResults = await aiService.searchProducts(searchQuery, momentStyle);
+        
+        if (searchResults.length > 0) {
+          // Transform results to match expected format
+          const transformedResults = searchResults.map(product => ({
+            ...product,
+            priceRange: product.price ? [parseFloat(product.price.replace('$', '').replace(',', '')), parseFloat(product.price.replace('$', '').replace(',', ''))] : [0, 0],
+            category: product.category || 'general',
+            tags: product.tags || [],
+            description: product.description || product.whyBuy || 'Perfect for this life moment!',
+            image: product.image || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&h=600&fit=crop&crop=center',
+            affiliateUrl: product.affiliateUrl || product.link || 'https://example.com'
+          }));
+          
+          setProducts(sortProducts(transformedResults));
+          console.log(`✅ Found ${transformedResults.length} products for ${momentId} life moment`);
+          setErrorMessage(null);
         } else {
-          // If still not enough, use the initial specific picks or all if specific picks were zero
-          if(mockProducts.filter(p => p.tags.includes(momentId + "-essential")).length > 0 && filteredProducts.length === 0){
-            filteredProducts = mockProducts.filter(p => p.tags.includes(momentId + "-essential"));
-          } else if (filteredProducts.length === 0) { // Only show all if specific picks truly yield nothing
-            console.log(`No specific or broader products for ${momentId}, showing all products.`);
-            filteredProducts = [...mockProducts]; // Fallback to all products if no specific products found
+          // Fallback to mock data if no results
+          console.log(`⚠️ No database results for ${momentId}, using mock data fallback`);
+          let filteredProducts = mockProducts.filter(p => 
+            p.tags.includes(momentId + '-essential') ||
+            p.tags.includes(momentId) ||
+            p.category.toLowerCase().includes(momentId)
+          );
+          
+          if (filteredProducts.length === 0) {
+            filteredProducts = [...mockProducts];
+          }
+          
+          setProducts(sortProducts(filteredProducts));
+          if (filteredProducts.length === mockProducts.length) {
+            setErrorMessage(`No specific products found for "${moment.name}". Showing all available products.`);
           }
         }
+        
+        setIsLoadingAnimation(false);
+        await aiService.cleanup();
+        
+      } catch (error) {
+        console.error('❌ Database search failed for life moment, falling back to mock data:', error);
+        
+        // Fallback to mock data search
+        let filteredProducts = mockProducts.filter(p => 
+          p.tags.includes(momentId + '-essential') ||
+          p.tags.includes(momentId) ||
+          p.category.toLowerCase().includes(momentId)
+        );
+        
+        if (filteredProducts.length === 0) {
+          filteredProducts = [...mockProducts];
+        }
+        
+        setProducts(sortProducts(filteredProducts));
+        setIsLoadingAnimation(false);
+        setErrorMessage(filteredProducts.length === mockProducts.length ? `No specific products found for "${moment.name}". Showing all available products.` : null);
       }
+    };
 
-      // If after all attempts, filteredProducts is still empty, show all products.
-      // This is a final safety net.
-      if (filteredProducts.length === 0 && mockProducts.length > 0) {
-        console.log(`Critical fallback for ${momentId}: All filters resulted in zero products. Showing all products.`);
-        filteredProducts = [...mockProducts];
-      }
-
-      setProducts(sortProducts(filteredProducts)); // sortProducts will handle empty array if needed
-      setIsLoadingAnimation(false);
-      setIsDiscoveryMode(false);
-      
-      console.log(`Final products for ${momentId}:`, filteredProducts.length, filteredProducts.map(p=>p.title));
-      if (filteredProducts.length === 0 && mockProducts.length > 0) {
-        setErrorMessage(`No products found for "${moment.name}". We're showing all available products instead.`);
-      } else if (filteredProducts.length === 0 && mockProducts.length === 0) {
-        setErrorMessage(`No products available in the store at the moment.`);
-      }
-
-    }, 1000);
+    await searchLifeMomentProducts();
   };
   
   // Remove filters

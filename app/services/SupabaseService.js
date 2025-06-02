@@ -12,15 +12,12 @@ export class SupabaseService {
   async initialize() {
     try {
       // Get Supabase key from environment variables
-      // For testing, let's use the key directly first
-      const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_KEY || 
-                         process.env.SUPABASE_KEY || 
-                         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1Ympqanh6eXdweXhpcWN4bmZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2NTIwODQsImV4cCI6MjA2NDIyODA4NH0.ba0c3uKsmhs9BosnuqLJFUYyjDYZQGxNDZE-qWA5v-4';
+      // Use direct key for production deployment
+      const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1Ympqanh6eXdweXhpcWN4bmZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2NTIwODQsImV4cCI6MjA2NDIyODA4NH0.ba0c3uKsmhs9BosnuqLJFUYyjDYZQGxNDZE-qWA5v-4';
       
-      console.log('🔑 Supabase Key Environment Check:');
-      console.log('- EXPO_PUBLIC_SUPABASE_KEY available:', !!process.env.EXPO_PUBLIC_SUPABASE_KEY);
-      console.log('- SUPABASE_KEY available:', !!process.env.SUPABASE_KEY);
-      console.log('- Using key length:', supabaseKey?.length || 0);
+      console.log('🔑 Supabase Key Check:');
+      console.log('- Using direct key for production');
+      console.log('- Key length:', supabaseKey?.length || 0);
       
       if (!supabaseKey) {
         throw new Error('Supabase key not found in environment variables');
@@ -67,12 +64,44 @@ export class SupabaseService {
       const normalizedQuery = query.toLowerCase().trim();
       console.log(`🔍 Supabase Search: "${normalizedQuery}" with persona: "${persona}" limit: ${limit}`);
       
-      // Search products using Supabase query
       let queryBuilder = this.supabase
         .from('Product')
-        .select('*')
-        .or(`title.ilike.%${normalizedQuery}%,description.ilike.%${normalizedQuery}%,features.ilike.%${normalizedQuery}%`)
-        .limit(limit);
+        .select('*');
+      
+      // First try to search by persona/lifemoment tags if the persona suggests it
+      if (persona && (persona.includes('student') || persona.includes('trendsetter') || persona.includes('optimizer') || persona.includes('conscious'))) {
+        // Extract persona name
+        const personaNames = ['student', 'trendsetter', 'optimizer', 'conscious'];
+        const matchedPersona = personaNames.find(p => persona.includes(p));
+        
+        if (matchedPersona) {
+          console.log(`🎭 Searching by persona tag: persona-${matchedPersona}`);
+          queryBuilder = queryBuilder.contains('tags', [`persona-${matchedPersona}`]);
+        }
+      } else if (persona && (persona.includes('sanctuary') || persona.includes('new-arrival') || persona.includes('career-launch'))) {
+        // Extract life moment name
+        const lifeMoments = ['sanctuary', 'new-arrival', 'career-launch', 'golden-years', 'gamer-setup', 'sustainable-living', 'wellness-retreat', 'perfect-hosting'];
+        const matchedMoment = lifeMoments.find(m => persona.includes(m));
+        
+        if (matchedMoment) {
+          console.log(`🏖️ Searching by life moment tag: lifemoment-${matchedMoment}`);
+          queryBuilder = queryBuilder.contains('tags', [`lifemoment-${matchedMoment}`]);
+        }
+      } else {
+        // Fallback to keyword search
+        const queryTerms = normalizedQuery.split(' ').filter(term => term.length > 2);
+        
+        if (queryTerms.length > 0) {
+          // Create OR conditions for each term across multiple fields
+          const orConditions = queryTerms.map(term => 
+            `title.ilike.%${term}%,description.ilike.%${term}%,features.ilike.%${term}%,category.ilike.%${term}%`
+          ).join(',');
+          
+          queryBuilder = queryBuilder.or(orConditions);
+        }
+      }
+      
+      queryBuilder = queryBuilder.limit(limit);
 
       console.log('📡 Executing Supabase query...');
       const { data: products, error } = await queryBuilder;
@@ -144,6 +173,40 @@ export class SupabaseService {
       transformedProducts.sort((a, b) => b.similarity - a.similarity);
       
       console.log(`Found ${transformedProducts.length} products from Supabase`);
+      
+      // If no results, try a broader fallback search
+      if (transformedProducts.length === 0) {
+        console.log('No products found, trying fallback search...');
+        
+        const fallbackQuery = this.supabase
+          .from('Product')
+          .select('*')
+          .limit(10);
+          
+        const { data: fallbackProducts, error: fallbackError } = await fallbackQuery;
+        
+        if (!fallbackError && fallbackProducts && fallbackProducts.length > 0) {
+          console.log(`Fallback: returning ${fallbackProducts.length} products`);
+          const fallbackTransformed = fallbackProducts.map(product => ({
+            id: product.id || product.productId,
+            title: product.title || product.name || 'Product',
+            brand: product.brand || 'Unknown',
+            price: product.price || product.currentPrice || '$0',
+            category: product.category || 'general',
+            description: product.description || product.whyBuy || 'Great product!',
+            whyBuy: product.whyBuy || product.description || 'Recommended for you',
+            image: product.image || product.imageUrl || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&h=600&fit=crop&crop=center',
+            affiliateUrl: product.affiliateUrl || product.link || 'https://example.com',
+            link: product.link || product.affiliateUrl || 'https://example.com',
+            rating: product.rating || 4.5,
+            tags: product.tags || [],
+            similarity: 0.5
+          }));
+          
+          return fallbackTransformed;
+        }
+      }
+      
       return transformedProducts;
       
     } catch (error) {
