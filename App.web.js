@@ -1975,7 +1975,7 @@ export default function App() {
         category: product.category || 'general',
         tags: product.tags || [],
         description: product.description || product.whyBuy || 'Great product!',
-        image: product.image || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&h=600&fit=crop&crop=center',
+        image: product.link || product.image || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&h=600&fit=crop&crop=center',
         affiliateUrl: product.affiliateUrl || product.link || 'https://example.com'
       }));
       
@@ -2167,7 +2167,7 @@ export default function App() {
             category: product.category || 'general',
             tags: product.tags || [],
             description: product.description || product.whyBuy || 'Great product!',
-            image: product.image || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&h=600&fit=crop&crop=center',
+            image: product.link || product.image || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&h=600&fit=crop&crop=center',
             affiliateUrl: product.affiliateUrl || product.link || 'https://example.com'
           }));
           
@@ -2273,7 +2273,7 @@ export default function App() {
             category: product.category || 'general',
             tags: product.tags || [],
             description: product.description || product.whyBuy || 'Perfect for this life moment!',
-            image: product.image || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&h=600&fit=crop&crop=center',
+            image: product.link || product.image || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&h=600&fit=crop&crop=center',
             affiliateUrl: product.affiliateUrl || product.link || 'https://example.com'
           }));
           
@@ -2426,7 +2426,7 @@ export default function App() {
         category: product.category || 'general',
         tags: product.tags || ['visual-search'],
         description: product.description || product.whyBuy || 'Great product!',
-        image: product.image || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&h=600&fit=crop&crop=center',
+        image: product.link || product.image || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&h=600&fit=crop&crop=center',
         affiliateUrl: product.affiliateUrl || product.link || 'https://example.com'
       }));
       
