@@ -2194,7 +2194,7 @@ export default function App() {
             );
           }
           
-          setProducts(sortProducts(filteredProducts.length > 0 ? filteredProducts : mockProducts.slice(0, 8)));
+          setProducts(sortProducts(filteredProducts.length > 0 ? filteredProducts : []));
           if (filteredProducts.length === 0) {
             setErrorMessage(`No products found for ${persona.name}. Showing popular items instead.`);
           } else {
@@ -2225,7 +2225,7 @@ export default function App() {
           );
         }
         
-        setProducts(sortProducts(filteredProducts.length > 0 ? filteredProducts : mockProducts.slice(0, 8)));
+        setProducts(sortProducts(filteredProducts.length > 0 ? filteredProducts : []));
         setIsLoadingAnimation(false);
         setIsDiscoveryMode(false);
         
@@ -2333,7 +2333,8 @@ export default function App() {
     setIsLoadingAnimation(true);
     
     setTimeout(() => {
-      setProducts(sortProducts([...mockProducts]));
+      // Load from database instead of mock data
+      setProducts([]);
       setIsLoadingAnimation(false);
     }, 500);
   };
