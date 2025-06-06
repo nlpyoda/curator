@@ -1020,7 +1020,7 @@ const ProductCard = ({ product, onPress, isTrending = false }) => {
         <View style={styles.cardContent}>
           <View style={styles.cardImageContainer}>
             <Image 
-              source={{ uri: product.image }}
+              source={{ uri: product.image || product.link || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&h=600&fit=crop' }}
               style={styles.productImage}
               resizeMode="cover"
             />
@@ -1588,7 +1588,7 @@ const VisualSearchPanel = ({ visible, onClose, onSearch }) => {
                   >
                     {product.image && (
                       <Image 
-                        source={{ uri: product.image }} 
+                        source={{ uri: product.image || product.link || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&h=600&fit=crop' }} 
                         style={{
                           width: 50,
                           height: 50,
@@ -2710,7 +2710,7 @@ Do not include any introductory text or explanations outside of the JSON array i
                   <View key={`trending-${trendItem.id}`} style={styles.modernProductCard}>
                     <View style={styles.productImageContainer}>
                       <Image
-                        source={{ uri: product.image }}
+                        source={{ uri: product.image || product.link || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&h=600&fit=crop' }}
                         style={styles.productImage}
                         resizeMode="cover"
                       />
@@ -3167,7 +3167,7 @@ Do not include any introductory text or explanations outside of the JSON array i
                   </Text>
                 </View>
               ) : (
-                products.map((product) => (
+                products.filter(product => product && product.id).map((product) => (
                   <View 
                     key={product.id} 
                     style={[
@@ -3655,7 +3655,7 @@ Do not include any introductory text or explanations outside of the JSON array i
             </View>
           ) : (
             <View style={styles.productGrid}>
-              {aiGeneratedProducts.map((product) => (
+              {aiGeneratedProducts.filter(product => product && product.id).map((product) => (
                 <View 
                   key={product.id} 
                   style={[
@@ -3666,7 +3666,7 @@ Do not include any introductory text or explanations outside of the JSON array i
                   {/* Using existing product card structure */}
                   <View style={styles.productImageContainer}>
                     <Image
-                      source={{ uri: product.image }}
+                      source={{ uri: product.image || product.link || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&h=600&fit=crop' }}
                       style={styles.productImage}
                       resizeMode="cover"
                     />
@@ -6694,7 +6694,7 @@ const TrendRadar = ({ items, onItemPress, onSeeAll }) => {
       ]}
       onPress={() => onItemPress(item)}
     >
-      <Image source={{ uri: item.image }} style={styles.ultraModernTrendRadarImage} resizeMode="cover" />
+      <Image source={{ uri: item.image || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&h=600&fit=crop' }} style={styles.ultraModernTrendRadarImage} resizeMode="cover" />
       <View style={styles.ultraModernTrendRadarOverlay} />
       <View style={[styles.ultraModernTrendRadarContent, cardContentAreaSmallScreenStyle]}>
         <Text style={[styles.ultraModernTrendRadarTitle, cardTitleSmallScreenStyle]} numberOfLines={2} ellipsizeMode="tail">
@@ -6990,3 +6990,4 @@ Do not include any introductory text or explanations outside of the JSON array i
   }
 }
 
+ 
